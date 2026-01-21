@@ -165,14 +165,16 @@ export function ReduxLocationSearchInput({
       </div>
 
       {/* Dropdown */}
-      {showDropdown && (
+      {(() => {
+        console.log('🔍 Dropdown render check:', {
+          showDropdown,
+          internalQuery,
+          filteredRegionsLength: filteredRegions.length,
+          currentPredictionsLength: currentPredictions.length
+        });
+        return showDropdown;
+      })() && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-          {console.log('🔍 Dropdown render check:', {
-            showDropdown,
-            internalQuery,
-            filteredRegionsLength: filteredRegions.length,
-            currentPredictionsLength: currentPredictions.length
-          })}
           
           {filteredRegions.length > 0 && !cascadingState.selectedRegion && (
             <>

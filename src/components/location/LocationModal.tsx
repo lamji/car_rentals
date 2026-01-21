@@ -93,7 +93,7 @@ export function LocationModal({ isOpen, onClose, onLocationSelect, initialLocati
       if (selectedIndex >= 0 && filteredRegions[selectedIndex]) {
         handleRegionSelect(filteredRegions[selectedIndex]);
       } else if (query.trim()) {
-        handleLocationSubmit(query.trim());
+        handleLocationSubmit();
       }
     } else if (e.key === "Escape") {
       onClose();
