@@ -37,7 +37,7 @@ A modern car rental booking application built with Next.js 15, React, and TypeSc
 ## 📱 Screenshots
 
 ### Home Page - Location Search
-![Home Page](screenshots/home-page.png)
+![Home Page](screenshots/preview.png)
 *Main search interface with location selector and date picker*
 
 ### Location Modal - Cascading Selection
@@ -52,9 +52,7 @@ A modern car rental booking application built with Next.js 15, React, and TypeSc
 ![Car Details](screenshots/car-details.png)
 *Detailed car information and booking options*
 
-### Booking Flow
-![Booking Flow](screenshots/booking-flow.png)
-*Multi-step checkout process*
+
 
 ## 🚀 Getting Started
 
