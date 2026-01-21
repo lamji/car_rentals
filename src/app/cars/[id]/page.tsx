@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -23,7 +24,7 @@ import { useBooking } from "@/hooks/useBooking";
 import { useCar } from "@/hooks/useCar";
 import { usePricing } from "@/hooks/usePricing";
 
-export default function CarDetailsPage() {
+function CarDetailsPageContent() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -274,5 +275,13 @@ export default function CarDetailsPage() {
         initialLocation={location}
       />
     </div>
+  );
+}
+
+export default function CarDetailsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CarDetailsPageContent />
+    </Suspense>
   );
 }

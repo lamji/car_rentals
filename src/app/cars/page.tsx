@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -13,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { useCars } from "@/hooks/useCars";
 
-export default function CarsPage() {
+function CarsPageContent() {
   const searchParams = useSearchParams();
 
   const location = searchParams.get("location") ?? "";
@@ -137,5 +138,13 @@ export default function CarsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CarsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CarsPageContent />
+    </Suspense>
   );
 }
