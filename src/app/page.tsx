@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, Suspense } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -16,7 +16,7 @@ import { MapPin, Calendar, Car, Search, Check, Shield, Zap, Headphones } from "l
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
   const { state, setState } = useSearchState();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -253,5 +253,13 @@ export default function Home() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
