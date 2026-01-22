@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { MapPin, Plus } from "lucide-react";
+import { MapLinkModal } from "@/components/ui/MapLinkModal";
 
 import { formatCurrency, formatNumber } from "@/lib/currency";
 import { BookingSteps } from "@/components/booking/BookingSteps";
@@ -27,15 +28,10 @@ import { useGeolocationContext } from "@/contexts/GeolocationContext";
 import { calculateDistanceToCar, formatDistance, getReadableAddressFromCoordinates } from "@/utils/distance";
 
 function CarDetailsPageContent() {
-  const params = useParams<{ id: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [duration, setDuration] = useState<"12hours" | "24hours">("24hours");
-  const [fulfillmentType, setFulfillmentType] = useState<"pickup" | "delivery">("pickup");
-  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<{ location?: string; dates?: string }>({});
   const [readableAddress, setReadableAddress] = useState<string>('Loading location...');
+  const [showMapModal, setShowMapModal] = useState(false);
 
   const { position, loading } = useGeolocationContext();
   const id = params.id;
@@ -247,23 +243,17 @@ function CarDetailsPageContent() {
                   <span>Garage: {readableAddress}</span>
                   {car?.garageLocation.coordinates && (
                     <Button
-                      asChild
                       variant="link"
                       size="sm"
                       className="h-auto p-0 text-primary hover:text-primary/80 underline ml-1"
+                      onClick={() => setShowMapModal(true)}
                     >
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${car.garageLocation.coordinates.lat},${car.garageLocation.coordinates.lng}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="View in Google Maps"
-                        className="flex items-center gap-1"
-                      >
+                      <span className="flex items-center gap-1">
                         <span>Map</span>
                         <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                         </svg>
-                      </a>
+                      </span>
                     </Button>
                   )}
                 </div>
@@ -418,6 +408,16 @@ function CarDetailsPageContent() {
         onLocationSelect={handleLocationSelect}
         initialData={{ region: location }}
       />
+      
+      {/* Map Link Modal */}
+      {car?.garageLocation.coordinates && (
+        <MapLinkModal
+          isOpen={showMapModal}
+          onClose={() => setShowMapModal(false)}
+          mapUrl={`https://www.google.com/maps/search/?api=1&query=${car.garageLocation.coordinates.lat},${car.garageLocation.coordinates.lng}`}
+          locationName={`${car.name} Garage`}
+        />
+      )}
     </div>
   );
 }
