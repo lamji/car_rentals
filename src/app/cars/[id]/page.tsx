@@ -9,15 +9,13 @@ import { useState, useEffect } from "react";
 import { MapPin, Plus } from "lucide-react";
 import { MapLinkModal } from "@/components/ui/MapLinkModal";
 
-import { formatCurrency, formatNumber } from "@/lib/currency";
-import { BookingSteps } from "@/components/booking/BookingSteps";
+import { formatCurrency } from "@/lib/currency";
 import { PriceBreakdown } from "@/components/booking/PriceBreakdown";
 import { StickyBottomCTA } from "@/components/booking/StickyBottomCTA";
 import { DateRangePicker } from "@/components/search/DateRangePicker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { LocationModal } from "@/components/location/LocationModal";
@@ -30,11 +28,17 @@ import { calculateDistanceToCar, formatDistance, getReadableAddressFromCoordinat
 function CarDetailsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const params = useParams();
   const [readableAddress, setReadableAddress] = useState<string>('Loading location...');
   const [showMapModal, setShowMapModal] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [duration, setDuration] = useState<'12hours' | '24hours'>('12hours');
+  const [fulfillmentType, setFulfillmentType] = useState<'pickup' | 'delivery'>('pickup');
+  const [validationErrors, setValidationErrors] = useState<{location?: string; dates?: string}>({});
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
 
   const { position, loading } = useGeolocationContext();
-  const id = params.id;
+  const id = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
   const car = useCar(id);
 
   // Calculate distance from user's location to car's garage
