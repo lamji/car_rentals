@@ -1,6 +1,16 @@
 export type CarType = "sedan" | "suv" | "van";
 export type Transmission = "automatic" | "manual";
 
+export type GarageLocation = {
+  address: string;
+  city: string;
+  province: string;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+};
+
 export type Car = {
   id: string;
   name: string;
@@ -13,6 +23,7 @@ export type Car = {
   type: CarType;
   imageUrls: string[];
   garageAddress: string;
+  garageLocation: GarageLocation;
   rentedCount: number;
   rating: number;
   selfDrive: boolean;

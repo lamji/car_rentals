@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { MapPin, Loader2 } from "lucide-react";
+import { MapPin, Loader2, Crosshair } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useReduxPSGCLocations } from "@/hooks/useReduxPSGCLocations";
+import { useGeolocationContext } from "@/contexts/GeolocationContext";
 import { PSGCRegion } from "@/lib/slices/regionsSlice";
 
 export interface LocationData {
@@ -93,6 +95,18 @@ export function LocationModal({
     setBarangayQuery,
   } = useReduxPSGCLocations();
 
+  // Geolocation hook
+  const { 
+    address, 
+    loading: locationLoading, 
+    requestLocation,
+    requestLocationPermission,
+    permissionDenied
+  } = useGeolocationContext();
+
+  // Geolocation switch state
+  const [useCurrentLocation, setUseCurrentLocation] = useState(false);
+
   // Initialize with initial data
   useEffect(() => {
     if (initialData && isOpen) {
@@ -103,6 +117,56 @@ export function LocationModal({
       setLandmark(initialData.landmark || "");
     }
   }, [initialData, isOpen, setRegionQuery]);
+
+  // Handle geolocation toggle
+  const handleLocationToggle = (enabled: boolean) => {
+    setUseCurrentLocation(enabled);
+    
+    if (enabled) {
+      if (permissionDenied) {
+        // If permission was denied, request it again
+        requestLocationPermission();
+      } else if (!address) {
+        // If no address available, request location
+        requestLocation();
+      }
+      // If address is available, the effect below will populate the inputs
+    } else {
+      // Clear inputs when toggled off
+      setRegionQuery("");
+      setLocalProvinceQuery("");
+      setLocalCityQuery("");
+      setLocalBarangayQuery("");
+    }
+  };
+
+  // Populate inputs when geolocation address is available and switch is on
+  useEffect(() => {
+    if (useCurrentLocation && address && isOpen) {
+      console.log('📍 Populating form with geocoded address:', address);
+      
+      setRegionQuery(address.region || "");
+      setLocalProvinceQuery(address.province || "");
+      setLocalCityQuery(address.city || address.municipality || "");
+      setLocalBarangayQuery(address.barangay || "");
+    }
+  }, [useCurrentLocation, address, isOpen, setRegionQuery]);
+
+  // Check if form is valid for submission
+  const isFormValid = () => {
+    // If current location is enabled and we have address data, it's valid
+    if (useCurrentLocation && address) {
+      return true;
+    }
+
+    // Otherwise check manual entry validation
+    if (required[0] && !cascadingState.selectedRegion) return false;
+    if (required[1] && !cascadingState.selectedProvince) return false;
+    if (required[2] && !cascadingState.selectedCity) return false;
+    if (required[3] && !cascadingState.selectedBarangay) return false;
+    
+    return true;
+  };
 
   // Focus first input when modal opens
   useEffect(() => {
@@ -227,7 +291,23 @@ export function LocationModal({
 
   // Handle location submit
   const handleLocationSubmit = () => {
-    // Check required fields
+    // If current location is enabled and we have address data, proceed with validation
+    if (useCurrentLocation && address) {
+      const locationData: LocationData = {
+        region: address.region,
+        province: address.province,
+        city: address.city || address.municipality,
+        barangay: address.barangay,
+        landmark: landmark.trim() || undefined
+      };
+
+      const locationString = address.formattedAddress;
+      onLocationSelect(locationString, locationData);
+      onClose();
+      return;
+    }
+
+    // Check required fields for manual entry
     if (required[0] && !cascadingState.selectedRegion) {
       return;
     }
@@ -262,6 +342,37 @@ export function LocationModal({
       landmark: landmark.trim() || undefined
     };
 
+    onLocationSelect(locationString, locationData);
+    onClose();
+  };
+
+  // Handle current location selection (for quick use button)
+  const handleCurrentLocation = async () => {
+    if (permissionDenied) {
+      // If permission was denied, request permission again
+      requestLocationPermission();
+      return;
+    }
+
+    if (!address) {
+      // Request location if not available
+      requestLocation();
+      return;
+    }
+
+    // Use the full geocoded address
+    const locationString = address.formattedAddress;
+    
+    // Create a location data object with proper administrative divisions
+    const locationData: LocationData = {
+      region: address.region,
+      province: address.province,
+      city: address.city || address.municipality,
+      barangay: address.barangay,
+      landmark: undefined
+    };
+
+    console.log('📍 Quick selecting location with data:', locationData);
     onLocationSelect(locationString, locationData);
     onClose();
   };
@@ -353,6 +464,48 @@ export function LocationModal({
             {title}
           </DialogTitle>
         </DialogHeader>
+        
+        {/* Current Location Preview with Switch */}
+        <div className="flex items-start justify-between p-3 border rounded-lg bg-gray-50 gap-4">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <Crosshair className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <button
+                onClick={handleCurrentLocation}
+                disabled={locationLoading || permissionDenied}
+                className="text-left w-full"
+              >
+                <span className="text-sm font-medium block">
+                  {locationLoading 
+                    ? "Getting location..." 
+                    : permissionDenied 
+                      ? "Location Access Denied"
+                      : address 
+                        ? "Use Current Location" 
+                        : "Use Current Location"
+                  }
+                </span>
+                {permissionDenied && (
+                  <span className="text-xs text-orange-600 mt-1 leading-tight block">
+                    Location access denied. Enable in your browser settings.
+                  </span>
+                )}
+                {address && !permissionDenied && (
+                  <span className="text-xs text-muted-foreground mt-1 leading-tight block">
+                    {address.formattedAddress}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+          <div className="flex-shrink-0 pt-1">
+            <Switch
+              checked={useCurrentLocation}
+              onCheckedChange={handleLocationToggle}
+              disabled={locationLoading}
+            />
+          </div>
+        </div>
         
         <div className="space-y-4">
           {/* Region Input */}
@@ -595,12 +748,7 @@ export function LocationModal({
             </Button>
             <Button 
               onClick={handleLocationSubmit}
-              disabled={
-                (required[0] && !cascadingState.selectedRegion) ||
-                (required[1] && !cascadingState.selectedProvince) ||
-                (required[2] && !cascadingState.selectedCity) ||
-                (required[3] && !cascadingState.selectedBarangay)
-              }
+              disabled={!isFormValid()}
               className="flex-1"
             >
               Use Location

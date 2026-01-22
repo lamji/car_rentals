@@ -4,6 +4,9 @@ import "./globals.css";
 
 import { Header } from "@/components/layout/Header";
 import ReduxProvider from "@/components/providers/ReduxProvider";
+import { GeolocationWrapper } from "@/components/providers/GeolocationWrapper";
+import { GeolocationTest } from "@/components/debug/GeolocationTest";
+import { LocationPermissionBanner } from "@/components/ui/LocationPermissionBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,8 +34,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ReduxProvider>
-          <Header />
-          {children}
+          <GeolocationWrapper>
+            <LocationPermissionBanner />
+            <Header />
+            {children}
+            <GeolocationTest />
+          </GeolocationWrapper>
         </ReduxProvider>
       </body>
     </html>

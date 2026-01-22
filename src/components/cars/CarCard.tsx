@@ -7,12 +7,22 @@ import type { Car } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { useGeolocationContext } from "@/contexts/GeolocationContext";
+import { calculateDistanceToCar, formatDistance } from "@/utils/distance";
 
 export function CarCard(props: {
   car: Car;
   href: string;
 }) {
   const car = props.car;
+  const { position } = useGeolocationContext();
+
+  // Simple debug to see if this is being called
+  console.log(`🚗 CarCard: ${car.name}, has position: ${!!position}`);
+
+  // Calculate distance from user's location to car's garage
+  const distance = position ? calculateDistanceToCar(position, car) : null;
+  const distanceText = distance ? formatDistance(distance) : null;
 
   return (
     <Card>
@@ -30,6 +40,11 @@ export function CarCard(props: {
                 <div className="mt-1 text-sm text-muted-foreground">
                   {car.seats} seats • {car.transmission}
                 </div>
+                {distanceText && (
+                  <div className="mt-1 text-xs text-blue-600 font-medium">
+                    📍 {distanceText}
+                  </div>
+                )}
               </div>
               <Badge variant="secondary">Available</Badge>
             </div>

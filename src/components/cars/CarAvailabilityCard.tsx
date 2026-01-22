@@ -6,8 +6,11 @@ import type { Car } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Calendar, CheckCircle, XCircle, Star, Car as CarIcon } from "lucide-react";
+import { CheckCircle, XCircle, Star, Car as CarIcon } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
+import { useGeolocationContext } from "@/contexts/GeolocationContext";
+import { calculateDistanceToCar, formatDistance } from "@/utils/distance";
+import { useCachedAddress } from "@/hooks/useCachedAddress";
 
 type Props = {
   car: Car;
@@ -15,27 +18,17 @@ type Props = {
   href: string;
 };
 
-function getNextAvailableDate(unavailableDates: string[]): string | null {
-  if (unavailableDates.length === 0) return null;
-  
-  const today = new Date();
-  const sortedDates = unavailableDates
-    .map(date => new Date(date))
-    .sort((a, b) => a.getTime() - b.getTime());
-  
-  // Find the first date after today
-  for (let i = 0; i < sortedDates.length; i++) {
-    if (sortedDates[i] > today) {
-      return sortedDates[i].toISOString().split('T')[0];
-    }
-  }
-  
-  return null;
-}
-
-
 export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
-  const nextAvailableDate = getNextAvailableDate(car.availability.unavailableDates);
+  const { position, loading } = useGeolocationContext();
+  
+  // Use cached address from Redux
+  const { address: readableAddress, isLoading: addressLoading } = useCachedAddress(car.garageLocation.coordinates);
+
+  // Calculate distance from user's location to car's garage
+  const distance = position ? calculateDistanceToCar(position, car) : null;
+  const distanceText = distance ? formatDistance(distance) : null;
+
+  console.log(`🚗 CarAvailabilityCard: ${car.name}, has position: ${!!position}, distance: ${distanceText}`);
   
   return (
     <Card className="transition-shadow hover:shadow-lg">
@@ -59,6 +52,18 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
             </div>
             <div className="mt-1 text-xs text-muted-foreground sm:text-sm">
               {car.seats} seats • {car.transmission}
+            </div>
+            {loading ? (
+              <div className="mt-1">
+                <div className="h-3 w-16 bg-muted animate-pulse rounded"></div>
+              </div>
+            ) : distanceText ? (
+              <div className="mt-1 text-xs text-muted-foreground">
+                📍 {distanceText}
+              </div>
+            ) : null}
+            <div className="mt-1 text-xs text-muted-foreground">
+              🏢 {readableAddress}
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
               <div className="flex items-center gap-1">
@@ -105,12 +110,6 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
                 </>
               )}
             </div>
-            {!isAvailable && nextAvailableDate && (
-              <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                <Calendar className="h-3 w-3" />
-                <span>Available from {new Date(nextAvailableDate).toLocaleDateString()}</span>
-              </div>
-            )}
           </div>
         </div>
       </CardContent>

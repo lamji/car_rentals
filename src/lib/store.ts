@@ -4,6 +4,7 @@ import regionsReducer from './slices/regionsSlice';
 import provincesReducer from './slices/provincesSlice';
 import citiesReducer from './slices/citiesSlice';
 import barangaysReducer from './slices/barangaysSlice';
+import addressReducer from './slices/addressSlice';
 
 export const store = configureStore({
   reducer: {
@@ -11,6 +12,7 @@ export const store = configureStore({
     provinces: provincesReducer,
     cities: citiesReducer,
     barangays: barangaysReducer,
+    address: addressReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

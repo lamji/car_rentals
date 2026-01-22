@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MapPin, Plus } from "lucide-react";
 
 import { formatCurrency, formatNumber } from "@/lib/currency";
@@ -23,6 +23,8 @@ import { LocationModal } from "@/components/location/LocationModal";
 import { useBooking } from "@/hooks/useBooking";
 import { useCar } from "@/hooks/useCar";
 import { usePricing } from "@/hooks/usePricing";
+import { useGeolocationContext } from "@/contexts/GeolocationContext";
+import { calculateDistanceToCar, formatDistance, getReadableAddressFromCoordinates } from "@/utils/distance";
 
 function CarDetailsPageContent() {
   const params = useParams<{ id: string }>();
@@ -32,9 +34,33 @@ function CarDetailsPageContent() {
   const [duration, setDuration] = useState<"12hours" | "24hours">("24hours");
   const [fulfillmentType, setFulfillmentType] = useState<"pickup" | "delivery">("pickup");
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<{ location?: string; dates?: string }>({});
+  const [readableAddress, setReadableAddress] = useState<string>('Loading location...');
 
+  const { position, loading } = useGeolocationContext();
   const id = params.id;
   const car = useCar(id);
+
+  // Calculate distance from user's location to car's garage
+  const distance = position && car ? calculateDistanceToCar(position, car) : null;
+  const distanceText = distance ? formatDistance(distance) : null;
+
+  // Fetch readable address from coordinates
+  useEffect(() => {
+    if (car?.garageLocation.coordinates) {
+      const fetchAddress = async () => {
+        try {
+          const address = await getReadableAddressFromCoordinates(car.garageLocation.coordinates);
+          setReadableAddress(address);
+        } catch (error) {
+          console.error('Failed to fetch address:', error);
+          setReadableAddress('Location unavailable');
+        }
+      };
+
+      fetchAddress();
+    }
+  }, [car?.garageLocation.coordinates]);
 
   const location = searchParams.get("location") ?? "";
   const startDate = searchParams.get("start") ?? "";
@@ -67,12 +93,84 @@ function CarDetailsPageContent() {
     );
   }
 
-  const canContinue = Boolean(startDate && endDate && fulfillmentType && startDate !== "" && endDate !== "" && location.trim());
-
   const handleLocationSelect = (newLocation: string) => {
     const nextParams = new URLSearchParams(searchParams.toString());
     nextParams.set("location", newLocation);
     router.replace(`/cars/${encodeURIComponent(id)}?${nextParams.toString()}`);
+    
+    // Clear location error when location is selected
+    if (newLocation.trim() && validationErrors.location) {
+      setValidationErrors(prev => ({ ...prev, location: undefined }));
+    }
+  };
+
+  const handleDateChange = (next: { startDate: string; endDate: string }) => {
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.set("start", next.startDate);
+    nextParams.set("end", next.endDate);
+    router.replace(`/cars/${encodeURIComponent(id)}?${nextParams.toString()}`);
+    
+    // Clear date error when dates are selected
+    if (next.startDate && next.endDate && validationErrors.dates) {
+      setValidationErrors(prev => ({ ...prev, dates: undefined }));
+    }
+  };
+
+  // Disable dates before today and dates too far in the future
+  const disabledDays = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
+    
+    // Allow bookings up to 6 months in advance (more reasonable for car rentals)
+    const maxDate = new Date();
+    maxDate.setMonth(today.getMonth() + 6);
+    maxDate.setHours(0, 0, 0, 0);
+    
+    // Debug logging to check date comparison (current date should be Jan 22, 2026)
+    console.log('Date validation:', {
+      checking: date.toDateString(),
+      today: today.toDateString(),
+      maxDate: maxDate.toDateString(),
+      isPast: date < today,
+      isFuture: date > maxDate,
+      checkingTime: date.getTime(),
+      todayTime: today.getTime()
+    });
+    
+    // Disable if date is before today OR after max booking window
+    return date.getTime() < today.getTime() || date.getTime() > maxDate.getTime();
+  };
+
+  const validateAndContinue = () => {
+    const errors: { location?: string; dates?: string } = {};
+    
+    if (!location.trim()) {
+      errors.location = "Location is required";
+    }
+    
+    if (!startDate || !endDate || startDate === "" || endDate === "") {
+      errors.dates = "Rent dates are required";
+    }
+    
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+    
+    // Clear any existing errors
+    setValidationErrors({});
+    
+    // If validation passes, proceed with the original logic
+    patchDraft({
+      carId: car.id,
+      location,
+      startDate,
+      endDate,
+      duration,
+      fulfillmentType,
+      deliveryFee,
+    });
+    router.push(`/cars/${encodeURIComponent(car.id)}/fulfillment`);
   };
 
   return (
@@ -118,11 +216,57 @@ function CarDetailsPageContent() {
               )}
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
-                <Badge variant="default" className="bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-200">
-                  Available
+                <Badge 
+                  variant={car.availability.isAvailableToday ? "default" : "destructive"} 
+                  className={`${
+                    car.availability.isAvailableToday 
+                      ? "bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-200" 
+                      : "bg-red-100 text-red-800 hover:bg-red-200 border-red-200"
+                  }`}
+                >
+                  {car.availability.isAvailableToday ? "Available" : "Unavailable"}
                 </Badge>
                 <Badge variant="outline">{car.seats} seats</Badge>
                 <Badge variant="outline">{car.transmission}</Badge>
+              </div>
+
+              {/* Distance and Garage Location */}
+              <div className="mt-4 space-y-2">
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 w-16 bg-muted animate-pulse rounded"></div>
+                  </div>
+                ) : distanceText ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>📍</span>
+                    <span>{distanceText} from your location</span>
+                  </div>
+                ) : null}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>🏢</span>
+                  <span>Garage: {readableAddress}</span>
+                  {car?.garageLocation.coordinates && (
+                    <Button
+                      asChild
+                      variant="link"
+                      size="sm"
+                      className="h-auto p-0 text-primary hover:text-primary/80 underline ml-1"
+                    >
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${car.garageLocation.coordinates.lat},${car.garageLocation.coordinates.lng}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="View in Google Maps"
+                        className="flex items-center gap-1"
+                      >
+                        <span>Map</span>
+                        <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                        </svg>
+                      </a>
+                    </Button>
+                  )}
+                </div>
               </div>
 
               {/* Drive type section */}
@@ -156,19 +300,48 @@ function CarDetailsPageContent() {
                 </div>
               )}
 
+              <div className="mt-6 space-y-3">
+                <div className="text-sm font-medium flex items-center gap-1">
+                  Location <span className="text-destructive">*</span>
+                </div>
+                <div className={`rounded-lg border bg-card p-4 ${validationErrors.location ? 'border-destructive' : ''}`}>
+                  {location ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <MapPin className="h-4 w-4 text-primary" />
+                      <span>Location: <span className="text-foreground">{location}</span></span>
+                    </div>
+                  ) : (
+                    <div 
+                      className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer hover:text-primary transition-colors"
+                      onClick={() => setIsLocationModalOpen(true)}
+                    >
+                      <MapPin className="h-4 w-4 text-destructive" />
+                      <span className="text-destructive">Add location</span>
+                      <Plus className="h-3 w-3 text-destructive" />
+                    </div>
+                  )}
+                </div>
+                {validationErrors.location && (
+                  <p className="text-sm text-destructive">{validationErrors.location}</p>
+                )}
+              </div>
+
               <div className="mt-6 space-y-2">
-                <div className="text-sm font-medium">Rent dates</div>
-                <DateRangePicker
-                  startDate={startDate}
-                  endDate={endDate}
-                  unavailableDates={car.availability.unavailableDates}
-                  onChange={(next) => {
-                    const nextParams = new URLSearchParams(searchParams.toString());
-                    nextParams.set("start", next.startDate);
-                    nextParams.set("end", next.endDate);
-                    router.replace(`/cars/${encodeURIComponent(id)}?${nextParams.toString()}`);
-                  }}
-                />
+                <div className="text-sm font-medium flex items-center gap-1">
+                  Rent dates <span className="text-destructive">*</span>
+                </div>
+                <div className={validationErrors.dates ? 'border border-destructive rounded-md' : ''}>
+                  <DateRangePicker
+                    startDate={startDate}
+                    endDate={endDate}
+                    unavailableDates={car.availability.unavailableDates}
+                    onChange={handleDateChange}
+                    disabled={disabledDays}
+                  />
+                </div>
+                {validationErrors.dates && (
+                  <p className="text-sm text-destructive">{validationErrors.dates}</p>
+                )}
               </div>
 
               <div className="mt-6 space-y-3">
@@ -228,24 +401,6 @@ function CarDetailsPageContent() {
               total={pricing.total}
               duration={duration}
             />
-
-            <div className="rounded-lg border bg-card p-4">
-              {location ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4 text-primary" />
-                  <span>Location: <span className="text-foreground">{location}</span></span>
-                </div>
-              ) : (
-                <div 
-                  className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer hover:text-primary transition-colors"
-                  onClick={() => setIsLocationModalOpen(true)}
-                >
-                  <MapPin className="h-4 w-4 text-destructive" />
-                  <span className="text-destructive">Add location</span>
-                  <Plus className="h-3 w-3 text-destructive" />
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </div>
@@ -253,19 +408,8 @@ function CarDetailsPageContent() {
       <StickyBottomCTA
         label="Continue"
         total={pricing.total}
-        disabled={!canContinue}
-        onClick={() => {
-          patchDraft({
-            carId: car.id,
-            location,
-            startDate,
-            endDate,
-            duration,
-            fulfillmentType,
-            deliveryFee,
-          });
-          router.push(`/cars/${encodeURIComponent(car.id)}/fulfillment`);
-        }}
+        disabled={false} // Always enabled now
+        onClick={validateAndContinue}
       />
 
       <LocationModal
