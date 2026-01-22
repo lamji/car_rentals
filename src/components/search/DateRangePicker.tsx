@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, X } from "lucide-react";
+import { Calendar as CalendarIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -48,49 +48,19 @@ export function DateRangePicker(props: {
   const [tempStart, setTempStart] = React.useState(start);
   const [tempEnd, setTempEnd] = React.useState(end);
   const [isOpen, setIsOpen] = React.useState(false);
+  const [isMobile, setIsMobile] = React.useState(false);
 
-  // Check if a date is unavailable
-  const isDateUnavailable = (date: Date) => {
-    if (!date || !props.unavailableDates) return false;
-    const dateStr = date.toISOString().split('T')[0];
-    return props.unavailableDates.includes(dateStr);
-  };
-
-  // Custom day component to handle unavailable dates
-  const DayComponent = (dayProps: any) => {
-    const { date, modifiers } = dayProps;
-    if (!date) return <td {...dayProps} />;
+  // Detect mobile screen size
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
     
-    const dateStr = date.toISOString().split('T')[0];
-    const isUnavailable = props.unavailableDates?.includes(dateStr) || false;
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
     
-    // Debug logging
-    if (dateStr === "2026-01-18") {
-      console.log("Debug - Jan 18, 2026:", {
-        dateStr,
-        unavailableDates: props.unavailableDates,
-        isUnavailable,
-        modifiers,
-        allProps: dayProps
-      });
-    }
-    
-    return (
-      <td
-        {...dayProps}
-        className={cn(
-          isUnavailable && "bg-red-100 text-red-800 line-through",
-          dayProps.className
-        )}
-        style={{
-          opacity: isUnavailable ? 0.7 : 1,
-          cursor: isUnavailable ? "not-allowed" : "pointer"
-        }}
-      >
-        {date.getDate()}
-      </td>
-    );
-  };
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleClear = () => {
     setTempStart(null);
@@ -112,17 +82,10 @@ export function DateRangePicker(props: {
     setIsOpen(false);
   };
 
-  const handleCancel = () => {
-    setTempStart(start);
-    setTempEnd(end);
-  };
-
-  const handleSelect = (range: any) => {
-    const from = range?.from;
-    const to = range?.to;
-    if (from && to) {
-      setTempStart(from);
-      setTempEnd(to);
+  const handleSelect = (range: { from?: Date | undefined; to?: Date | undefined } | undefined) => {
+    if (range && range.from && range.to) {
+      setTempStart(range.from);
+      setTempEnd(range.to);
     }
   };
 
@@ -144,21 +107,21 @@ export function DateRangePicker(props: {
             )}
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[600px] max-w-[95vw]">
+        <DialogContent className="sm:max-w-[600px] max-w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogTitle>Select Rental Dates</DialogTitle>
           <div className="space-y-4">
             <div className="text-center">
               <p className="text-sm text-muted-foreground">Choose your pickup and return dates</p>
             </div>
             
-            <div className="flex justify-center">
+            <div className="flex justify-center overflow-x-auto">
               <Calendar
                 mode="range"
-                numberOfMonths={2}
+                numberOfMonths={isMobile ? 1 : 2}
                 selected={tempStart && tempEnd ? { from: tempStart, to: tempEnd } : undefined}
                 onSelect={handleSelect}
                 initialFocus
-                className="rounded-md border"
+                className="rounded-md border min-w-[300px] sm:min-w-[500px]"
                 disabled={(date: Date) => {
                   if (!date || !props.unavailableDates) return false;
                   const dateStr = date.toISOString().split('T')[0];
@@ -178,7 +141,7 @@ export function DateRangePicker(props: {
                   }
                 }}
                 components={{
-                  Day: (dayProps: any) => {
+                  Day: (dayProps: { date?: Date; modifiers?: Record<string, boolean>; disabled?: boolean; className?: string }) => {
                     const { date, modifiers, disabled } = dayProps;
                     if (!date) return <td {...dayProps} />;
                     
@@ -224,7 +187,7 @@ export function DateRangePicker(props: {
               />
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 pt-4 sticky bottom-0 bg-background pb-2">
               <Button variant="outline" onClick={handleClear} className="w-full sm:w-auto">
                 Clear
               </Button>

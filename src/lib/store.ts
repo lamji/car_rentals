@@ -1,10 +1,16 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import regionsReducer from './slices/regionsSlice';
+import provincesReducer from './slices/provincesSlice';
+import citiesReducer from './slices/citiesSlice';
+import barangaysReducer from './slices/barangaysSlice';
 
 export const store = configureStore({
   reducer: {
     regions: regionsReducer,
+    provinces: provincesReducer,
+    cities: citiesReducer,
+    barangays: barangaysReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

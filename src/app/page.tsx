@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/search/DateRangePicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ReduxLocationSearchInput } from "@/components/search/ReduxLocationSearchInput";
+import { LocationModal, LocationData } from "@/components/location/LocationModal";
 import { useSearchState } from "@/hooks/useSearchState";
 import { CarAvailabilityCard } from "@/components/cars/CarAvailabilityCard";
 import { CARS } from "@/lib/data/cars";
@@ -19,7 +19,12 @@ import { Label } from "@/components/ui/label";
 function HomeContent() {
   const router = useRouter();
   const { state, setState } = useSearchState();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+
+  const handleLocationSelect = (locationString: string, locationData?: LocationData) => {
+    setState({ location: locationString }, { replace: true });
+    setIsLocationModalOpen(false);
+  };
 
   const canSearch = useMemo(() => {
     return Boolean(state.location.trim() && state.startDate && state.endDate);
@@ -119,10 +124,13 @@ function HomeContent() {
                         <MapPin className="h-3 w-3 text-primary sm:h-4 sm:w-4" />
                         <label className="text-xs font-semibold text-foreground sm:text-sm">Pickup Location</label>
                       </div>
-                      <ReduxLocationSearchInput 
-                        value={state.location} 
-                        onChange={(location) => setState({ location }, { replace: true })} 
-                        className="border-black" 
+                      <Input
+                        value={state.location}
+                        onChange={(e) => setState({ location: e.target.value }, { replace: true })}
+                        onClick={() => setIsLocationModalOpen(true)}
+                        placeholder="Click to select pickup location"
+                        className="border-black cursor-pointer"
+                        readOnly
                       />
                     </div>
 
@@ -252,6 +260,16 @@ function HomeContent() {
           </div>
         </div>
       </div>
+
+      {/* Location Modal */}
+      <LocationModal
+        isOpen={isLocationModalOpen}
+        onClose={() => setIsLocationModalOpen(false)}
+        onLocationSelect={handleLocationSelect}
+        title="Select Pickup Location"
+        showLandmark={true}
+        required={[true, true, true, true]}
+      />
     </div>
   );
 }

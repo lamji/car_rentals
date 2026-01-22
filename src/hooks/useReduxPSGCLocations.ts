@@ -1,17 +1,41 @@
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect } from "react";
-import { useAppDispatch, useAppSelector } from "@/lib/store";
-import { 
-  fetchRegions, 
-  filterRegions, 
-  selectAllRegions, 
-  selectFilteredRegions, 
-  selectRegionsLoading, 
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  selectAllRegions,
+  selectFilteredRegions,
+  selectRegionsLoading,
   selectRegionsError,
   selectShouldRefetchRegions,
-  PSGCRegion 
+  fetchRegions,
+  filterRegions,
+  PSGCRegion,
 } from "@/lib/slices/regionsSlice";
+import {
+  selectAllProvinces,
+  selectFilteredProvinces,
+  selectProvincesLoading,
+  fetchProvincesByRegion,
+  filterProvinces,
+  PSGCProvince,
+} from "@/lib/slices/provincesSlice";
+import {
+  selectAllCities,
+  selectFilteredCities,
+  selectCitiesLoading,
+  fetchCitiesByProvince,
+  filterCities,
+  PSGCCity,
+} from "@/lib/slices/citiesSlice";
+import {
+  selectAllBarangays,
+  selectFilteredBarangays,
+  selectBarangaysLoading,
+  fetchBarangaysByCity,
+  filterBarangays,
+  PSGCBarangay,
+} from "@/lib/slices/barangaysSlice";
 
 // PSGC API types for other levels
 interface PSGCLocation {
@@ -59,6 +83,24 @@ interface UseReduxPSGCLocationsReturn {
   regionQuery: string;
   setRegionQuery: (query: string) => void;
   
+  // Provinces (from Redux)
+  allProvinces: PSGCProvince[];
+  filteredProvinces: PSGCProvince[];
+  provincesLoading: boolean;
+  setProvinceQuery: (query: string) => void;
+  
+  // Cities (from Redux)
+  allCities: PSGCCity[];
+  filteredCities: PSGCCity[];
+  citiesLoading: boolean;
+  setCityQuery: (query: string) => void;
+  
+  // Barangays (from Redux)
+  allBarangays: PSGCBarangay[];
+  filteredBarangays: PSGCBarangay[];
+  barangaysLoading: boolean;
+  setBarangayQuery: (query: string) => void;
+  
   // Other levels (from API)
   predictions: PSGCPlace[];
   isLoading: boolean;
@@ -86,12 +128,27 @@ export function useReduxPSGCLocations(options: UseReduxPSGCLocationsOptions = {}
   } = options;
 
   // Redux hooks for regions
-  const dispatch = useAppDispatch();
-  const allRegions = useAppSelector(selectAllRegions);
-  const filteredRegions = useAppSelector(selectFilteredRegions);
-  const regionsLoading = useAppSelector(selectRegionsLoading);
-  const regionsError = useAppSelector(selectRegionsError);
-  const shouldRefetch = useAppSelector((state) => selectShouldRefetchRegions(state, regionCacheTime));
+  const dispatch = useDispatch();
+  const allRegions = useSelector(selectAllRegions);
+  const filteredRegions = useSelector(selectFilteredRegions);
+  const regionsLoading = useSelector(selectRegionsLoading);
+  const regionsError = useSelector(selectRegionsError);
+  const shouldRefetch = useSelector((state: any) => selectShouldRefetchRegions(state, regionCacheTime));
+
+  // Redux hooks for provinces
+  const allProvinces = useSelector(selectAllProvinces);
+  const filteredProvinces = useSelector(selectFilteredProvinces);
+  const provincesLoading = useSelector(selectProvincesLoading);
+
+  // Redux hooks for cities
+  const allCities = useSelector(selectAllCities);
+  const filteredCities = useSelector(selectFilteredCities);
+  const citiesLoading = useSelector(selectCitiesLoading);
+
+  // Redux hooks for barangays
+  const allBarangays = useSelector(selectAllBarangays);
+  const filteredBarangays = useSelector(selectFilteredBarangays);
+  const barangaysLoading = useSelector(selectBarangaysLoading);
 
   // Local state for region query
   const [regionQuery, setRegionQuery] = useState("");
@@ -122,7 +179,7 @@ export function useReduxPSGCLocations(options: UseReduxPSGCLocationsOptions = {}
     
     if (autoFetchRegions && (allRegions.length === 0 || shouldRefetch)) {
       console.log('🔄 Fetching regions...');
-      dispatch(fetchRegions());
+      dispatch(fetchRegions() as any);
     } else {
       console.log('✅ Using cached regions - NOT fetching');
     }
@@ -151,7 +208,8 @@ export function useReduxPSGCLocations(options: UseReduxPSGCLocationsOptions = {}
       setRegionQuery(region.name);
       dispatch(filterRegions(region.name));
       setCurrentSearchLevel('provinces');
-      console.log('🔄 Ready to search provinces in region:', region.psgc_id);
+      console.log('🔄 Fetching provinces for region:', region.psgc_id);
+      dispatch(fetchProvincesByRegion(region.psgc_id) as any);
     } else {
       setCurrentSearchLevel('regions');
     }
@@ -165,7 +223,11 @@ export function useReduxPSGCLocations(options: UseReduxPSGCLocationsOptions = {}
       selectedBarangay: null,
     }));
     setPredictions([]);
-  }, []);
+    if (province && cascadingState.selectedRegion) {
+      console.log('🔄 Fetching cities for province:', province.psgc_id);
+      dispatch(fetchCitiesByProvince(province.psgc_id) as any);
+    }
+  }, [dispatch, cascadingState.selectedRegion]);
 
   const setSelectedCity = useCallback((city: PSGCLocation | null) => {
     setCascadingState(prev => ({
@@ -174,7 +236,11 @@ export function useReduxPSGCLocations(options: UseReduxPSGCLocationsOptions = {}
       selectedBarangay: null,
     }));
     setPredictions([]);
-  }, []);
+    if (city && cascadingState.selectedProvince) {
+      console.log('🔄 Fetching barangays for city:', city.psgc_id);
+      dispatch(fetchBarangaysByCity(city.psgc_id) as any);
+    }
+  }, [dispatch, cascadingState.selectedProvince]);
 
   const setSelectedBarangay = useCallback((barangay: PSGCLocation | null) => {
     setCascadingState(prev => ({
@@ -356,6 +422,24 @@ export function useReduxPSGCLocations(options: UseReduxPSGCLocationsOptions = {}
     regionsError,
     regionQuery,
     setRegionQuery: handleRegionQueryChange,
+    
+    // Provinces (from Redux)
+    allProvinces,
+    filteredProvinces,
+    provincesLoading,
+    setProvinceQuery: (query: string) => dispatch(filterProvinces(query)),
+    
+    // Cities (from Redux)
+    allCities,
+    filteredCities,
+    citiesLoading,
+    setCityQuery: (query: string) => dispatch(filterCities(query)),
+    
+    // Barangays (from Redux)
+    allBarangays,
+    filteredBarangays,
+    barangaysLoading,
+    setBarangayQuery: (query: string) => dispatch(filterBarangays(query)),
     
     // Other levels (from API)
     predictions,
