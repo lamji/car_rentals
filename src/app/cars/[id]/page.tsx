@@ -272,7 +272,7 @@ function CarDetailsPageContent() {
         isOpen={isLocationModalOpen}
         onClose={() => setIsLocationModalOpen(false)}
         onLocationSelect={handleLocationSelect}
-        initialLocation={location}
+        initialData={{ region: location }}
       />
     </div>
   );
