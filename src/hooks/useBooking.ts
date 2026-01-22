@@ -13,6 +13,7 @@ export type BookingDraft = {
   location?: string;
   startDate?: string;
   endDate?: string;
+  startTime?: string;
   duration?: "12hours" | "24hours";
   fulfillmentType?: "pickup" | "delivery";
   deliveryFee?: number;

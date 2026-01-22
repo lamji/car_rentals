@@ -242,14 +242,22 @@ function HomeContent() {
           {/* Right grid: filtered cars */}
           <div className="lg:col-span-3">
             <div className="grid gap-2 sm:gap-6 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredCars.map((car) => (
+              {filteredCars.map((car) => {
+                console.log("test:cars", car)
+                // Get today's date and check if it's in unavailableDates
+                const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+                const isTodayUnavailable = car.availability.unavailableDates.includes(today);
+                const isAvailable = !isTodayUnavailable;
+                
+                return(
                 <CarAvailabilityCard
                   key={car.id}
                   car={car}
-                  isAvailable={availabilityMap.get(car.id) ?? true}
+                  isAvailable={isAvailable}
                   href={detailsHrefFor(car.id)}
                 />
-              ))}
+              )
+              })}
             </div>
             {filteredCars.length === 0 && (
               <div className="rounded-lg border bg-card p-4 text-center sm:p-6">

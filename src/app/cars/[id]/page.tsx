@@ -2,40 +2,23 @@
 
 import * as React from "react";
 import { Suspense } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
-import { MapPin, Plus } from "lucide-react";
-import { MapLinkModal } from "@/components/ui/MapLinkModal";
+import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
 
-import { formatCurrency } from "@/lib/currency";
-import { PriceBreakdown } from "@/components/booking/PriceBreakdown";
-import { StickyBottomCTA } from "@/components/booking/StickyBottomCTA";
-import { DateRangePicker } from "@/components/search/DateRangePicker";
-import { Badge } from "@/components/ui/badge";
+import { MapLinkModal } from "@/components/ui/MapLinkModal";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { LocationModal } from "@/components/location/LocationModal";
+import { RentalOptions } from "@/components/cars/RentalOptions";
+import { CarImages } from "@/components/cars/CarImages";
 import { useBooking } from "@/hooks/useBooking";
 import { useCar } from "@/hooks/useCar";
-import { usePricing } from "@/hooks/usePricing";
 import { useGeolocationContext } from "@/contexts/GeolocationContext";
-import { calculateDistanceToCar, formatDistance, getReadableAddressFromCoordinates } from "@/utils/distance";
+import { calculateDistanceToCar, formatDistance } from "@/utils/distance";
 
 function CarDetailsPageContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const params = useParams();
-  const [readableAddress, setReadableAddress] = useState<string>('Loading location...');
   const [showMapModal, setShowMapModal] = useState(false);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [duration, setDuration] = useState<'12hours' | '24hours'>('12hours');
-  const [fulfillmentType, setFulfillmentType] = useState<'pickup' | 'delivery'>('pickup');
-  const [validationErrors, setValidationErrors] = useState<{location?: string; dates?: string}>({});
-  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
 
   const { position, loading } = useGeolocationContext();
   const id = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
@@ -45,38 +28,7 @@ function CarDetailsPageContent() {
   const distance = position && car ? calculateDistanceToCar(position, car) : null;
   const distanceText = distance ? formatDistance(distance) : null;
 
-  // Fetch readable address from coordinates
-  useEffect(() => {
-    if (car?.garageLocation.coordinates) {
-      const fetchAddress = async () => {
-        try {
-          const address = await getReadableAddressFromCoordinates(car.garageLocation.coordinates);
-          setReadableAddress(address);
-        } catch (error) {
-          console.error('Failed to fetch address:', error);
-          setReadableAddress('Location unavailable');
-        }
-      };
-
-      fetchAddress();
-    }
-  }, [car?.garageLocation.coordinates]);
-
-  const location = searchParams.get("location") ?? "";
-  const startDate = searchParams.get("start") ?? "";
-  const endDate = searchParams.get("end") ?? "";
-
   const { patchDraft } = useBooking();
-
-  // Calculate pricing based on duration selection
-  const pricePerUnit = duration === "12hours" ? (car?.pricePer12Hours ?? 0) : (car?.pricePer24Hours ?? car?.pricePerDay ?? 0);
-  const deliveryFee = fulfillmentType === "delivery" ? 150 : 0; // Add delivery fee if delivery is selected
-  const pricing = usePricing({
-    startDate,
-    endDate,
-    pricePerDay: pricePerUnit,
-    deliveryFee,
-  });
 
   if (!car) {
     return (
@@ -93,329 +45,171 @@ function CarDetailsPageContent() {
     );
   }
 
-  const handleLocationSelect = (newLocation: string) => {
-    const nextParams = new URLSearchParams(searchParams.toString());
-    nextParams.set("location", newLocation);
-    router.replace(`/cars/${encodeURIComponent(id)}?${nextParams.toString()}`);
-    
-    // Clear location error when location is selected
-    if (newLocation.trim() && validationErrors.location) {
-      setValidationErrors(prev => ({ ...prev, location: undefined }));
-    }
-  };
-
-  const handleDateChange = (next: { startDate: string; endDate: string }) => {
-    const nextParams = new URLSearchParams(searchParams.toString());
-    nextParams.set("start", next.startDate);
-    nextParams.set("end", next.endDate);
-    router.replace(`/cars/${encodeURIComponent(id)}?${nextParams.toString()}`);
-    
-    // Clear date error when dates are selected
-    if (next.startDate && next.endDate && validationErrors.dates) {
-      setValidationErrors(prev => ({ ...prev, dates: undefined }));
-    }
-  };
-
-  // Disable dates before today and dates too far in the future
-  const disabledDays = (date: Date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
-    
-    // Allow bookings up to 6 months in advance (more reasonable for car rentals)
-    const maxDate = new Date();
-    maxDate.setMonth(today.getMonth() + 6);
-    maxDate.setHours(0, 0, 0, 0);
-    
-    // Debug logging to check date comparison (current date should be Jan 22, 2026)
-    console.log('Date validation:', {
-      checking: date.toDateString(),
-      today: today.toDateString(),
-      maxDate: maxDate.toDateString(),
-      isPast: date < today,
-      isFuture: date > maxDate,
-      checkingTime: date.getTime(),
-      todayTime: today.getTime()
-    });
-    
-    // Disable if date is before today OR after max booking window
-    return date.getTime() < today.getTime() || date.getTime() > maxDate.getTime();
-  };
-
-  const validateAndContinue = () => {
-    const errors: { location?: string; dates?: string } = {};
-    
-    if (!location.trim()) {
-      errors.location = "Location is required";
-    }
-    
-    if (!startDate || !endDate || startDate === "" || endDate === "") {
-      errors.dates = "Rent dates are required";
-    }
-    
-    if (Object.keys(errors).length > 0) {
-      setValidationErrors(errors);
-      return;
-    }
-    
-    // Clear any existing errors
-    setValidationErrors({});
-    
-    // If validation passes, proceed with the original logic
-    patchDraft({
-      carId: car.id,
-      location,
-      startDate,
-      endDate,
-      duration,
-      fulfillmentType,
-      deliveryFee,
-    });
-    router.push(`/cars/${encodeURIComponent(car.id)}/fulfillment`);
+  const goToBooking = () => {
+    patchDraft({ carId: car.id });
+    router.push(`/cars/${encodeURIComponent(car.id)}/booking`);
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="mx-auto w-full max-w-4xl px-4 py-6">
-        <div className="mb-4">
-          <div>
-            <div className="text-xl font-semibold">{car.name} {car.year}</div>
-            <div className="text-sm text-muted-foreground">Confirm car + dates</div>
-          </div>
-        </div>
+    <div data-testid="car-details-page" className="min-h-screen bg-white">
+      <div data-testid="car-details-container" className="mx-auto w-full max-w-7xl px-4 py-8">
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="md:col-span-2">
-            <CardContent className="p-4">
-              {/* Main image */}
-              <div className="relative aspect-[4/2.4] w-full overflow-hidden rounded-lg bg-muted">
-                <Image src={car.imageUrls[selectedImageIndex]} alt={car.name} fill className="object-cover" />
+
+        <div data-testid="car-details-content" className="grid gap-12 lg:grid-cols-2">
+          <div>
+            <CarImages imageUrls={car.imageUrls} carName={car.name} />
+          </div>
+
+          <div data-testid="car-info-section" className="space-y-8">
+            <div data-testid="car-title-section" className="space-y-4">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <h1 data-testid="car-name" className="text-4xl font-bold text-gray-900 tracking-tight">
+                    {car.name} {car.year}
+                  </h1>
+                  <p data-testid="car-type" className="text-xl text-gray-600 font-medium capitalize">{car.type}</p>
+                </div>
               </div>
 
-              {/* Thumbnail gallery */}
-              {car.imageUrls.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                  {car.imageUrls.map((imageUrl, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedImageIndex(index)}
-                      className={`relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
-                        selectedImageIndex === index
-                          ? "border-primary opacity-100"
-                          : "border-transparent opacity-60 hover:opacity-80"
-                      }`}
-                    >
-                      <Image
-                        src={imageUrl}
-                        alt={`${car.name} thumbnail ${index + 1}`}
-                        fill
-                        className="object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <Badge 
-                  variant={car.availability.isAvailableToday ? "default" : "destructive"} 
-                  className={`${
-                    car.availability.isAvailableToday 
-                      ? "bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-200" 
-                      : "bg-red-100 text-red-800 hover:bg-red-200 border-red-200"
+              <div data-testid="car-badges" className="flex flex-wrap gap-3 pt-4">
+                <div
+                  data-testid="driving-mode-badge"
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium ${
+                    car.selfDrive
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200" 
+                      : "bg-amber-50 text-amber-700 border border-amber-200"
                   }`}
                 >
-                  {car.availability.isAvailableToday ? "Available" : "Unavailable"}
-                </Badge>
-                <Badge variant="outline">{car.seats} seats</Badge>
-                <Badge variant="outline">{car.transmission}</Badge>
+                  <div className={`h-2 w-2 rounded-full ${car.selfDrive ? "bg-emerald-500" : "bg-amber-500"}`}></div>
+                  {car.selfDrive ? "Self-Drive" : "With Driver"}
+                </div>
+                <div
+                  data-testid="availability-badge"
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium ${
+                    car.availability.isAvailableToday 
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200" 
+                      : "bg-red-50 text-red-700 border border-red-200"
+                  }`}
+                >
+                  <div className={`h-2 w-2 rounded-full ${car.availability.isAvailableToday ? "bg-emerald-500" : "bg-red-500"}`}></div>
+                  {car.availability.isAvailableToday ? "Available Now" : "Currently Unavailable"}
+                </div>
+                <div data-testid="seats-badge" className="inline-flex items-center gap-2 rounded-full bg-gray-100 text-gray-700 px-4 py-2 text-sm font-medium">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656-.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  {car.seats} Seats
+                </div>
+                <div data-testid="transmission-badge" className="inline-flex items-center gap-2 rounded-full bg-gray-100 text-gray-700 px-4 py-2 text-sm font-medium">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                  </svg>
+                  {car.transmission}
+                </div>
               </div>
+            </div>
 
-              {/* Distance and Garage Location */}
-              <div className="mt-4 space-y-2">
+            <RentalOptions car={car} />
+
+
+
+            <div data-testid="location-section" className="border-t border-gray-200 pt-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Location & Distance</h2>
+              <div className="space-y-3">
                 {loading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="h-3 w-16 bg-muted animate-pulse rounded"></div>
+                  <div className="flex items-center gap-3">
+                    <div className="h-4 w-32 bg-gray-200 animate-pulse rounded"></div>
                   </div>
                 ) : distanceText ? (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>📍</span>
+                  <div data-testid="distance-info" className="flex items-center gap-3 text-gray-600">
+                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
                     <span>{distanceText} from your location</span>
                   </div>
                 ) : null}
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>🏢</span>
-                  <span>Garage: {readableAddress}</span>
+                <div data-testid="garage-address" className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 text-gray-600">
+                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    <span className="font-medium">{car.garageAddress}</span>
+                  </div>
                   {car?.garageLocation.coordinates && (
                     <Button
-                      variant="link"
+                      data-testid="view-map-button"
+                      variant="outline"
                       size="sm"
-                      className="h-auto p-0 text-primary hover:text-primary/80 underline ml-1"
+                      className="hover:bg-blue-50 hover:border-blue-300"
                       onClick={() => setShowMapModal(true)}
                     >
-                      <span className="flex items-center gap-1">
-                        <span>Map</span>
-                        <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                        </svg>
-                      </span>
+                      View Map
                     </Button>
                   )}
                 </div>
               </div>
+            </div>
 
-              {/* Drive type section */}
-              <div className="mt-4">
-                <Badge 
-                  variant={car.selfDrive ? "default" : "destructive"} 
-                  className={`text-sm px-3 py-1 ${
-                    car.selfDrive 
-                      ? "bg-green-100 text-green-800 hover:bg-green-200 border-green-200" 
-                      : "bg-red-100 text-red-800 hover:bg-red-200 border-red-200"
-                  }`}
-                >
-                  {car.selfDrive ? "Self-drive Available" : "With Driver Only"}
-                </Badge>
-              </div>
-
-              {/* Unavailable dates section */}
-              {car.availability.unavailableDates.length > 0 && (
-                <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="h-2 w-2 rounded-full bg-red-500"></div>
-                    <span className="text-sm font-medium text-red-800">Unavailable Dates</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {car.availability.unavailableDates.sort().map((date) => (
-                      <Badge key={date} variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-200">
-                        {new Date(date).toLocaleDateString()}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="mt-6 space-y-3">
-                <div className="text-sm font-medium flex items-center gap-1">
-                  Location <span className="text-destructive">*</span>
-                </div>
-                <div className={`rounded-lg border bg-card p-4 ${validationErrors.location ? 'border-destructive' : ''}`}>
-                  {location ? (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      <span>Location: <span className="text-foreground">{location}</span></span>
+            {car.availability.unavailableDates.length > 0 && (
+              <div data-testid="unavailable-dates-section" className="border-t border-gray-200 pt-8">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Unavailable Dates</h2>
+                <div className="bg-red-50 border border-red-200 rounded-xl p-5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <svg className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <div>
+                      <h3 className="text-sm font-semibold text-red-900">Already Booked</h3>
+                      <p className="text-xs text-red-600">{car.availability.unavailableDates.length} dates unavailable</p>
                     </div>
-                  ) : (
-                    <div 
-                      className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer hover:text-primary transition-colors"
-                      onClick={() => setIsLocationModalOpen(true)}
-                    >
-                      <MapPin className="h-4 w-4 text-destructive" />
-                      <span className="text-destructive">Add location</span>
-                      <Plus className="h-3 w-3 text-destructive" />
-                    </div>
-                  )}
+                  </div>
+                  <div data-testid="unavailable-dates-list" className="grid gap-2 sm:grid-cols-2">
+                    {car.availability.unavailableDates
+                      .slice()
+                      .sort()
+                      .map((date) => (
+                        <div
+                          key={date}
+                          data-testid={`unavailable-date-${date}`}
+                          className="flex items-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-800"
+                        >
+                          <svg className="h-3.5 w-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>{new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        </div>
+                      ))}
+                  </div>
                 </div>
-                {validationErrors.location && (
-                  <p className="text-sm text-destructive">{validationErrors.location}</p>
-                )}
               </div>
+            )}
 
-              <div className="mt-6 space-y-2">
-                <div className="text-sm font-medium flex items-center gap-1">
-                  Rent dates <span className="text-destructive">*</span>
-                </div>
-                <div className={validationErrors.dates ? 'border border-destructive rounded-md' : ''}>
-                  <DateRangePicker
-                    startDate={startDate}
-                    endDate={endDate}
-                    unavailableDates={car.availability.unavailableDates}
-                    onChange={handleDateChange}
-                    disabled={disabledDays}
-                  />
-                </div>
-                {validationErrors.dates && (
-                  <p className="text-sm text-destructive">{validationErrors.dates}</p>
-                )}
-              </div>
-
-              <div className="mt-6 space-y-3">
-                <div className="text-sm font-medium">Rental Duration</div>
-                <RadioGroup value={duration} onValueChange={(value) => setDuration(value as "12hours" | "24hours")}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="12hours" id="12hours" />
-                    <Label htmlFor="12hours" className="flex items-center justify-between w-full cursor-pointer">
-                      <span>12 Hours</span>
-                      <span className="font-semibold text-primary">{formatCurrency(car.pricePer12Hours)}</span>
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="24hours" id="24hours" />
-                    <Label htmlFor="24hours" className="flex items-center justify-between w-full cursor-pointer">
-                      <span>24 Hours</span>
-                      <span className="font-semibold text-primary">{formatCurrency(car.pricePer24Hours)}</span>
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              <div className="mt-6 space-y-3">
-                <div className="text-sm font-medium">Fulfillment Type</div>
-                <RadioGroup value={fulfillmentType} onValueChange={(value) => setFulfillmentType(value as "pickup" | "delivery")}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="pickup" id="pickup" />
-                    <Label htmlFor="pickup" className="flex items-center justify-between w-full cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <span>Pickup</span>
-                        <span className="text-xs text-muted-foreground">at garage</span>
-                      </div>
-                      <span className="font-semibold text-green-600">Free</span>
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="delivery" id="delivery" />
-                    <Label htmlFor="delivery" className="flex items-center justify-between w-full cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <span>Delivery</span>
-                        <span className="text-xs text-muted-foreground">to your location</span>
-                      </div>
-                      <span className="font-semibold text-primary">{formatCurrency(150)}</span>
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="space-y-4">
-            <PriceBreakdown
-              days={pricing.days}
-              pricePerDay={pricePerUnit}
-              rentCost={pricing.rentCost}
-              deliveryFee={pricing.deliveryFee}
-              total={pricing.total}
-              duration={duration}
-            />
+            <div data-testid="booking-section" className="border-t border-gray-200 pt-8">
+              <Button 
+                data-testid="continue-booking-button"
+                size="lg" 
+                className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/80 text-white"
+                onClick={goToBooking}
+              >
+                <span className="flex items-center justify-center gap-2">
+                  Continue to Booking
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </span>
+              </Button>
+              <p data-testid="cancellation-policy" className="text-xs text-gray-500 text-center mt-3">
+                20% down payment required • No refund upon cancellation
+              </p>
+            </div>
           </div>
         </div>
       </div>
-
-      <StickyBottomCTA
-        label="Continue"
-        total={pricing.total}
-        disabled={false} // Always enabled now
-        onClick={validateAndContinue}
-      />
-
-      <LocationModal
-        isOpen={isLocationModalOpen}
-        onClose={() => setIsLocationModalOpen(false)}
-        onLocationSelect={handleLocationSelect}
-        initialData={{ region: location }}
-      />
       
-      {/* Map Link Modal */}
       {car?.garageLocation.coordinates && (
         <MapLinkModal
+          data-testid="map-modal"
           isOpen={showMapModal}
           onClose={() => setShowMapModal(false)}
           mapUrl={`https://www.google.com/maps/search/?api=1&query=${car.garageLocation.coordinates.lat},${car.garageLocation.coordinates.lng}`}

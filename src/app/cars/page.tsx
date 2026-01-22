@@ -119,14 +119,22 @@ function CarsPageContent() {
           </Card>
 
           <div className="grid gap-4">
-            {cars.map((car) => (
+            {cars.map((car) => {
+              console.log("test:car",car);
+              // Get today's date and check if it's in unavailableDates
+              const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+              const isTodayUnavailable = car.availability.unavailableDates.includes(today);
+              const isAvailable = !isTodayUnavailable;
+              
+              return (
               <CarAvailabilityCard
                 key={car.id}
                 car={car}
-                isAvailable={availabilityMap.get(car.id) ?? true}
+                isAvailable={isAvailable}
                 href={detailsHrefFor(car.id)}
               />
-            ))}
+            )
+            })}
 
             {cars.length === 0 ? (
               <div className="rounded-lg border bg-card p-6 text-center">

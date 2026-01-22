@@ -20,15 +20,15 @@ type Props = {
 
 export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
   const { position, loading } = useGeolocationContext();
+
+  console.log("test:position", position)
   
   // Use cached address from Redux
-  const { address: readableAddress, isLoading: addressLoading } = useCachedAddress(car.garageLocation.coordinates);
+  const { address: readableAddress } = useCachedAddress(car.garageLocation.coordinates);
 
   // Calculate distance from user's location to car's garage
   const distance = position ? calculateDistanceToCar(position, car) : null;
   const distanceText = distance ? formatDistance(distance) : null;
-
-  console.log(`🚗 CarAvailabilityCard: ${car.name}, has position: ${!!position}, distance: ${distanceText}`);
   
   return (
     <Card className="transition-shadow hover:shadow-lg h-full flex flex-col">
@@ -63,7 +63,7 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
               </div>
             ) : null}
             <div className="mt-1 text-xs text-muted-foreground">
-              🏢 {readableAddress}
+              🏢 Cebu City, Philippines
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
               <div className="flex items-center gap-1">

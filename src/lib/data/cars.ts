@@ -16,14 +16,14 @@ export const CARS: Car[] = [
       "https://images.unsplash.com/photo-1550355291-bbee04a92027?q=80&w=800&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1493238793685-419bd7346ff3?q=80&w=800&auto=format&fit=crop"
     ],
-    garageAddress: "Garage A, Makati City",
+    garageAddress: "Cebu City, Philippines",
     garageLocation: {
-      address: "123 Ayala Avenue, Makati City, Metro Manila",
-      city: "Makati City",
-      province: "Metro Manila",
+      address: "Cebu City, Philippines",
+      city: "Cebu City",
+      province: "Cebu",
       coordinates: {
-        lat: 14.5605,
-        lng: 121.0145
+        lat: 14.5547,
+        lng: 121.0244
       }
     },
     rentedCount: 127,
@@ -49,10 +49,10 @@ export const CARS: Car[] = [
       "https://images.unsplash.com/photo-1542362567-b07e54358753?q=80&w=800&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1583121274602-7567941206b5?q=80&w=800&auto=format&fit=crop"
     ],
-    garageAddress: "Garage B, Carmen, Cebu",
+    garageAddress: "Cebu City, Philippines",
     garageLocation: {
-      address: "National Highway, Carmen, Cebu",
-      city: "Carmen",
+      address: "Cebu City, Philippines",
+      city: "Cebu City",
       province: "Cebu",
       coordinates: {
         lat: 10.58142,
@@ -82,18 +82,18 @@ export const CARS: Car[] = [
       "https://images.unsplash.com/photo-1549399836-b3164316c851?q=80&w=800&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1617654112369-ae0c058be276?q=80&w=800&auto=format&fit=crop"
     ],
-    garageAddress: "Garage C, Pasig City",
+    garageAddress: "Cebu City, Philippines",
     garageLocation: {
-      address: "789 Ortigas Avenue, Pasig City, Metro Manila",
-      city: "Pasig City",
-      province: "Metro Manila",
+      address: "Cebu City, Philippines",
+      city: "Cebu City",
+      province: "Cebu",
       coordinates: {
-        lat: 14.5764,
-        lng: 121.0851
+        lat: 14.6018,
+        lng: 121.0456
       }
     },
-    rentedCount: 156,
-    rating: 4.9,
+    rentedCount: 94,
+    rating: 4.5,
     selfDrive: true,
     availability: {
       isAvailableToday: true,
@@ -112,22 +112,22 @@ export const CARS: Car[] = [
     type: "sedan",
     imageUrls: [
       "https://res.cloudinary.com/dlax3esau/image/upload/v1768988167/sedan_tt05j8.png",
-      "https://images.unsplash.com/photo-1617654112369-ae0c058be276?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1583121274602-7567941206b5?q=80&w=800&auto=format&fit=crop"
+      "https://images.unsplash.com/photo-1583121274602-7567941206b5?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1617654112369-ae0c058be276?q=80&w=800&auto=format&fit=crop"
     ],
-    garageAddress: "Garage D, Cebu City",
+    garageAddress: "Cebu City, Philippines",
     garageLocation: {
-      address: "456 Osmeña Boulevard, Cebu City, Philippines",
+      address: "Cebu City, Philippines",
       city: "Cebu City",
       province: "Cebu",
       coordinates: {
-        lat: 10.3157,
-        lng: 123.8854
+        lat: 14.5804,
+        lng: 121.0362
       }
     },
-    rentedCount: 203,
-    rating: 4.7,
-    selfDrive: true,
+    rentedCount: 67,
+    rating: 4.9,
+    selfDrive: false,
     availability: {
       isAvailableToday: true,
       unavailableDates: ["2026-01-17", "2026-01-21", "2026-01-26", "2026-01-27", "2026-01-28"]
@@ -148,14 +148,14 @@ export const CARS: Car[] = [
       "https://images.unsplash.com/photo-1583121274602-7567941206b5?q=80&w=800&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1617654112369-ae0c058be276?q=80&w=800&auto=format&fit=crop"
     ],
-    garageAddress: "Garage E, Mandaluyong City",
+    garageAddress: "Cebu City, Philippines",
     garageLocation: {
-      address: "654 Shaw Boulevard, Mandaluyong City, Metro Manila",
-      city: "Mandaluyong City",
-      province: "Metro Manila",
+      address: "Cebu City, Philippines",
+      city: "Cebu City",
+      province: "Cebu",
       coordinates: {
-        lat: 14.5794,
-        lng: 121.0359
+        lat: 10.3157,
+        lng: 123.8854
       }
     },
     rentedCount: 67,
@@ -181,14 +181,14 @@ export const CARS: Car[] = [
       "https://images.unsplash.com/photo-1549399836-b3164316c851?q=80&w=800&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1617654112369-ae0c058be276?q=80&w=800&auto=format&fit=crop"
     ],
-    garageAddress: "Garage F, San Juan City",
+    garageAddress: "Cebu City, Philippines",
     garageLocation: {
-      address: "987 Greenhills Shopping Center, San Juan City, Metro Manila",
-      city: "San Juan City",
-      province: "Metro Manila",
+      address: "Cebu City, Philippines",
+      city: "Cebu City",
+      province: "Cebu",
       coordinates: {
-        lat: 14.6042,
-        lng: 121.0378
+        lat: 10.3167,
+        lng: 123.8900
       }
     },
     rentedCount: 94,
