@@ -31,8 +31,8 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
   console.log(`🚗 CarAvailabilityCard: ${car.name}, has position: ${!!position}, distance: ${distanceText}`);
   
   return (
-    <Card className="transition-shadow hover:shadow-lg">
-      <CardContent className="p-0">
+    <Card className="transition-shadow hover:shadow-lg h-full flex flex-col">
+      <CardContent className="p-0 flex-1 flex flex-col">
         {/* Image on top */}
         <div className="relative h-36 w-full overflow-hidden bg-muted">
           <Image src={car.imageUrls[0]} alt={car.name} fill className="object-cover" />
@@ -45,7 +45,7 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
         </div>
         
         {/* Details below */}
-        <div className="px-3 py-0 sm:px-4 sm:py-0">
+        <div className="px-3 py-0 sm:px-4 sm:py-0 flex-1 flex flex-col">
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold sm:text-base">
               {car.name} {car.year}
