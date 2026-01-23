@@ -5,6 +5,9 @@ import provincesReducer from './slices/provincesSlice';
 import citiesReducer from './slices/citiesSlice';
 import barangaysReducer from './slices/barangaysSlice';
 import addressReducer from './slices/addressSlice';
+import bookingReducer from './slices/bookingSlice';
+import globalLoaderReducer from './slices/globalLoaderSlice';
+import alertReducer from './slices/alertSlice';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { combineReducers } from '@reduxjs/toolkit';
@@ -16,6 +19,13 @@ const addressPersistConfig = {
   whitelist: ['cache', 'lastFetchTime'] // Only persist cache and timestamps
 };
 
+// Persist config for booking slice (to save booking progress)
+const bookingPersistConfig = {
+  key: 'booking',
+  storage,
+  whitelist: ['selectedCar', 'bookingDetails', 'currentStep', 'isPaymentModalOpen'] // Persist all booking data including modal state
+};
+
 // Combine reducers
 const rootReducer = combineReducers({
   regions: regionsReducer,
@@ -23,13 +33,16 @@ const rootReducer = combineReducers({
   cities: citiesReducer,
   barangays: barangaysReducer,
   address: persistReducer(addressPersistConfig, addressReducer),
+  booking: persistReducer(bookingPersistConfig, bookingReducer),
+  globalLoader: globalLoaderReducer,
+  alerts: alertReducer,
 });
 
 // Root persist config (optional - for entire store if needed)
 const rootPersistConfig = {
   key: 'root',
   storage,
-  whitelist: ['address'] // Only persist address cache
+  whitelist: ['address', 'booking'] // Persist address cache and booking data
 };
 
 export const store = configureStore({

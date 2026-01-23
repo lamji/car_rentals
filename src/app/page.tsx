@@ -1,43 +1,101 @@
 "use client";
 
-import { useMemo, useState, Suspense } from "react";
+import { useMemo, useState, Suspense, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-
-import { Button } from "@/components/ui/button";
-import { DateRangePicker } from "@/components/search/DateRangePicker";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LocationModal, LocationData } from "@/components/location/LocationModal";
+import { NearestGarageModal } from "@/components/location/NearestGarageModal";
 import { useSearchState } from "@/hooks/useSearchState";
 import { CarAvailabilityCard } from "@/components/cars/CarAvailabilityCard";
 import { CARS } from "@/lib/data/cars";
 import type { CarType } from "@/lib/types";
-import { MapPin, Calendar, Car, Search, Check, Shield, Zap, Headphones } from "lucide-react";
+import { Car, Zap, Headphones, MapPin, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useNearestGarage, SearchNearestGarageResponse } from "@/lib/api/useNearestGarage";
 
 function HomeContent() {
-  const router = useRouter();
   const { state, setState } = useSearchState();
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [isNearestGarageModalOpen, setIsNearestGarageModalOpen] = useState(false);
+  const [nearestGarageResults, setNearestGarageResults] = useState<SearchNearestGarageResponse | null>(null);
+  const { searchNearestGarage } = useNearestGarage();
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const router = useRouter();
 
-  const handleLocationSelect = (locationString: string, locationData?: LocationData) => {
+  const handleLocationSelect = async (locationString: string, locationData?: LocationData) => {
     setState({ location: locationString }, { replace: true });
     setIsLocationModalOpen(false);
+    
+    // Trigger nearest garage search when location is selected from modal
+    if (locationString.trim().length > 3) {
+      try {
+        const results = await searchNearestGarage({ 
+          address: locationString,
+          timeoutMs: 1500,
+          progressIntervalMs: 300
+        });
+        setNearestGarageResults(results);
+        setIsNearestGarageModalOpen(true);
+      } catch (error) {
+        console.error('Error searching nearest garage:', error);
+      }
+    }
   };
 
-  const canSearch = useMemo(() => {
-    return Boolean(state.location.trim() && state.startDate && state.endDate);
-  }, [state.endDate, state.location, state.startDate]);
+  const handleClearLocation = () => {
+    setState({ location: '' });
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+      setSearchTimeout(null);
+    }
+    setNearestGarageResults(null);
+    setIsNearestGarageModalOpen(false);
+  };
+
+  const handleLocationChange = (value: string) => {
+    console.log('handleLocationChange called with:', value);
+    setState({ location: value });
+    alert(value); // Testing alert
+    
+    // Clear existing timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    // Trigger nearest garage search with debouncing
+    if (value.trim().length > 3) {
+      const timeout = setTimeout(async () => {
+        try {
+          const results = await searchNearestGarage({ 
+            address: value,
+            timeoutMs: 1500,
+            progressIntervalMs: 300
+          });
+          setNearestGarageResults(results);
+          setIsNearestGarageModalOpen(true);
+        } catch (error) {
+          console.error('Error searching nearest garage:', error);
+        }
+      }, 500); // 500ms debounce
+      
+      setSearchTimeout(timeout);
+    }
+  };
+
+  const handleSelectGarage = (carId: string) => {
+    console.log('Selected car:', carId);
+    setIsNearestGarageModalOpen(false);
+    
+    // Extract car ID from the listing ID (format: "car-listing-{carId}")
+    const actualCarId = carId.replace('car-listing-', '');
+    
+    // Redirect to car details page
+    router.push(`/cars/${actualCarId}`);
+  };
+
+
 
   // Real availability data from car objects
-  const availabilityMap = useMemo(() => {
-    const map = new Map<string, boolean>();
-    CARS.forEach((car) => {
-      map.set(car.id, car.availability.isAvailableToday);
-    });
-    return map;
-  }, []);
 
   const detailsHrefFor = (id: string) => {
   const params = new URLSearchParams();
@@ -66,17 +124,19 @@ function HomeContent() {
     return CARS.filter((car) => car.type === selectedCategory);
   }, [selectedCategory]);
 
+
+
   return (
     <div>
       {/* Hero */}
-      <div className="relative h-[80vh] w-full overflow-hidden">
+      <div className="relative h-[40vh] sm:h-[60vh] w-full overflow-hidden">
         {/* Hero background image */}
         <div className="absolute inset-0 -z-10">
           <Image
-            src="https://res.cloudinary.com/dlax3esau/image/upload/v1768987069/ChatGPT_Image_Jan_21_2026_05_17_38_PM_fxfior.png"
+            src="https://res.cloudinary.com/dlax3esau/image/upload/v1769172920/herobg_nxiyen.png"
             alt="Car rental"
             fill
-            className="object-contain"
+            className="object-cover"
             priority
           />
           <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px]" />
@@ -93,104 +153,64 @@ function HomeContent() {
               <p className="mt-1 text-sm font-semibold sm:text-lg md:text-xl">Affordable & Reliable Car Rentals</p>
 
               <ul className="mt-4 flex flex-wrap justify-center gap-2 sm:gap-6 text-xs sm:text-base sm:text-lg">
-                <li className="flex items-center gap-1 rounded-lg bg-white px-2 py-1 sm:gap-3 sm:px-4 sm:py-2">
-                  <div className="rounded-full bg-black/20 p-1 sm:p-2">
-                    <Car className="h-3 w-3 text-black sm:h-5 sm:w-5" />
+                <li className="flex items-center gap-1 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 px-2 py-1 sm:gap-3 sm:px-4 sm:py-2">
+                  <div className="rounded-full bg-white/20 p-1 sm:p-2">
+                    <Car className="h-3 w-3 text-white sm:h-5 sm:w-5" />
                   </div>
-                  <span className="text-xs sm:text-sm sm:text-base">Wide Selection</span>
+                  <span className="text-xs text-white sm:text-sm sm:text-base">Wide Selection</span>
                 </li>
-                <li className="flex items-center gap-1 rounded-lg bg-white px-2 py-1 sm:gap-3 sm:px-4 sm:py-2">
-                  <div className="rounded-full bg-black/20 p-1 sm:p-2">
-                    <Zap className="h-3 w-3 text-black sm:h-5 sm:w-5" />
+                <li className="flex items-center gap-1 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 px-2 py-1 sm:gap-3 sm:px-4 sm:py-2">
+                  <div className="rounded-full bg-white/20 p-1 sm:p-2">
+                    <Zap className="h-3 w-3 text-white sm:h-5 sm:w-5" />
                   </div>
-                  <span className="text-xs sm:text-sm sm:text-base">Easy Booking</span>
+                  <span className="text-xs text-white sm:text-sm sm:text-base">Easy Booking</span>
                 </li>
-                <li className="flex items-center gap-1 rounded-lg bg-white px-2 py-1 sm:gap-3 sm:px-4 sm:py-2">
-                  <div className="rounded-full bg-black/20 p-1 sm:p-2">
-                    <Headphones className="h-3 w-3 text-black sm:h-5 sm:w-5" />
+                <li className="flex items-center gap-1 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 px-2 py-1 sm:gap-3 sm:px-4 sm:py-2">
+                  <div className="rounded-full bg-white/20 p-1 sm:p-2">
+                    <Headphones className="h-3 w-3 text-white sm:h-5 sm:w-5" />
                   </div>
-                  <span className="text-xs sm:text-sm sm:text-base">24/5 Support</span>
+                  <span className="text-xs text-white sm:text-sm sm:text-base">24/5 Support</span>
                 </li>
               </ul>
-            </div>
 
-            {/* Bottom row: booking section */}
-            <div className="mx-auto w-full max-w-4xl px-4">
-              <div className="rounded-3xl bg-white/10 p-1 shadow-2xl">
-                <div className="rounded-3xl bg-background p-4 sm:p-6 md:p-8">
-                  <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-5">
-                    <div className="space-y-2 sm:space-y-3 lg:col-span-2">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-3 w-3 text-primary sm:h-4 sm:w-4" />
-                        <label className="text-xs font-semibold text-foreground sm:text-sm">Pickup Location</label>
+              {/* Address Search inside hero */}
+              <div className="mt-8 max-w-2xl mx-auto">
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-2">
+                  <div className="flex items-center px-4 py-3">
+                    <MapPin className="h-5 w-5 text-white mr-3 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-white/80 font-medium">PICKUP LOCATION</p>
+                      <div className="relative">
+                        <Input
+                          type="text"
+                          placeholder="Enter city, airport, or address..."
+                          value={state.location || ''}
+                          onChange={(e) => handleLocationChange(e.target.value)}
+                          onFocus={() => setIsLocationModalOpen(true)}
+                          className="w-full border border-white/20 bg-transparent px-3 py-2 pr-10 text-base font-medium placeholder:text-white/60 focus:ring-0 cursor-pointer text-white rounded-md"
+                        />
+                        {state.location && (
+                          <button
+                            onClick={handleClearLocation}
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-white/60 hover:text-white transition-colors"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
-                      <Input
-                        value={state.location}
-                        onChange={(e) => setState({ location: e.target.value }, { replace: true })}
-                        onClick={() => setIsLocationModalOpen(true)}
-                        placeholder="Click to select pickup location"
-                        className="border-black cursor-pointer"
-                        readOnly
-                      />
-                    </div>
-
-                    <div className="space-y-2 sm:space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-3 w-3 text-primary sm:h-4 sm:w-4" />
-                        <label className="text-xs font-semibold text-foreground sm:text-sm">Rental Dates</label>
-                      </div>
-                      <DateRangePicker
-                        startDate={state.startDate}
-                        endDate={state.endDate}
-                        onChange={(next) => setState(next, { replace: true })}
-                        className="border-black"
-                      />
-                    </div>
-
-                    <div className="space-y-2 sm:space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Car className="h-3 w-3 text-primary sm:h-4 sm:w-4" />
-                        <label className="text-xs font-semibold text-foreground sm:text-sm">Car Type</label>
-                      </div>
-                      <Select value={state.carType ?? "any"} onValueChange={(value) => setState({ carType: value === "any" ? undefined : (value as CarType) }, { replace: true })}>
-                        <SelectTrigger className="border-black w-full">
-                          <SelectValue placeholder="Any type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="any">Any type</SelectItem>
-                          <SelectItem value="suv">SUV</SelectItem>
-                          <SelectItem value="sedan">Sedan</SelectItem>
-                          <SelectItem value="van">Van</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2 sm:space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Search className="h-3 w-3 text-primary sm:h-4 sm:w-4" />
-                        <label className="text-xs font-semibold text-foreground sm:text-sm">Search</label>
-                      </div>
-                      <Button
-                        disabled={!canSearch}
-                        onClick={() => {
-                          router.push(`/cars?location=${encodeURIComponent(state.location)}&start=${encodeURIComponent(state.startDate)}&end=${encodeURIComponent(state.endDate)}${state.carType ? `&type=${encodeURIComponent(state.carType)}` : ""}`);
-                        }}
-                        className="w-full py-2 text-sm font-semibold sm:py-3 sm:text-base"
-                        size="lg"
-                      >
-                        Check
-                      </Button>
+                      <p className="text-xs text-white/60 mt-1">Enter your address so we can suggest the nearest garage</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </div>
 
       {/* Car cards below hero */}
-      <div className="mx-auto w-full max-w-6xl px-2 py-8 sm:px-4 sm:py-12">
+      <div className="w-full px-2 py-8 sm:px-12 sm:py-12">
         <div className="grid gap-6 lg:gap-8 lg:grid-cols-4">
           {/* Left sidebar: categories */}
           <div className="lg:col-span-1 lg:border-r-4 lg:border-r-border lg:pr-8">
@@ -241,7 +261,7 @@ function HomeContent() {
 
           {/* Right grid: filtered cars */}
           <div className="lg:col-span-3">
-            <div className="grid gap-2 sm:gap-6 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-2 sm:gap-6 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-5">
               {filteredCars.map((car) => {
                 console.log("test:cars", car)
                 // Get today's date and check if it's in unavailableDates
@@ -277,6 +297,14 @@ function HomeContent() {
         title="Select Pickup Location"
         showLandmark={true}
         required={[true, true, true, true]}
+      />
+
+      {/* Nearest Garage Modal */}
+      <NearestGarageModal
+        isOpen={isNearestGarageModalOpen}
+        onClose={() => setIsNearestGarageModalOpen(false)}
+        searchResults={nearestGarageResults}
+        onSelectGarage={handleSelectGarage}
       />
     </div>
   );

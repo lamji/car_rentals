@@ -12,16 +12,25 @@ export type GarageLocation = {
 };
 
 export type Car = {
-  id: string;
-  name: string;
-  year: number;
-  pricePerDay: number;
-  pricePer12Hours: number;
-  pricePer24Hours: number;
-  seats: number;
-  transmission: Transmission;
-  type: CarType;
-  imageUrls: string[];
+  id: string
+  name: string
+  type: string
+  image: string
+  imageUrls: string[]
+  seats: number
+  transmission: string
+  fuel: string
+  year: number
+  pricePerDay: number
+  pricePer12Hours: number
+  pricePer24Hours: number
+  pricePerHour: number
+  deliveryFee: number
+  owner: {
+    name: string
+    contactNumber: string
+  }
+  unavailableDates: string[];
   garageAddress: string;
   garageLocation: GarageLocation;
   rentedCount: number;

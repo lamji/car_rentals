@@ -13,12 +13,15 @@ import { CarImages } from "@/components/cars/CarImages";
 import { useBooking } from "@/hooks/useBooking";
 import { useCar } from "@/hooks/useCar";
 import { useGeolocationContext } from "@/contexts/GeolocationContext";
+import { useAppDispatch } from "@/lib/store";
+import { setSelectedCar } from "@/lib/slices/bookingSlice";
 import { calculateDistanceToCar, formatDistance } from "@/utils/distance";
 
 function CarDetailsPageContent() {
   const router = useRouter();
   const params = useParams();
   const [showMapModal, setShowMapModal] = useState(false);
+  const dispatch = useAppDispatch();
 
   const { position, loading } = useGeolocationContext();
   const id = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
@@ -46,6 +49,10 @@ function CarDetailsPageContent() {
   }
 
   const goToBooking = () => {
+    // Store entire car data in Redux
+    console.log('test:cardData:', car);
+    dispatch(setSelectedCar(car));
+    
     patchDraft({ carId: car.id });
     router.push(`/cars/${encodeURIComponent(car.id)}/booking`);
   };
@@ -105,6 +112,36 @@ function CarDetailsPageContent() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                   </svg>
                   {car.transmission}
+                </div>
+              </div>
+            </div>
+
+            {/* Owner Contact Information */}
+            <div data-testid="owner-contact-section" className="border-t border-gray-200 pt-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Owner Information</h2>
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                      <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div data-testid="owner-name" className="font-semibold text-gray-900">{car.owner.name}</div>
+                      <div data-testid="owner-contact" className="text-sm text-gray-600">{car.owner.contactNumber}</div>
+                    </div>
+                  </div>
+                  <Button
+                    data-testid="contact-owner-button"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={() => window.open(`tel:${car.owner.contactNumber}`, '_self')}
+                  >
+                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    Call Owner
+                  </Button>
                 </div>
               </div>
             </div>

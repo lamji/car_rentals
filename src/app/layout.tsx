@@ -8,6 +8,8 @@ import { GeolocationWrapper } from "@/components/providers/GeolocationWrapper";
 import { GeolocationTest } from "@/components/debug/GeolocationTest";
 import { LocationPermissionBanner } from "@/components/ui/LocationPermissionBanner";
 import { MessengerAlertWrapper } from "@/components/ui/MessengerAlertWrapper";
+import { GlobalLoaderOverlay } from "@/components/ui/GlobalLoaderOverlay";
+import { AlertModal } from "@/components/ui/AlertModal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,9 +40,11 @@ export default function RootLayout({
           <GeolocationWrapper>
             <LocationPermissionBanner />
             <Header />
+            <GlobalLoaderOverlay />
             {children}
             <GeolocationTest />
             <MessengerAlertWrapper />
+            <AlertModal />
           </GeolocationWrapper>
         </ReduxProvider>
       </body>

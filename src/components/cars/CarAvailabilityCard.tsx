@@ -10,7 +10,6 @@ import { CheckCircle, XCircle, Star, Car as CarIcon } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { useGeolocationContext } from "@/contexts/GeolocationContext";
 import { calculateDistanceToCar, formatDistance } from "@/utils/distance";
-import { useCachedAddress } from "@/hooks/useCachedAddress";
 
 type Props = {
   car: Car;
@@ -20,13 +19,6 @@ type Props = {
 
 export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
   const { position, loading } = useGeolocationContext();
-
-  console.log("test:position", position)
-  
-  // Use cached address from Redux
-  const { address: readableAddress } = useCachedAddress(car.garageLocation.coordinates);
-
-  // Calculate distance from user's location to car's garage
   const distance = position ? calculateDistanceToCar(position, car) : null;
   const distanceText = distance ? formatDistance(distance) : null;
   
@@ -34,8 +26,10 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
     <Card className="transition-shadow hover:shadow-lg h-full flex flex-col">
       <CardContent className="p-0 flex-1 flex flex-col">
         {/* Image on top */}
-        <div className="relative h-36 w-full overflow-hidden bg-muted">
-          <Image src={car.imageUrls[0]} alt={car.name} fill className="object-cover" />
+        <div className="relative h-36 w-full overflow-hidden bg-white p-2">
+          <div className="relative w-full h-full">
+            <Image src={car.imageUrls[0]} alt={car.name} fill className="object-cover" />
+          </div>
           {/* Availability badge on top of image */}
           <div className="absolute top-2 right-2">
             <Badge variant={isAvailable ? "default" : "secondary"} className={isAvailable ? "bg-green-500 hover:bg-green-600" : ""}>

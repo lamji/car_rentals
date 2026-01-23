@@ -65,6 +65,13 @@ export function useGeolocation(options?: PositionOptions) {
           reverseGeocode(locationData.lat, locationData.lng)
             .then(address => {
               console.log('📍 Geolocation: Address resolved', address);
+              console.log('📍 Geolocation: Location details:', {
+                region: address?.region,
+                province: address?.province,
+                city: address?.city || address?.municipality,
+                barangay: address?.barangay,
+                fullAddress: address?.formattedAddress
+              });
               setState({
                 position: locationData,
                 address,
@@ -94,10 +101,9 @@ export function useGeolocation(options?: PositionOptions) {
           const errorMessage = getErrorMessage(error);
           const isPermissionDenied = error?.code === 1; // PERMISSION_DENIED
           
-          console.error('❌ Geolocation: Error getting location', {
+          console.log('ℹ️ Geolocation: Location access not available', {
             code: error?.code,
             message: errorMessage,
-            error: error,
             isPermissionDenied,
             timestamp: new Date().toISOString()
           });
@@ -118,10 +124,10 @@ export function useGeolocation(options?: PositionOptions) {
         }
       );
     } catch (catchError) {
-      console.error('❌ Geolocation: Unexpected error during getCurrentPosition', catchError);
+      console.log('ℹ️ Geolocation: Unexpected error during location request', catchError);
       setState(prev => ({
         ...prev,
-        error: { code: 0, message: "Unexpected error occurred while requesting location" },
+        error: { code: 0, message: "Location services are temporarily unavailable" },
         loading: false,
       }));
     }
@@ -156,7 +162,14 @@ export function useGeolocation(options?: PositionOptions) {
         // Get address from coordinates
         reverseGeocode(locationData.lat, locationData.lng)
           .then(address => {
-            console.log('📍 Geolocation: Address resolved', address);
+            console.log('📍 Geolocation: Address resolved (watch)', address);
+            console.log('📍 Geolocation: Location details (watch):', {
+              region: address?.region,
+              province: address?.province,
+              city: address?.city || address?.municipality,
+              barangay: address?.barangay,
+              fullAddress: address?.formattedAddress
+            });
             setState({
               position: locationData,
               address,
@@ -181,7 +194,7 @@ export function useGeolocation(options?: PositionOptions) {
       },
       (error) => {
         const errorMessage = getErrorMessage(error);
-        console.error('❌ Geolocation: Error watching position', {
+        console.log('ℹ️ Geolocation: Location watching failed', {
           code: error.code,
           message: errorMessage,
           timestamp: new Date().toISOString()

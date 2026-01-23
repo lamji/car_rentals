@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { MapPin, Loader2, Crosshair } from "lucide-react";
+import { MapPin, Loader2, Crosshair, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -120,19 +120,35 @@ export function LocationModal({
 
   // Handle geolocation toggle
   const handleLocationToggle = (enabled: boolean) => {
+    console.log('🔄 Location Toggle:', enabled ? 'ON' : 'OFF');
+    console.log('🔄 Current address before toggle:', address);
+    console.log('🔄 isOpen:', isOpen);
+    console.log('🔄 useCurrentLocation before:', useCurrentLocation);
+    
     setUseCurrentLocation(enabled);
     
+    // Log the new state
+    setTimeout(() => {
+      console.log('🔄 useCurrentLocation after:', useCurrentLocation);
+    }, 100);
+    
     if (enabled) {
+      console.log('📍 Activating geolocation...');
       if (permissionDenied) {
         // If permission was denied, request it again
+        console.log('🔐 Permission was denied, requesting again...');
         requestLocationPermission();
       } else if (!address) {
         // If no address available, request location
+        console.log('📍 No address available, requesting location...');
         requestLocation();
+      } else {
+        console.log('📍 Address already available, will populate form');
       }
       // If address is available, the effect below will populate the inputs
     } else {
       // Clear inputs when toggled off
+      console.log('🧹 Clearing location inputs...');
       setRegionQuery("");
       setLocalProvinceQuery("");
       setLocalCityQuery("");
@@ -144,11 +160,20 @@ export function LocationModal({
   useEffect(() => {
     if (useCurrentLocation && address && isOpen) {
       console.log('📍 Populating form with geocoded address:', address);
+      console.log('📍 Form population details:', {
+        region: address.region,
+        province: address.province,
+        city: address.city || address.municipality,
+        barangay: address.barangay,
+        fullAddress: address.formattedAddress
+      });
       
       setRegionQuery(address.region || "");
       setLocalProvinceQuery(address.province || "");
       setLocalCityQuery(address.city || address.municipality || "");
       setLocalBarangayQuery(address.barangay || "");
+      
+      console.log('📍 Form populated with location data');
     }
   }, [useCurrentLocation, address, isOpen, setRegionQuery]);
 
@@ -241,10 +266,10 @@ export function LocationModal({
     setTimeout(() => provinceInputRef.current?.focus(), 100);
   };
 
-  const handleProvinceSelect = (province: any) => {
+  const handleProvinceSelect = (province: PSGCLocation) => {
     setLocalProvinceQuery(province.name);
     setProvinceQuery(province.name);
-    setSelectedProvince(province as PSGCLocation);
+    setSelectedProvince(province);
     setShowProvinceDropdown(false);
     setActiveDropdown(null);
     
@@ -260,10 +285,10 @@ export function LocationModal({
     setTimeout(() => cityInputRef.current?.focus(), 100);
   };
 
-  const handleCitySelect = (city: any) => {
+  const handleCitySelect = (city: PSGCLocation) => {
     setLocalCityQuery(city.name);
     setCityQuery(city.name);
-    setSelectedCity(city as PSGCLocation);
+    setSelectedCity(city);
     setShowCityDropdown(false);
     setActiveDropdown(null);
     
@@ -276,10 +301,10 @@ export function LocationModal({
     setTimeout(() => barangayInputRef.current?.focus(), 100);
   };
 
-  const handleBarangaySelect = (barangay: any) => {
+  const handleBarangaySelect = (barangay: PSGCLocation) => {
     setLocalBarangayQuery(barangay.name);
     setBarangayQuery(barangay.name);
-    setSelectedBarangay(barangay as PSGCLocation);
+    setSelectedBarangay(barangay);
     setShowBarangayDropdown(false);
     setActiveDropdown(null);
     
@@ -375,6 +400,15 @@ export function LocationModal({
     console.log('📍 Quick selecting location with data:', locationData);
     onLocationSelect(locationString, locationData);
     onClose();
+  };
+
+  const handleRetryLocation = () => {
+    if (permissionDenied) {
+      requestLocationPermission();
+      return;
+    }
+
+    requestLocation();
   };
 
   // Handle modal close
@@ -496,6 +530,21 @@ export function LocationModal({
                   </span>
                 )}
               </button>
+
+            
+                <div className="mt-2">
+                  <Button
+                    type="button"
+                    onClick={handleRetryLocation}
+                    variant="default"
+                    size="sm"
+                    className="h-9 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <RefreshCw className="h-3 w-3 mr-1" />
+                    Refresh Location
+                  </Button>
+                </div>
+              
             </div>
           </div>
           <div className="flex-shrink-0 pt-1">
@@ -508,224 +557,228 @@ export function LocationModal({
         </div>
         
         <div className="space-y-4">
-          {/* Region Input */}
-          <div className="relative">
-            <Input
-              ref={regionInputRef}
-              placeholder="Region *"
-              value={regionQuery}
-              onChange={(e) => handleRegionQueryChange(e.target.value)}
-              onKeyDown={(e) => handleKeyDown(e, 'region')}
-              className="pr-10 border-black"
-            />
-            {regionsLoading && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              </div>
-            )}
-            
-            {/* Region Dropdown */}
-            {showRegionDropdown && (
-              <div className="absolute top-full left-0 right-0 z-50 mt-1 border rounded-md max-h-60 overflow-y-auto bg-white shadow-lg">
-                {filteredRegions.length > 0 ? (
-                  <>
-                    <div className="px-3 py-2 text-xs text-gray-500 border-b bg-gray-50">
-                      Philippine Regions ({filteredRegions.length})
-                    </div>
-                    {filteredRegions.map((region, index) => (
-                      <button
-                        key={region.psgc_id}
-                        type="button"
-                        className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${
-                          index === selectedIndex ? "bg-accent" : ""
-                        }`}
-                        onClick={() => handleRegionSelect(region)}
-                      >
-                        <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium truncate">
-                            {region.name}
-                          </div>
-                          <div className="text-xs text-muted-foreground truncate">
-                            Population: {region.population?.trim()}
-                          </div>
+          {!useCurrentLocation && (
+            <>
+              {/* Region Input */}
+              <div className="relative">
+                <Input
+                  ref={regionInputRef}
+                  placeholder="Region *"
+                  value={regionQuery}
+                  onChange={(e) => handleRegionQueryChange(e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, 'region')}
+                  className="pr-10 border-black"
+                />
+                {regionsLoading && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+                
+                {/* Region Dropdown */}
+                {showRegionDropdown && (
+                  <div className="absolute top-full left-0 right-0 z-50 mt-1 border rounded-md max-h-60 overflow-y-auto bg-white shadow-lg">
+                    {filteredRegions.length > 0 ? (
+                      <>
+                        <div className="px-3 py-2 text-xs text-gray-500 border-b bg-gray-50">
+                          Philippine Regions ({filteredRegions.length})
                         </div>
-                      </button>
-                    ))}
-                  </>
-                ) : (
-                  <div className="px-3 py-2 text-gray-500 text-sm">
-                    No regions found matching &quot;{regionQuery}&quot;. Showing all regions.
+                        {filteredRegions.map((region, index) => (
+                          <button
+                            key={region.psgc_id}
+                            type="button"
+                            className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${
+                              index === selectedIndex ? "bg-accent" : ""
+                            }`}
+                            onClick={() => handleRegionSelect(region)}
+                          >
+                            <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium truncate">
+                                {region.name}
+                              </div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                Population: {region.population?.trim()}
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </>
+                    ) : (
+                      <div className="px-3 py-2 text-gray-500 text-sm">
+                        No regions found matching &quot;{regionQuery}&quot;. Showing all regions.
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </div>
 
-          {/* Province Input */}
-          <div className="relative">
-            <Input
-              ref={provinceInputRef}
-              placeholder="Province *"
-              value={localProvinceQuery}
-              onChange={(e) => handleProvinceQueryChange(e.target.value)}
-              onKeyDown={(e) => handleKeyDown(e, 'province')}
-              disabled={!cascadingState.selectedRegion}
-              className="pr-10 border-black"
-            />
-            {provincesLoading && activeDropdown === 'province' && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              </div>
-            )}
-            
-            {/* Province Dropdown */}
-            {showProvinceDropdown && (
-              <div className="absolute top-full left-0 right-0 z-50 mt-1 border rounded-md max-h-60 overflow-y-auto bg-white shadow-lg">
-                {filteredProvinces.length > 0 ? (
-                  <>
-                    <div className="px-3 py-2 text-xs text-gray-500 border-b bg-gray-50">
-                      Provinces in {cascadingState.selectedRegion?.name} ({filteredProvinces.length})
-                    </div>
-                    {filteredProvinces.map((province, index) => (
-                      <button
-                        key={province.psgc_id}
-                        type="button"
-                        className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${
-                          index === selectedIndex ? "bg-accent" : ""
-                        }`}
-                        onClick={() => handleProvinceSelect(province)}
-                      >
-                        <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium truncate">
-                            {province.name}
-                          </div>
-                          <div className="text-xs text-muted-foreground truncate">
-                            {province.geographic_level}
-                          </div>
+              {/* Province Input */}
+              <div className="relative">
+                <Input
+                  ref={provinceInputRef}
+                  placeholder="Province *"
+                  value={localProvinceQuery}
+                  onChange={(e) => handleProvinceQueryChange(e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, 'province')}
+                  disabled={!cascadingState.selectedRegion}
+                  className="pr-10 border-black"
+                />
+                {provincesLoading && activeDropdown === 'province' && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+                
+                {/* Province Dropdown */}
+                {showProvinceDropdown && (
+                  <div className="absolute top-full left-0 right-0 z-50 mt-1 border rounded-md max-h-60 overflow-y-auto bg-white shadow-lg">
+                    {filteredProvinces.length > 0 ? (
+                      <>
+                        <div className="px-3 py-2 text-xs text-gray-500 border-b bg-gray-50">
+                          Provinces in {cascadingState.selectedRegion?.name} ({filteredProvinces.length})
                         </div>
-                      </button>
-                    ))}
-                  </>
-                ) : (
-                  <div className="px-3 py-2 text-gray-500 text-sm">
-                    {provincesLoading ? 'Loading provinces...' : 'No provinces found matching "' + localProvinceQuery + '"'}
+                        {filteredProvinces.map((province, index) => (
+                          <button
+                            key={province.psgc_id}
+                            type="button"
+                            className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${
+                              index === selectedIndex ? "bg-accent" : ""
+                            }`}
+                            onClick={() => handleProvinceSelect(province)}
+                          >
+                            <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium truncate">
+                                {province.name}
+                              </div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {province.geographic_level}
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </>
+                    ) : (
+                      <div className="px-3 py-2 text-gray-500 text-sm">
+                        {provincesLoading ? 'Loading provinces...' : 'No provinces found matching "' + localProvinceQuery + '"'}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </div>
 
-          {/* City/Municipality Input */}
-          <div className="relative">
-            <Input
-              ref={cityInputRef}
-              placeholder="City/Municipality *"
-              value={localCityQuery}
-              onChange={(e) => handleCityQueryChange(e.target.value)}
-              onKeyDown={(e) => handleKeyDown(e, 'city')}
-              disabled={!cascadingState.selectedProvince}
-              className="pr-10 border-black"
-            />
-            {citiesLoading && activeDropdown === 'city' && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              </div>
-            )}
-            
-            {/* City Dropdown */}
-            {showCityDropdown && (
-              <div className="absolute top-full left-0 right-0 z-50 mt-1 border rounded-md max-h-60 overflow-y-auto bg-white shadow-lg">
-                {filteredCities.length > 0 ? (
-                  <>
-                    <div className="px-3 py-2 text-xs text-gray-500 border-b bg-gray-50">
-                      Cities/Municipalities in {cascadingState.selectedProvince?.name} ({filteredCities.length})
-                    </div>
-                    {filteredCities.map((city, index) => (
-                      <button
-                        key={city.psgc_id}
-                        type="button"
-                        className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${
-                          index === selectedIndex ? "bg-accent" : ""
-                        }`}
-                        onClick={() => handleCitySelect(city)}
-                      >
-                        <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium truncate">
-                            {city.name}
-                          </div>
-                          <div className="text-xs text-muted-foreground truncate">
-                            {city.geographic_level}
-                          </div>
+              {/* City/Municipality Input */}
+              <div className="relative">
+                <Input
+                  ref={cityInputRef}
+                  placeholder="City/Municipality *"
+                  value={localCityQuery}
+                  onChange={(e) => handleCityQueryChange(e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, 'city')}
+                  disabled={!cascadingState.selectedProvince}
+                  className="pr-10 border-black"
+                />
+                {citiesLoading && activeDropdown === 'city' && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+                
+                {/* City Dropdown */}
+                {showCityDropdown && (
+                  <div className="absolute top-full left-0 right-0 z-50 mt-1 border rounded-md max-h-60 overflow-y-auto bg-white shadow-lg">
+                    {filteredCities.length > 0 ? (
+                      <>
+                        <div className="px-3 py-2 text-xs text-gray-500 border-b bg-gray-50">
+                          Cities/Municipalities in {cascadingState.selectedProvince?.name} ({filteredCities.length})
                         </div>
-                      </button>
-                    ))}
-                  </>
-                ) : (
-                  <div className="px-3 py-2 text-gray-500 text-sm">
-                    {citiesLoading ? 'Loading cities...' : 'No cities found matching "' + localCityQuery + '"'}
+                        {filteredCities.map((city, index) => (
+                          <button
+                            key={city.psgc_id}
+                            type="button"
+                            className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${
+                              index === selectedIndex ? "bg-accent" : ""
+                            }`}
+                            onClick={() => handleCitySelect(city)}
+                          >
+                            <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium truncate">
+                                {city.name}
+                              </div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {city.geographic_level}
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </>
+                    ) : (
+                      <div className="px-3 py-2 text-gray-500 text-sm">
+                        {citiesLoading ? 'Loading cities...' : 'No cities found matching "' + localCityQuery + '"'}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </div>
 
-          {/* Barangay Input */}
-          <div className="relative">
-            <Input
-              ref={barangayInputRef}
-              placeholder="Barangay *"
-              value={localBarangayQuery}
-              onChange={(e) => handleBarangayQueryChange(e.target.value)}
-              onKeyDown={(e) => handleKeyDown(e, 'barangay')}
-              disabled={!cascadingState.selectedCity}
-              className="pr-10 border-black"
-            />
-            {barangaysLoading && activeDropdown === 'barangay' && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              </div>
-            )}
-            
-            {/* Barangay Dropdown */}
-            {showBarangayDropdown && (
-              <div className="absolute top-full left-0 right-0 z-50 mt-1 border rounded-md max-h-60 overflow-y-auto bg-white shadow-lg">
-                {filteredBarangays.length > 0 ? (
-                  <>
-                    <div className="px-3 py-2 text-xs text-gray-500 border-b bg-gray-50">
-                      Barangays in {cascadingState.selectedCity?.name} ({filteredBarangays.length})
-                    </div>
-                    {filteredBarangays.map((barangay, index) => (
-                      <button
-                        key={barangay.psgc_id}
-                        type="button"
-                        className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${
-                          index === selectedIndex ? "bg-accent" : ""
-                        }`}
-                        onClick={() => handleBarangaySelect(barangay)}
-                      >
-                        <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium truncate">
-                            {barangay.name}
-                          </div>
-                          <div className="text-xs text-muted-foreground truncate">
-                            {barangay.geographic_level}
-                          </div>
+              {/* Barangay Input */}
+              <div className="relative">
+                <Input
+                  ref={barangayInputRef}
+                  placeholder="Barangay *"
+                  value={localBarangayQuery}
+                  onChange={(e) => handleBarangayQueryChange(e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, 'barangay')}
+                  disabled={!cascadingState.selectedCity}
+                  className="pr-10 border-black"
+                />
+                {barangaysLoading && activeDropdown === 'barangay' && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+                
+                {/* Barangay Dropdown */}
+                {showBarangayDropdown && (
+                  <div className="absolute top-full left-0 right-0 z-50 mt-1 border rounded-md max-h-60 overflow-y-auto bg-white shadow-lg">
+                    {filteredBarangays.length > 0 ? (
+                      <>
+                        <div className="px-3 py-2 text-xs text-gray-500 border-b bg-gray-50">
+                          Barangays in {cascadingState.selectedCity?.name} ({filteredBarangays.length})
                         </div>
-                      </button>
-                    ))}
-                  </>
-                ) : (
-                  <div className="px-3 py-2 text-gray-500 text-sm">
-                    {barangaysLoading ? 'Loading barangays...' : 'No barangays found matching "' + localBarangayQuery + '"'}
+                        {filteredBarangays.map((barangay, index) => (
+                          <button
+                            key={barangay.psgc_id}
+                            type="button"
+                            className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${
+                              index === selectedIndex ? "bg-accent" : ""
+                            }`}
+                            onClick={() => handleBarangaySelect(barangay)}
+                          >
+                            <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium truncate">
+                                {barangay.name}
+                              </div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {barangay.geographic_level}
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </>
+                    ) : (
+                      <div className="px-3 py-2 text-gray-500 text-sm">
+                        {barangaysLoading ? 'Loading barangays...' : 'No barangays found matching "' + localBarangayQuery + '"'}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </div>
+            </>
+          )}
 
           {/* Landmark Input */}
           {showLandmark && (
@@ -735,7 +788,7 @@ export function LocationModal({
                 placeholder="Landmark (optional)"
                 value={landmark}
                 onChange={(e) => setLandmark(e.target.value)}
-                disabled={!cascadingState.selectedBarangay}
+                disabled={!useCurrentLocation && !cascadingState.selectedBarangay}
                 className="border-black"
               />
             </div>
