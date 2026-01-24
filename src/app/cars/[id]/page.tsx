@@ -3,35 +3,22 @@
 import * as React from "react";
 import { Suspense } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
 
 import { MapLinkModal } from "@/components/ui/MapLinkModal";
 import { Button } from "@/components/ui/button";
 import { RentalOptions } from "@/components/cars/RentalOptions";
 import { CarImages } from "@/components/cars/CarImages";
-import { useBooking } from "@/hooks/useBooking";
-import { useCar } from "@/hooks/useCar";
-import { useGeolocationContext } from "@/contexts/GeolocationContext";
-import { useAppDispatch } from "@/lib/store";
-import { setSelectedCar } from "@/lib/slices/bookingSlice";
-import { calculateDistanceToCar, formatDistance } from "@/utils/distance";
+import { useCarDetailsPage } from "@/hooks/useCarDetailsPage";
 
 function CarDetailsPageContent() {
-  const router = useRouter();
-  const params = useParams();
-  const [showMapModal, setShowMapModal] = useState(false);
-  const dispatch = useAppDispatch();
-
-  const { position, loading } = useGeolocationContext();
-  const id = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
-  const car = useCar(id);
-
-  // Calculate distance from user's location to car's garage
-  const distance = position && car ? calculateDistanceToCar(position, car) : null;
-  const distanceText = distance ? formatDistance(distance) : null;
-
-  const { patchDraft } = useBooking();
+  const {
+    showMapModal,
+    car,
+    distanceText,
+    loading,
+    goToBooking,
+    setShowMapModal,
+  } = useCarDetailsPage();
 
   if (!car) {
     return (
@@ -47,15 +34,6 @@ function CarDetailsPageContent() {
       </div>
     );
   }
-
-  const goToBooking = () => {
-    // Store entire car data in Redux
-    console.log('test:cardData:', car);
-    dispatch(setSelectedCar(car));
-    
-    patchDraft({ carId: car.id });
-    router.push(`/cars/${encodeURIComponent(car.id)}/booking`);
-  };
 
   return (
     <div data-testid="car-details-page" className="min-h-screen bg-white">

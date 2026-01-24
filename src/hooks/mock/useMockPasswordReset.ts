@@ -2,7 +2,7 @@ import type {
   SendResetPasswordResponse,
   VerifyResetPasswordOtpResponse,
   ResetPasswordResponse,
-} from '@/lib/api/useResetPassword';
+} from '@/lib/types/resetPassword';
 
 export function useMockPasswordReset() {
   const generateOTP = (): string => {

@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 
-const STEPS = ["Search", "Car", "Dates", "Fulfillment", "Confirm"] as const;
+const STEPS = ["Search", "Car", "Dates", "Confirm"] as const;
 
 export function BookingSteps(props: { activeIndex: number }) {
   return (

@@ -1,135 +1,37 @@
 "use client";
 
-import { useMemo, useState, Suspense, useCallback } from "react";
+import { Suspense } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { LocationModal, LocationData } from "@/components/location/LocationModal";
+import { LocationModal } from "@/components/location/LocationModal";
 import { NearestGarageModal } from "@/components/location/NearestGarageModal";
-import { useSearchState } from "@/hooks/useSearchState";
+import { useHomeContent } from "@/hooks/useHomeContent";
 import { CarAvailabilityCard } from "@/components/cars/CarAvailabilityCard";
-import { CARS } from "@/lib/data/cars";
-import type { CarType } from "@/lib/types";
 import { Car, Zap, Headphones, MapPin, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useNearestGarage, SearchNearestGarageResponse } from "@/lib/api/useNearestGarage";
 
 function HomeContent() {
-  const { state, setState } = useSearchState();
-  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
-  const [isNearestGarageModalOpen, setIsNearestGarageModalOpen] = useState(false);
-  const [nearestGarageResults, setNearestGarageResults] = useState<SearchNearestGarageResponse | null>(null);
-  const { searchNearestGarage } = useNearestGarage();
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
-  const router = useRouter();
-
-  const handleLocationSelect = async (locationString: string, locationData?: LocationData) => {
-    setState({ location: locationString }, { replace: true });
-    setIsLocationModalOpen(false);
-    
-    // Trigger nearest garage search when location is selected from modal
-    if (locationString.trim().length > 3) {
-      try {
-        const results = await searchNearestGarage({ 
-          address: locationString,
-          timeoutMs: 1500,
-          progressIntervalMs: 300
-        });
-        setNearestGarageResults(results);
-        setIsNearestGarageModalOpen(true);
-      } catch (error) {
-        console.error('Error searching nearest garage:', error);
-      }
-    }
-  };
-
-  const handleClearLocation = () => {
-    setState({ location: '' });
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
-      setSearchTimeout(null);
-    }
-    setNearestGarageResults(null);
-    setIsNearestGarageModalOpen(false);
-  };
-
-  const handleLocationChange = (value: string) => {
-    console.log('handleLocationChange called with:', value);
-    setState({ location: value });
-    alert(value); // Testing alert
-    
-    // Clear existing timeout
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
-    }
-    
-    // Trigger nearest garage search with debouncing
-    if (value.trim().length > 3) {
-      const timeout = setTimeout(async () => {
-        try {
-          const results = await searchNearestGarage({ 
-            address: value,
-            timeoutMs: 1500,
-            progressIntervalMs: 300
-          });
-          setNearestGarageResults(results);
-          setIsNearestGarageModalOpen(true);
-        } catch (error) {
-          console.error('Error searching nearest garage:', error);
-        }
-      }, 500); // 500ms debounce
-      
-      setSearchTimeout(timeout);
-    }
-  };
-
-  const handleSelectGarage = (carId: string) => {
-    console.log('Selected car:', carId);
-    setIsNearestGarageModalOpen(false);
-    
-    // Extract car ID from the listing ID (format: "car-listing-{carId}")
-    const actualCarId = carId.replace('car-listing-', '');
-    
-    // Redirect to car details page
-    router.push(`/cars/${actualCarId}`);
-  };
-
-
-
-  // Real availability data from car objects
-
-  const detailsHrefFor = (id: string) => {
-  const params = new URLSearchParams();
-  
-  if (state.location) params.set('location', state.location);
-  if (state.startDate) params.set('start', state.startDate);
-  if (state.endDate) params.set('end', state.endDate);
-  if (state.carType) params.set('type', state.carType);
-  
-  const queryString = params.toString();
-  return `/cars/${encodeURIComponent(id)}${queryString ? `?${queryString}` : ''}`;
-};
-
-  // Category filtering
-  const categories: { label: string; value: CarType | "all" }[] = [
-    { label: "All Cars", value: "all" },
-    { label: "SUV", value: "suv" },
-    { label: "Sedan", value: "sedan" },
-    { label: "Van", value: "van" },
-  ];
-
-  const [selectedCategory, setSelectedCategory] = useState<CarType | "all">("all");
-
-  const filteredCars = useMemo(() => {
-    if (selectedCategory === "all") return CARS;
-    return CARS.filter((car) => car.type === selectedCategory);
-  }, [selectedCategory]);
-
-
+  const {
+    state,
+    isLocationModalOpen,
+    isNearestGarageModalOpen,
+    nearestGarageResults,
+    selectedCategory,
+    filteredCars,
+    categories,
+    setIsLocationModalOpen,
+    setIsNearestGarageModalOpen,
+    setSelectedCategory,
+    handleLocationSelect,
+    handleClearLocation,
+    handleLocationChange,
+    handleSelectGarage,
+    detailsHrefFor,
+  } = useHomeContent();
 
   return (
     <div>
       {/* Hero */}
-      <div className="relative h-[40vh] sm:h-[60vh] w-full overflow-hidden">
+      <div className="relative h-[100vh] sm:h-[60vh] md:h-[60vh] lg:h-[60vh] w-full overflow-hidden">
         {/* Hero background image */}
         <div className="absolute inset-0 -z-10">
           <Image

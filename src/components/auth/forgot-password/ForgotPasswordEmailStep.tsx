@@ -38,7 +38,7 @@ export function ForgotPasswordEmailStep({
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="pl-10"
+              className="pl-10 border-black"
               disabled={isSubmitting}
             />
           </div>

@@ -40,6 +40,7 @@ export function ForgotPasswordNewPasswordStep({
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            className="border-black"
             disabled={isSubmitting}
           />
         </div>
@@ -51,6 +52,7 @@ export function ForgotPasswordNewPasswordStep({
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
+            className="border-black"
             disabled={isSubmitting}
           />
         </div>

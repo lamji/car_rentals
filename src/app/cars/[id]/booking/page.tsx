@@ -1,139 +1,29 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { useRouter, useParams } from 'next/navigation'
-import { useAppDispatch } from '@/lib/store'
-import { setSelectedCar, setBookingDetails, nextStep, previousStep, openPaymentModal, closePaymentModal } from '@/lib/slices/bookingSlice'
-import { BookingDetails } from '@/lib/slices/bookingSlice'
-import { calculatePaymentSummary } from '@/lib/paymentSummaryHelper'
-import { useBookingPersistence } from '@/hooks/useBookingPersistence'
-import { useCar } from '@/hooks/useCar'
+import React from 'react'
 import { SelectedCarCard } from '@/components/booking/SelectedCarCard'
 import { RentalDetailsForm } from '@/components/booking/RentalDetailsForm'
-import { PersonalInfoForm, PersonalInfoData } from '@/components/booking/PersonalInfoForm'
+import { PersonalInfoForm } from '@/components/booking/PersonalInfoForm'
 import { BookingConfirmation } from '@/components/booking/BookingConfirmation'
 import { PaymentModal } from '@/components/booking/PaymentModal'
-
-interface ProgressStep {
-  id: number
-  title: string
-  description: string
-}
-
+import { useBookingPage } from '@/hooks/useBookingPage'
 
 export default function BookingPage() {
-  const router = useRouter()
-  const params = useParams()
-  const dispatch = useAppDispatch()
-  const [isLoaded, setIsLoaded] = useState(false)
-  const { currentStep, selectedCar, bookingDetails, isPaymentModalOpen } = useBookingPersistence()
-  
-  // State for PersonalInfoForm validation
-  const [isPersonalInfoValid, setIsPersonalInfoValid] = useState(false)
-  const [personalInfoData, setPersonalInfoData] = useState<PersonalInfoData | null>(null)
-  
-  // Get car ID from URL params
-  const carId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : ''
-  const car = useCar(carId)
-
-  // Wait for a moment to ensure Redux is initialized, then set as loaded
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoaded(true)
-      console.log('Booking page marked as loaded')
-    }, 100) // Small delay to ensure Redux is ready
-    
-    return () => clearTimeout(timer)
-  }, [])
-
-  // Fallback: If no car in Redux but we have car ID, set it
-  useEffect(() => {
-    if (isLoaded && !selectedCar && car && carId) {
-      console.log('Car not in Redux, setting from URL:', carId)
-      dispatch(setSelectedCar(car))
-    }
-  }, [isLoaded, selectedCar, car, carId, dispatch])
-
-  // Handle PersonalInfoForm validation changes
-  const handlePersonalInfoValidationChange = React.useCallback((isValid: boolean, data?: PersonalInfoData) => {
-    setIsPersonalInfoValid(isValid)
-    setPersonalInfoData(data ?? null)
-    console.log('PersonalInfo validation:', { isValid, data })
-  }, [])
-
-  const handleRentalDetailsChange = React.useCallback((data: Partial<BookingDetails>) => {
-    dispatch(setBookingDetails(data))
-    console.log('Rental details updated:', data)
-  }, [dispatch])
-
-  const canProceedToNext = React.useCallback(() => {
-    let canProceed = false
-    
-    // Helper function to calculate rental duration in hours
-    const calculateRentalDuration = () => {
-      if (!bookingDetails.startDate || !bookingDetails.endDate || !bookingDetails.startTime || !bookingDetails.endTime) {
-        return null;
-      }
-
-      const startDateTime = new Date(`${bookingDetails.startDate}T${bookingDetails.startTime}`);
-      const endDateTime = new Date(`${bookingDetails.endDate}T${bookingDetails.endTime}`);
-      
-      const durationMs = endDateTime.getTime() - startDateTime.getTime();
-      const durationHours = durationMs / (1000 * 60 * 60);
-      
-      return durationHours;
-    }
-
-    // Check if booking meets minimum duration requirement
-    const isMinimumDurationMet = () => {
-      const duration = calculateRentalDuration();
-      return duration !== null && duration >= 12;
-    }
-    
-    switch (currentStep) {
-      case 1:
-        canProceed = !!selectedCar // Car must be selected
-        break
-      case 2:
-        const hasRequiredFields = !!(bookingDetails.startDate && bookingDetails.endDate && bookingDetails.location && bookingDetails.startTime && bookingDetails.endTime)
-        const meetsDuration = isMinimumDurationMet()
-        canProceed = hasRequiredFields && meetsDuration
-        break
-      case 3:
-        canProceed = isPersonalInfoValid // Personal info form must be valid
-        break
-      case 4:
-        canProceed = true // Enable complete booking button
-        break
-      default:
-        canProceed = false
-    }
-    
-    return canProceed
-  }, [currentStep, selectedCar, bookingDetails, isPersonalInfoValid])
-
-  // Handle Complete Booking - opens payment modal (called from navigation button)
-  const handleComplete = React.useCallback(() => {
-    if (canProceedToNext()) {
-      dispatch(openPaymentModal())
-    }
-  }, [canProceedToNext, dispatch])
-
-  // Handle Payment Complete
-  const handlePaymentComplete = React.useCallback(() => {
-    dispatch(closePaymentModal())
-    dispatch(nextStep()) // Move to completion or confirmation step
-    // Here you would typically save the booking to backend
-    console.log('Payment completed, booking confirmed')
-  }, [dispatch])
-
-  // Close Payment Modal
-  const closePaymentModalHandler = React.useCallback(() => {
-    dispatch(closePaymentModal())
-  }, [dispatch])
-
-  // Calculate payment summary using helper
-  const paymentSummary = calculatePaymentSummary(selectedCar, bookingDetails)
+  const {
+    isLoaded,
+    currentStep,
+    isPaymentModalOpen,
+    paymentSummary,
+    steps,
+    handlePersonalInfoValidationChange,
+    handleRentalDetailsChange,
+    handleComplete,
+    handlePaymentComplete,
+    closePaymentModalHandler,
+    handlePrevious,
+    handleNext,
+    canProceedToNext,
+  } = useBookingPage();
 
   // Show loading while initializing
   if (!isLoaded) {
@@ -147,13 +37,6 @@ export default function BookingPage() {
     )
   }
 
-  const steps: ProgressStep[] = [
-    { id: 1, title: 'Select Car', description: 'Choose your vehicle' },
-    { id: 2, title: 'Rental Details', description: 'Dates & location' },
-    { id: 3, title: 'Personal Info', description: 'Your details' },
-    { id: 4, title: 'Confirmation', description: 'Review & book' }
-  ]
-
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
@@ -166,92 +49,6 @@ export default function BookingPage() {
         return <BookingConfirmation />
       default:
         return null
-    }
-  }
-
-  const handlePrevious = () => {
-    console.log('Previous clicked, current step:', currentStep)
-    if (currentStep === 1) {
-      // Navigate back to car listing page
-      router.push('/cars')
-    } else {
-      dispatch(previousStep())
-    }
-  }
-
-  const handleNext = () => {
-    console.log('Next clicked, can proceed:', canProceedToNext())
-    console.log('Current Step:', currentStep)
-    console.log('Current bookingDetails from Redux:', bookingDetails)
-    
-    // Log Step 2 specific data when moving from Step 2 to Step 3
-    if (currentStep === 2) {
-      const { startDate, endDate, startTime, endTime, location, pickupType } = bookingDetails
-      
-      // Calculate pricing details for Step 2
-      if (selectedCar && startDate && endDate && startTime && endTime) {
-        const startDateTime = new Date(`${startDate}T${startTime}`)
-        const endDateTime = new Date(`${endDate}T${endTime}`)
-        const durationHours = (endDateTime.getTime() - startDateTime.getTime()) / (1000 * 60 * 60)
-        
-        let rentalPrice = 0
-        let pricingType: 'hourly' | '12-hours' | '24-hours' | 'daily' = 'hourly'
-        
-        if (durationHours <= 12) {
-          rentalPrice = selectedCar.pricePer12Hours || 0
-          pricingType = '12-hours'
-        } else if (durationHours <= 24) {
-          rentalPrice = selectedCar.pricePer24Hours || 0
-          pricingType = '24-hours'
-        } else {
-          const days = Math.ceil(durationHours / 24)
-          rentalPrice = (selectedCar.pricePerDay || 0) * days
-          pricingType = 'daily'
-        }
-        
-        const deliveryFee = pickupType === 'delivery' ? (selectedCar.deliveryFee || 0) : 0
-        const totalPrice = rentalPrice + deliveryFee
-             
-        // Dispatch Step 2 data to Redux
-        dispatch(setBookingDetails({
-          startDate,
-          endDate,
-          startTime,
-          endTime,
-          location,
-          pickupType,
-          // Store calculated pricing for reference
-          rentalPrice,
-          deliveryFee,
-          totalPrice,
-          pricingType,
-          durationHours: Math.round(durationHours * 100) / 100
-        }))
-        
-        console.log('Step 2 data dispatched to Redux')
-      }
-      
-      console.log('========================')
-    }
-    
-    if (canProceedToNext()) {
-      if (currentStep === 3 && personalInfoData) {
-        dispatch(setBookingDetails({
-          firstName: personalInfoData.firstName,
-          middleName: personalInfoData.middleName,
-          lastName: personalInfoData.lastName,
-          contactNumber: personalInfoData.contactNumber,
-          email: personalInfoData.email,
-          licenseNumber: personalInfoData.licenseNumber,
-          idType: personalInfoData.idType,
-          dataConsent: personalInfoData.dataConsent
-        }))
-      }
-      console.log('Dispatching nextStep action...')
-      dispatch(nextStep())
-      console.log('nextStep action dispatched')
-    } else {
-      console.log('Cannot proceed - validation failed')
     }
   }
 

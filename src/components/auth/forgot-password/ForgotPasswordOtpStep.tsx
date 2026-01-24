@@ -13,7 +13,8 @@ interface ForgotPasswordOtpStepProps {
   onVerify: () => void;
   onBack: () => void;
   onResend: () => void;
-  onOtpSent?: () => void; // Callback to trigger countdown
+  onOtpSent?: () => void;
+  expectedOtp?: string; // Add expected OTP for testing
 }
 
 const COUNTDOWN_DURATION = 5 * 60; // 5 minutes in seconds
@@ -29,6 +30,7 @@ export function ForgotPasswordOtpStep({
   onBack,
   onResend,
   onOtpSent,
+  expectedOtp,
 }: ForgotPasswordOtpStepProps) {
   const inputsRef = React.useRef<Array<HTMLInputElement | null>>([]);
   const [timeLeft, setTimeLeft] = useState<number>(0);
@@ -161,6 +163,15 @@ export function ForgotPasswordOtpStep({
         <span className="font-medium text-gray-900"> {email}</span>
       </p>
 
+      {/* Temporary OTP display for testing */}
+      {expectedOtp && (
+        <div className="text-center">
+          <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg inline-block">
+            🧪 TEST MODE: OTP is <span className="font-mono font-bold">{expectedOtp}</span>
+          </p>
+        </div>
+      )}
+
       <div className="flex items-center justify-center gap-2">
         {digits.map((d, i) => (
           <Input
@@ -174,7 +185,7 @@ export function ForgotPasswordOtpStep({
             onChange={(e) => handleChange(i, e.target.value)}
             onKeyDown={(e) => handleKeyDown(i, e)}
             onPaste={handlePaste}
-            className="h-12 w-12 text-center text-lg font-semibold"
+            className="h-12 w-12 text-center text-lg font-semibold border-black"
             disabled={isSubmitting}
           />
         ))}
