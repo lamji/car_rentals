@@ -2,7 +2,6 @@ import React from 'react'
 import { useAppSelector, useAppDispatch } from '@/lib/store'
 import { showLoader, hideLoader } from '@/lib/slices/globalLoaderSlice'
 import { CARS } from '@/lib/data/cars'
-import type { Car } from '@/lib/types'
 
 export type SearchNearestGarageArgs = {
   address: string

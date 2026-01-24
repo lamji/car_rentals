@@ -1,56 +1,13 @@
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect } from "react";
-
-// PSGC API types
-interface PSGCLocation {
-  psgc_id: string;
-  name: string;
-  correspondence_code: string;
-  geographic_level: "Reg" | "Prov" | "City" | "Bgy";
-  old_names: string;
-  city_class: string;
-  income_classification: string;
-  urban_rural: string;
-  population: string;
-  status: string;
-}
-
-interface PSGCPlace {
-  psgc_id: string;
-  name: string;
-  geographic_level: string;
-  full_address: string;
-  population?: string;
-}
-
-interface UsePSGCLocationsOptions {
-  debounceMs?: number;
-  minQueryLength?: number;
-  baseUrl?: string;
-}
-
-interface CascadingSearchState {
-  selectedRegion: PSGCLocation | null;
-  selectedProvince: PSGCLocation | null;
-  selectedCity: PSGCLocation | null;
-  selectedBarangay: PSGCLocation | null;
-}
-
-interface UsePSGCLocationsReturn {
-  predictions: PSGCPlace[];
-  isLoading: boolean;
-  error: string | null;
-  fetchPredictions: (query: string, level?: 'regions' | 'provinces' | 'cities' | 'barangays') => void;
-  getLocationDetails: (psgcId: string) => Promise<PSGCLocation | null>;
-  clearPredictions: () => void;
-  cascadingState: CascadingSearchState;
-  setSelectedRegion: (region: PSGCLocation | null) => void;
-  setSelectedProvince: (province: PSGCLocation | null) => void;
-  setSelectedCity: (city: PSGCLocation | null) => void;
-  setSelectedBarangay: (barangay: PSGCLocation | null) => void;
-  resetCascadingSearch: () => void;
-}
+import { useState, useCallback, useRef } from "react";
+import type { 
+  PSGCLocation, 
+  PSGCPlace, 
+  UsePSGCLocationsOptions, 
+  CascadingSearchState, 
+  UsePSGCLocationsReturn 
+} from "@/lib/types/psgc";
 
 export function usePSGCLocations(options: UsePSGCLocationsOptions = {}): UsePSGCLocationsReturn {
   const {
@@ -62,7 +19,7 @@ export function usePSGCLocations(options: UsePSGCLocationsOptions = {}): UsePSGC
   const [predictions, setPredictions] = useState<PSGCPlace[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentSearchLevel, setCurrentSearchLevel] = useState<'regions' | 'provinces' | 'cities' | 'barangays'>('regions');
+  const [currentSearchLevel] = useState<'regions' | 'provinces' | 'cities' | 'barangays'>('regions');
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Cascading search state
@@ -209,7 +166,7 @@ export function usePSGCLocations(options: UsePSGCLocationsOptions = {}): UsePSGC
         } else {
           setPredictions([]);
         }
-      } catch (err) {
+      } catch {
         setError("Failed to fetch location data");
         setPredictions([]);
       } finally {
@@ -240,7 +197,7 @@ export function usePSGCLocations(options: UsePSGCLocationsOptions = {}): UsePSGC
 
       const data = await response.json();
       return data;
-    } catch (err) {
+    } catch {
       setError("Failed to get location details");
       return null;
     }

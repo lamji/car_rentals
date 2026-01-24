@@ -8,7 +8,7 @@ import type { Alert } from "@/lib/slices/alertSlice";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
-import { X, CheckCircle, XCircle, AlertTriangle, Info } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle, Info } from "lucide-react";
 
 export function AlertModal() {
   const dispatch = useDispatch();

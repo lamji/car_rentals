@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = React.useState(false);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="mt-5 min-h-screen flex flex-col max-lg:w-full mx-auto">
       {/* Header */}
     
 

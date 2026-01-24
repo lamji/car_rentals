@@ -2,13 +2,28 @@
 
 import React, { useState } from "react";
 import { usePSGCLocations } from "@/hooks/usePSGCLocations";
+import type { PSGCLocation, PSGCPlace } from "@/lib/types/psgc";
+
+// Helper function to convert PSGCPlace to PSGCLocation
+const psgcPlaceToLocation = (place: PSGCPlace): PSGCLocation => ({
+  psgc_id: place.psgc_id,
+  name: place.name,
+  correspondence_code: '', // Not available in PSGCPlace
+  geographic_level: place.geographic_level as 'Reg' | 'Prov' | 'City' | 'Bgy',
+  old_names: '', // Not available in PSGCPlace
+  city_class: '', // Not available in PSGCPlace
+  income_classification: '', // Not available in PSGCPlace
+  urban_rural: '', // Not available in PSGCPlace
+  population: place.population || '', // Use empty string if not available
+  status: '', // Not available in PSGCPlace
+});
 
 interface LocationSelectorProps {
   onLocationSelect?: (location: {
-    region?: any;
-    province?: any;
-    city?: any;
-    barangay?: any;
+    region?: PSGCPlace | null;
+    province?: PSGCPlace | null;
+    city?: PSGCPlace | null;
+    barangay?: PSGCPlace | null;
   }) => void;
 }
 
@@ -37,8 +52,9 @@ export default function LocationSelector({ onLocationSelect }: LocationSelectorP
   const [showBarangayResults, setShowBarangayResults] = useState(false);
 
   // Handle region selection
-  const handleRegionSelect = (region: any) => {
-    setSelectedRegion(region);
+  const handleRegionSelect = (region: PSGCPlace) => {
+    const locationRegion = psgcPlaceToLocation(region);
+    setSelectedRegion(locationRegion);
     setRegionQuery(region.name);
     setShowRegionResults(false);
     clearPredictions();
@@ -58,8 +74,9 @@ export default function LocationSelector({ onLocationSelect }: LocationSelectorP
   };
 
   // Handle province selection
-  const handleProvinceSelect = (province: any) => {
-    setSelectedProvince(province);
+  const handleProvinceSelect = (province: PSGCPlace) => {
+    const locationProvince = psgcPlaceToLocation(province);
+    setSelectedProvince(locationProvince);
     setProvinceQuery(province.name);
     setShowProvinceResults(false);
     clearPredictions();
@@ -78,8 +95,9 @@ export default function LocationSelector({ onLocationSelect }: LocationSelectorP
   };
 
   // Handle city selection
-  const handleCitySelect = (city: any) => {
-    setSelectedCity(city);
+  const handleCitySelect = (city: PSGCPlace) => {
+    const locationCity = psgcPlaceToLocation(city);
+    setSelectedCity(locationCity);
     setCityQuery(city.name);
     setShowCityResults(false);
     clearPredictions();
@@ -96,8 +114,9 @@ export default function LocationSelector({ onLocationSelect }: LocationSelectorP
   };
 
   // Handle barangay selection
-  const handleBarangaySelect = (barangay: any) => {
-    setSelectedBarangay(barangay);
+  const handleBarangaySelect = (barangay: PSGCPlace) => {
+    const locationBarangay = psgcPlaceToLocation(barangay);
+    setSelectedBarangay(locationBarangay);
     setBarangayQuery(barangay.name);
     setShowBarangayResults(false);
     clearPredictions();

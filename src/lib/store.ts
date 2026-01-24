@@ -8,6 +8,7 @@ import addressReducer from './slices/addressSlice';
 import bookingReducer from './slices/bookingSlice';
 import globalLoaderReducer from './slices/globalLoaderSlice';
 import alertReducer from './slices/alertSlice';
+import confirmationReducer from './slices/confirmationSlice';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { combineReducers } from '@reduxjs/toolkit';
@@ -36,6 +37,7 @@ const rootReducer = combineReducers({
   booking: persistReducer(bookingPersistConfig, bookingReducer),
   globalLoader: globalLoaderReducer,
   alerts: alertReducer,
+  confirmation: confirmationReducer,
 });
 
 // Root persist config (optional - for entire store if needed)

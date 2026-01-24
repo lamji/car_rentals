@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { useReduxPSGCLocations } from "@/hooks/useReduxPSGCLocations";
 import { MapPin } from "lucide-react";
+import type { PSGCRegion } from "@/lib/slices/regionsSlice";
 
 interface ReduxLocationSearchInputProps {
   value: string;
@@ -21,7 +22,6 @@ export function ReduxLocationSearchInput({
   const {
     filteredRegions,
     regionsLoading,
-    regionQuery,
     setRegionQuery,
     cascadingState,
     setSelectedRegion,
@@ -59,58 +59,13 @@ export function ReduxLocationSearchInput({
   };
 
   // Handle region selection
-  const handleRegionSelect = (region: any) => {
+  const handleRegionSelect = (region: PSGCRegion) => {
     console.log('✅ Region selected:', region.name);
     const locationString = `${region.name}`;
     setInternalQuery(locationString);
     onChange(locationString);
     setShowDropdown(false);
     setSelectedRegion(region);
-  };
-
-  // Handle province selection
-  const handleProvinceSelect = (province: any) => {
-    console.log('✅ Province selected:', province.name);
-    let locationString = province.name;
-    if (cascadingState.selectedRegion) {
-      locationString = `${province.name}, ${cascadingState.selectedRegion.name}`;
-    }
-    setInternalQuery(locationString);
-    onChange(locationString);
-    setShowDropdown(false);
-    setSelectedProvince(province);
-  };
-
-  // Handle city selection
-  const handleCitySelect = (city: any) => {
-    console.log('✅ City selected:', city.name);
-    let locationString = city.name;
-    if (cascadingState.selectedProvince) {
-      locationString = `${city.name}, ${cascadingState.selectedProvince.name}`;
-    } else if (cascadingState.selectedRegion) {
-      locationString = `${city.name}, ${cascadingState.selectedRegion.name}`;
-    }
-    setInternalQuery(locationString);
-    onChange(locationString);
-    setShowDropdown(false);
-    setSelectedCity(city);
-  };
-
-  // Handle barangay selection
-  const handleBarangaySelect = (barangay: any) => {
-    console.log('✅ Barangay selected:', barangay.name);
-    let locationString = barangay.name;
-    if (cascadingState.selectedCity) {
-      locationString = `${barangay.name}, ${cascadingState.selectedCity.name}`;
-    } else if (cascadingState.selectedProvince) {
-      locationString = `${barangay.name}, ${cascadingState.selectedProvince.name}`;
-    } else if (cascadingState.selectedRegion) {
-      locationString = `${barangay.name}, ${cascadingState.selectedRegion.name}`;
-    }
-    setInternalQuery(locationString);
-    onChange(locationString);
-    setShowDropdown(false);
-    setSelectedBarangay(barangay);
   };
 
   // Handle focus
@@ -198,7 +153,7 @@ export function ReduxLocationSearchInput({
 
           {filteredRegions.length === 0 && internalQuery.length >= 1 && !regionsLoading && (
             <div className="px-3 py-2 text-gray-500 text-sm">
-              No regions found matching "{internalQuery}"
+              No regions found matching &quot;{internalQuery}&quot;
             </div>
           )}
 

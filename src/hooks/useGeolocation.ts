@@ -1,28 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { reverseGeocode, GeocodedAddress } from "@/utils/geocoding";
-
-export type GeolocationPosition = {
-  lat: number;
-  lng: number;
-  accuracy: number;
-  timestamp: number;
-};
-
-export type GeolocationError = {
-  code: number;
-  message: string;
-};
-
-export type GeolocationState = {
-  position: GeolocationPosition | null;
-  address: GeocodedAddress | null;
-  error: GeolocationError | null;
-  loading: boolean;
-  permissionGranted: boolean | null;
-  permissionDenied: boolean;
-};
+import { reverseGeocode } from "@/utils/geocoding";
+import type { GeolocationState } from "@/lib/types/geolocation";
 
 export function useGeolocation(options?: PositionOptions) {
   const [state, setState] = useState<GeolocationState>({

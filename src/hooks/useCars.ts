@@ -3,13 +3,8 @@
 import { useMemo } from "react";
 
 import { CARS } from "@/lib/data/cars";
-import type { Car, Transmission } from "@/lib/types";
-
-export type CarsFilters = {
-  priceMax?: number;
-  seats?: number;
-  transmission?: Transmission;
-};
+import type { Car } from "@/lib/types";
+import type { CarsFilters } from "@/lib/types/booking";
 
 export function useCars(params: {
   location: string;

@@ -90,7 +90,7 @@ export function useResetPassword() {
         return response
       }
     }
-  }, [createMockResponse, isValidEmail, simulateApiCall])
+  }, [createMockResponse, isValidEmail, simulateApiCall, dispatch])
 
   const verifyResetPasswordOTP = React.useCallback(async (args: VerifyResetPasswordOtpArgs): Promise<VerifyResetPasswordOtpResponse> => {
     const {

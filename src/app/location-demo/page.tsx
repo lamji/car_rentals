@@ -1,9 +1,16 @@
 "use client";
 
 import ReduxLocationSelector from "@/components/ReduxLocationSelector";
+import type { PSGCRegion } from "@/lib/slices/regionsSlice";
+import type { PSGCPlace } from "@/lib/types/psgc";
 
 export default function LocationDemoPage() {
-  const handleLocationSelect = (location: any) => {
+  const handleLocationSelect = (location: {
+    region?: PSGCRegion | null;
+    province?: PSGCPlace | null;
+    city?: PSGCPlace | null;
+    barangay?: PSGCPlace | null;
+  }) => {
     console.log("Selected location:", location);
   };
 

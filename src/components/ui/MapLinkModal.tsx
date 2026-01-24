@@ -46,7 +46,7 @@ export function MapLinkModal({ isOpen, onClose, mapUrl, locationName }: MapLinkM
             Open Location in Maps
           </DialogTitle>
           <DialogDescription>
-            View "{locationName}" location on Google Maps
+            View &quot;{locationName}&quot; location on Google Maps
           </DialogDescription>
         </DialogHeader>
         

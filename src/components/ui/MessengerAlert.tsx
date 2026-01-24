@@ -112,9 +112,9 @@ export function useMessengerDetection() {
       const hasInAppBrowserFeatures = (
         !window.opener || // In-app browsers often don't have window.opener
         window.name === '_blank' ||
-        !!(window as any).webkit?.messageHandlers || // Some in-app browsers use this
-        !(window as any).chrome || // Missing Chrome features
-        !(window as any).sidebar // Missing Firefox features
+        !!(window as unknown as { webkit?: { messageHandlers?: unknown } }).webkit?.messageHandlers || // Some in-app browsers use this
+        !(window as unknown as { chrome?: unknown }).chrome || // Missing Chrome features
+        !(window as unknown as { sidebar?: unknown }).sidebar // Missing Firefox features
       );
 
       // Check if we're in a limited environment

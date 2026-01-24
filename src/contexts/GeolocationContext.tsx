@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useContext, ReactNode, useEffect } from "react";
-import { useGeolocation, GeolocationState } from "@/hooks/useGeolocation";
+import { useGeolocation } from "@/hooks/useGeolocation";
+import type { GeolocationState } from "@/lib/types/geolocation";
 
 interface GeolocationContextType extends GeolocationState {
   getCurrentPosition: () => void;

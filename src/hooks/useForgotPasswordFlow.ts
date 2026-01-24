@@ -4,21 +4,14 @@ import React from "react";
 import { useResetPassword } from "@/lib/api/useResetPassword";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useResponseValidator } from "@/hooks/useResponseValidator";
-
-type Step = "email" | "otp" | "password";
-
-type UseForgotPasswordFlowArgs = {
-  isOpen: boolean;
-  onClose: () => void;
-  onShouldOpen?: () => void;
-};
+import type { ForgotPasswordStep, UseForgotPasswordFlowArgs } from "@/lib/types/auth";
 
 const MODAL_STATE_KEY = "forgot_password_modal_state";
 const COUNTDOWN_KEY_PREFIX = "otp_resend_timer_";
 const OTP_STATUS_KEY = "otp_session_status";
 
 export function useForgotPasswordFlow({ isOpen, onClose, onShouldOpen }: UseForgotPasswordFlowArgs) {
-  const [step, setStep] = React.useState<Step>("email");
+  const [step, setStep] = React.useState<ForgotPasswordStep>("email");
   const [email, setEmail] = React.useState("");
   const [otp, setOtp] = React.useState("");
   const [expectedOtp, setExpectedOtp] = React.useState<string | undefined>(undefined);

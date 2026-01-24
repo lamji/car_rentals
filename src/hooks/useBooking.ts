@@ -2,23 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import type { Booking, FulfillmentState } from "@/lib/types";
+import type { Booking } from "@/lib/types";
+import type { BookingDraft } from "@/lib/types/booking";
 import { canUseDom, safeJsonParse } from "@/lib/storage";
 
 const BOOKINGS_KEY = "car_rentals_bookings";
 const DRAFT_KEY = "car_rentals_draft";
-
-export type BookingDraft = {
-  carId?: string;
-  location?: string;
-  startDate?: string;
-  endDate?: string;
-  startTime?: string;
-  duration?: "12hours" | "24hours";
-  fulfillmentType?: "pickup" | "delivery";
-  deliveryFee?: number;
-  fulfillment?: FulfillmentState;
-};
 
 export function useBooking() {
   const [bookings, setBookings] = useState<Booking[]>([]);

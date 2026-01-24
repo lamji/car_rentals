@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from 'react-redux'
+import type { RootState, AppDispatch } from '@/lib/store';
 import {
   selectAllRegions,
   selectFilteredRegions,
@@ -128,12 +129,12 @@ export function useReduxPSGCLocations(options: UseReduxPSGCLocationsOptions = {}
   } = options;
 
   // Redux hooks for regions
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const allRegions = useSelector(selectAllRegions);
   const filteredRegions = useSelector(selectFilteredRegions);
   const regionsLoading = useSelector(selectRegionsLoading);
   const regionsError = useSelector(selectRegionsError);
-  const shouldRefetch = useSelector((state: any) => selectShouldRefetchRegions(state, regionCacheTime));
+  const shouldRefetch = useSelector((state: RootState) => selectShouldRefetchRegions(state, regionCacheTime));
 
   // Redux hooks for provinces
   const allProvinces = useSelector(selectAllProvinces);
@@ -179,7 +180,7 @@ export function useReduxPSGCLocations(options: UseReduxPSGCLocationsOptions = {}
     
     if (autoFetchRegions && (allRegions.length === 0 || shouldRefetch)) {
       console.log('🔄 Fetching regions...');
-      dispatch(fetchRegions() as any);
+      dispatch(fetchRegions());
     } else {
       console.log('✅ Using cached regions - NOT fetching');
     }
@@ -209,7 +210,7 @@ export function useReduxPSGCLocations(options: UseReduxPSGCLocationsOptions = {}
       dispatch(filterRegions(region.name));
       setCurrentSearchLevel('provinces');
       console.log('🔄 Fetching provinces for region:', region.psgc_id);
-      dispatch(fetchProvincesByRegion(region.psgc_id) as any);
+      dispatch(fetchProvincesByRegion(region.psgc_id));
     } else {
       setCurrentSearchLevel('regions');
     }
@@ -225,7 +226,7 @@ export function useReduxPSGCLocations(options: UseReduxPSGCLocationsOptions = {}
     setPredictions([]);
     if (province && cascadingState.selectedRegion) {
       console.log('🔄 Fetching cities for province:', province.psgc_id);
-      dispatch(fetchCitiesByProvince(province.psgc_id) as any);
+      dispatch(fetchCitiesByProvince(province.psgc_id));
     }
   }, [dispatch, cascadingState.selectedRegion]);
 
@@ -238,7 +239,7 @@ export function useReduxPSGCLocations(options: UseReduxPSGCLocationsOptions = {}
     setPredictions([]);
     if (city && cascadingState.selectedProvince) {
       console.log('🔄 Fetching barangays for city:', city.psgc_id);
-      dispatch(fetchBarangaysByCity(city.psgc_id) as any);
+      dispatch(fetchBarangaysByCity(city.psgc_id));
     }
   }, [dispatch, cascadingState.selectedProvince]);
 
@@ -399,7 +400,7 @@ export function useReduxPSGCLocations(options: UseReduxPSGCLocationsOptions = {}
 
       const data = await response.json();
       return data;
-    } catch (err) {
+    } catch {
       setError("Failed to get location details");
       return null;
     }
