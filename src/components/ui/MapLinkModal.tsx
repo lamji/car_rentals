@@ -70,13 +70,7 @@ export function MapLinkModal({ isOpen, onClose, mapUrl, locationName }: MapLinkM
             <Copy className="h-4 w-4 mr-2" />
             {copied ? "Copied!" : "Copy URL"}
           </Button>
-          <Button
-            onClick={handleOpenInBrowser}
-            className="w-full sm:w-auto"
-          >
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Open in Browser
-          </Button>
+         
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -75,19 +75,7 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
               </div>
             </div>
           </div>
-          <div className="mt-3 border-t pt-3">
-            <div className="flex justify-around text-center">
-              <div className="flex-1">
-                <div className="text-lg font-bold text-primary sm:text-xl">{formatCurrency(car.pricePer12Hours)}</div>
-                <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide">12 Hours</div>
-              </div>
-              <div className="w-px bg-border"></div>
-              <div className="flex-1">
-                <div className="text-lg font-bold text-primary sm:text-xl">{formatCurrency(car.pricePer24Hours)}</div>
-                <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide">24 Hours</div>
-              </div>
-            </div>
-          </div>
+ 
           
           {/* Availability information */}
           <div className="mt-3 p-2 rounded-md bg-muted/50">

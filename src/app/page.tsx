@@ -1,13 +1,11 @@
 "use client";
 
 import { Suspense } from "react";
-import { LocateFixed } from "lucide-react";
 import { useHomeContent } from "@/hooks/useHomeContent";
-import { useLocationModal } from "@/contexts/LocationModalContext";
 import { Hero } from "@/components/home/Hero";
 import { CarGrid } from "@/components/home/CarGrid";
 import { CategorySidebar } from "@/components/home/CategorySidebar";
-import { MobileCategoryFilter } from "@/components/home/MobileCategoryFilter";
+import { MobileHero } from "@/components/home/MobileHero";
 
 function HomeContent() {
   const {
@@ -21,13 +19,7 @@ function HomeContent() {
     detailsHrefFor,
   } = useHomeContent();
 
-  const { openLocationModal } = useLocationModal();
 
-  // Function to truncate text to specific character count
-  const truncateText = (text: string, maxLength: number) => {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength - 3) + '...';
-  };
 
   return (
     <div data-testid="home-page">
@@ -42,7 +34,7 @@ function HomeContent() {
 
       {/* Mobile Hero Section */}
       <div
-        className="lg:hidden relative border-b-2 border-l-2 border-r-2 border-gray-800 p-6 mb-4 h-[50vh] flex flex-col"
+        className="lg:hidden relative border-b-2 border-l-2 border-r-2 border-gray-800 p-6 mb-4 h-[60vh] flex flex-col"
         style={{
           backgroundImage:
             "url(https://res.cloudinary.com/dlax3esau/image/upload/v1769172920/herobg_nxiyen.png)",
@@ -98,48 +90,15 @@ function HomeContent() {
         </div>
 
         {/* Center content */}
-        <div className="relative z-10 flex-1 flex items-center justify-center text-center">
-          <div>
-            <h1 className="text-2xl font-bold text-white mb-2">
-              Hi {state.user?.name || "Guest"}
-            </h1>
-            <p className="text-lg text-white font-medium">
-              Find Your Perfect Ride
-            </p>
-            <p className="text-gray-300">
-              Browse our selection of quality vehicles
-            </p>
-            <div className="mt-4 flex gap-2 max-w-md mx-auto ">
-              <button
-                onClick={openLocationModal}
-                className="flex-1 px-4 py-3 rounded-lg bg-white/10 border-2 border-white text-white placeholder-white/60 hover:bg-white/20 transition-colors text-left flex items-center gap-3 min-w-0"
-              >
-                <LocateFixed className="w-4 h-4 text-white flex-shrink-0" />
-                <span className="flex-1 flex items-center justify-between">
-                  <span className="truncate">
-                    {truncateText(state.location || "Select Location", 30)}
-                  </span>
-                  {state.location && (
-                    <button
-                      onClick={handleClearLocation}
-                      className="flex-shrink-0 p-1 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-                      title="Clear location"
-                    >
-                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                      </svg>
-                    </button>
-                  )}
-                </span>
-              </button>
-              <MobileCategoryFilter
-                categories={categories}
-                selectedCategory={selectedCategory}
-                setSelectedCategory={setSelectedCategory}
-                data-testid="mobile-filter-wrapper"
-              />
-            </div>
-          </div>
+        <div className="relative z-10 flex-1 flex items-center justify-center text-center w-[100%]">
+          <MobileHero
+            location={state.location}
+            onClearLocation={handleClearLocation}
+            userName={state.user?.name}
+            categories={categories}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+          />
         </div>
       </div>
 
@@ -152,7 +111,6 @@ function HomeContent() {
           className="grid gap-6 lg:gap-8 lg:grid-cols-4"
           data-testid="car-content-grid"
         >
-         
           <CategorySidebar
             categories={categories}
             selectedCategory={selectedCategory}
@@ -160,9 +118,8 @@ function HomeContent() {
             data-testid="category-sidebar-wrapper"
           />
 
-      
           <div
-            className="pt-6 lg:col-span-3 px-5 lg:px-0 -mt-20 lg:-mt-0 rounded-tl-[3rem] rounded-tr-[3rem] bg-white border-0 border-gray-200 relative"
+            className="pt-10 lg:col-span-3 px-5 lg:px-0 -mt-20 lg:-mt-0 rounded-tl-[3rem] rounded-tr-[3rem] bg-white border-0 border-gray-200 relative"
             data-testid="car-main-content"
           >
             <CarGrid

@@ -9,7 +9,7 @@ interface CarGridProps {
 export function CarGrid({ filteredCars, detailsHrefFor }: CarGridProps) {
   return (
     <div className="lg:col-span-3">
-      <div className="grid gap-2 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-5">
+      <div className="grid gap-2 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-5">
         {filteredCars.map((car) => {
           console.log("test:cars", car);
           // Get today's date and check if it's in unavailableDates

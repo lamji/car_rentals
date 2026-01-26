@@ -29,7 +29,7 @@ export function MobileCategoryFilter({
       <div className="lg:hidden flex items-center justify-between">
         <Button
           onClick={() => setIsFilterModalOpen(true)}
-          className="p-3 bg-white border-2 border-white hover:bg-gray-100"
+          className="w-12 h-12 p-3 bg-white border-2 border-white hover:bg-gray-100"
           size="lg"
         >
           <SlidersHorizontal className="h-5 w-5 text-black" />

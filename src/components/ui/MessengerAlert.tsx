@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Copy, ExternalLink, AlertTriangle } from "lucide-react";
+import { Copy, AlertTriangle } from "lucide-react";
 
 interface MessengerAlertProps {
   isOpen: boolean;
@@ -31,12 +31,7 @@ export function MessengerAlert({ isOpen, onClose, currentUrl }: MessengerAlertPr
     }
   };
 
-  const handleOpenInBrowser = () => {
-    // Try to open in external browser
-    window.open(currentUrl, '_blank', 'noopener,noreferrer');
-    onClose();
-  };
-
+ 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -71,13 +66,7 @@ export function MessengerAlert({ isOpen, onClose, currentUrl }: MessengerAlertPr
             {copied ? "Copied!" : "Copy URL"}
           </Button>
           
-          <Button
-            onClick={handleOpenInBrowser}
-            className="w-full sm:w-auto"
-          >
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Open in Browser
-          </Button>
+          
         </DialogFooter>
       </DialogContent>
     </Dialog>
