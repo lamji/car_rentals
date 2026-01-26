@@ -2,15 +2,11 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-import { Header } from "@/components/layout/Header";
 import ReduxProvider from "@/components/providers/ReduxProvider";
 import { GeolocationWrapper } from "@/components/providers/GeolocationWrapper";
-import { GeolocationTest } from "@/components/debug/GeolocationTest";
 import { LocationPermissionBanner } from "@/components/ui/LocationPermissionBanner";
-import { MessengerAlertWrapper } from "@/components/ui/MessengerAlertWrapper";
-import { GlobalLoaderOverlay } from "@/components/ui/GlobalLoaderOverlay";
-import { AlertModal } from "@/components/ui/AlertModal";
-import { ConfirmationModal } from "@/components/modal/ConfirmationModal";
+import { LayoutContent } from "@/components/layout/LayoutContent";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,13 +36,9 @@ export default function RootLayout({
         <ReduxProvider>
           <GeolocationWrapper>
             <LocationPermissionBanner />
-            <Header />
-            <GlobalLoaderOverlay />
-            {children}
-            <GeolocationTest />
-            <MessengerAlertWrapper />
-            <AlertModal />
-            <ConfirmationModal />
+            <LayoutContent>
+              {children}
+            </LayoutContent>
           </GeolocationWrapper>
         </ReduxProvider>
       </body>

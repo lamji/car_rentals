@@ -18,7 +18,7 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
   const unavailableCars = searchResults.garages.filter((g: NearestGarageResult) => !g.available)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -26,12 +26,12 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
       />
       
       {/* Modal */}
-      <div className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+      <div className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] sm:max-h-[80vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">Nearest Garages</h2>
-            <p className="text-sm text-gray-500 mt-1">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">Nearest Garages</h2>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1 truncate">
               Search results for: {searchResults.searchAddress}
             </p>
           </div>
@@ -39,21 +39,21 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="p-2 hover:bg-gray-100"
+            className="p-2 hover:bg-gray-100 flex-shrink-0"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[60vh]">
+        <div className="p-4 sm:p-6 overflow-y-auto max-h-[70vh] sm:max-h-[60vh]">
           {availableCars.length === 0 && unavailableCars.length === 0 ? (
             <div className="text-center py-8">
               <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500">No cars found near your location</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {/* Available Cars */}
               {availableCars.length > 0 && (
                 <div>
@@ -62,52 +62,106 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
                     {availableCars.map((car: NearestGarageResult) => (
                       <div
                         key={car.id}
-                        className="border border-green-500 rounded-lg p-4 bg-white hover:bg-gray-50 transition-colors cursor-pointer"
+                        className="border border-green-500 rounded-lg p-3 sm:p-4 bg-white hover:bg-gray-50 transition-colors cursor-pointer"
                         onClick={() => onSelectGarage(car.id)}
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-shrink-0 mr-4">
-                            <div className="relative w-32 h-24 rounded-lg border-2 border-gray-200 overflow-hidden">
-                              <Image
-                                src={car.carImage}
-                                alt={car.carName}
-                                fill
-                                className="object-cover"
-                              />
+                        {/* Mobile: Vertical layout */}
+                        <div className="sm:hidden space-y-3">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0">
+                              <div className="relative w-20 h-16 rounded-lg overflow-hidden">
+                                <Image
+                                  src={car.carImage}
+                                  alt={car.carName}
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-medium text-gray-900 text-sm truncate">{car.carName}</h4>
+                                <span className="text-xs text-gray-500">{car.carYear}</span>
+                                <span className="px-2 py-1 bg-green-500 text-white text-xs rounded-full">
+                                  Available
+                                </span>
+                              </div>
+                              
+                              <div className="flex gap-3 text-xs text-gray-600 mb-2">
+                                <div className="flex items-center gap-1">
+                                  <Users className="h-3 w-3" />
+                                  <span>{car.seats} seats</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Settings className="h-3 w-3" />
+                                  <span>{car.transmission}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Car className="h-3 w-3" />
+                                  <span>{car.selfDrive ? 'Self-drive' : 'With driver'}</span>
+                                </div>
+                              </div>
                             </div>
                           </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <h4 className="font-medium text-gray-900">{car.carName}</h4>
-                              <span className="text-xs text-gray-500">{car.carYear}</span>
-                              <span className="px-2 py-1 bg-green-500 text-white text-xs rounded-full">
-                                Available
-                              </span>
+                          
+                          <div className="space-y-1 text-xs text-gray-600 pl-0">
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate">{car.garageAddress} - {car.distance} km away</span>
                             </div>
-                            
-                            <div className="flex items-center gap-3 text-sm text-gray-600 mb-2">
-                              <div className="flex items-center gap-1">
-                                <Users className="h-4 w-4" />
-                                <span>{car.seats} seats</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Settings className="h-4 w-4" />
-                                <span>{car.transmission}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Car className="h-4 w-4" />
-                                <span>{car.selfDrive ? 'Self-drive' : 'With driver'}</span>
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-3 w-3 flex-shrink-0" />
+                              <span>{car.ownerContact}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Desktop: Horizontal layout */}
+                        <div className="hidden sm:block">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-shrink-0 mr-4">
+                              <div className="relative w-32 h-24 rounded-lg border-2 border-gray-200 overflow-hidden">
+                                <Image
+                                  src={car.carImage}
+                                  alt={car.carName}
+                                  fill
+                                  className="object-cover"
+                                />
                               </div>
                             </div>
-                            
-                            <div className="space-y-1 text-sm text-gray-600">
-                              <div className="flex items-center gap-2">
-                                <MapPin className="h-4 w-4" />
-                                <span>{car.garageAddress} - {car.distance} km away</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h4 className="font-medium text-gray-900 truncate">{car.carName}</h4>
+                                <span className="text-xs text-gray-500">{car.carYear}</span>
+                                <span className="px-2 py-1 bg-green-500 text-white text-xs rounded-full">
+                                  Available
+                                </span>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <Phone className="h-4 w-4" />
-                                <span>{car.ownerContact}</span>
+                              
+                              <div className="flex items-center gap-3 text-sm text-gray-600 mb-2">
+                                <div className="flex items-center gap-1">
+                                  <Users className="h-4 w-4" />
+                                  <span>{car.seats} seats</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Settings className="h-4 w-4" />
+                                  <span>{car.transmission}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Car className="h-4 w-4" />
+                                  <span>{car.selfDrive ? 'Self-drive' : 'With driver'}</span>
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-1 text-sm text-gray-600">
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="h-4 w-4" />
+                                  <span className="truncate">{car.garageAddress} - {car.distance} km away</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Phone className="h-4 w-4" />
+                                  <span>{car.ownerContact}</span>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -126,51 +180,105 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
                     {unavailableCars.map((car: NearestGarageResult) => (
                       <div
                         key={car.id}
-                        className="border border-gray-200 rounded-lg p-4 bg-gray-50 opacity-60"
+                        className="border border-gray-200 rounded-lg p-3 sm:p-4 bg-gray-50 opacity-60"
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-shrink-0 mr-4">
-                            <div className="relative w-32 h-24 rounded-lg border-2 border-gray-200 overflow-hidden opacity-50">
-                              <Image
-                                src={car.carImage}
-                                alt={car.carName}
-                                fill
-                                className="object-cover"
-                              />
+                        {/* Mobile: Vertical layout */}
+                        <div className="sm:hidden space-y-3">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0">
+                              <div className="relative w-20 h-16 rounded-lg overflow-hidden opacity-50">
+                                <Image
+                                  src={car.carImage}
+                                  alt={car.carName}
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-medium text-gray-700 text-sm truncate">{car.carName}</h4>
+                                <span className="text-xs text-gray-500">{car.carYear}</span>
+                                <span className="px-2 py-1 bg-red-500 text-white text-xs rounded-full">
+                                  Unavailable
+                                </span>
+                              </div>
+                              
+                              <div className="flex gap-3 text-xs text-gray-500 mb-2">
+                                <div className="flex items-center gap-1">
+                                  <Users className="h-3 w-3" />
+                                  <span>{car.seats} seats</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Settings className="h-3 w-3" />
+                                  <span>{car.transmission}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Car className="h-3 w-3" />
+                                  <span>{car.selfDrive ? 'Self-drive' : 'With driver'}</span>
+                                </div>
+                              </div>
                             </div>
                           </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <h4 className="font-medium text-gray-700">{car.carName}</h4>
-                              <span className="text-xs text-gray-500">{car.carYear}</span>
-                              <span className="px-2 py-1 bg-red-500 text-white text-xs rounded-full">
-                                Unavailable
-                              </span>
+                          
+                          <div className="space-y-1 text-xs text-gray-500 pl-0">
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate">{car.garageAddress} - {car.distance} km away</span>
                             </div>
-                            
-                            <div className="flex items-center gap-3 text-sm text-gray-500 mb-2">
-                              <div className="flex items-center gap-1">
-                                <Users className="h-4 w-4" />
-                                <span>{car.seats} seats</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Settings className="h-4 w-4" />
-                                <span>{car.transmission}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Car className="h-4 w-4" />
-                                <span>{car.selfDrive ? 'Self-drive' : 'With driver'}</span>
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-3 w-3 flex-shrink-0" />
+                              <span>{car.ownerContact}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Desktop: Horizontal layout */}
+                        <div className="hidden sm:block">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-shrink-0 mr-4">
+                              <div className="relative w-32 h-24 rounded-lg border-2 border-gray-200 overflow-hidden opacity-50">
+                                <Image
+                                  src={car.carImage}
+                                  alt={car.carName}
+                                  fill
+                                  className="object-cover"
+                                />
                               </div>
                             </div>
-                            
-                            <div className="space-y-1 text-sm text-gray-500">
-                              <div className="flex items-center gap-2">
-                                <MapPin className="h-4 w-4" />
-                                <span>{car.garageAddress} - {car.distance} km away</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h4 className="font-medium text-gray-700 truncate">{car.carName}</h4>
+                                <span className="text-xs text-gray-500">{car.carYear}</span>
+                                <span className="px-2 py-1 bg-red-500 text-white text-xs rounded-full">
+                                  Unavailable
+                                </span>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <Phone className="h-4 w-4" />
-                                <span>{car.ownerContact}</span>
+                              
+                              <div className="flex items-center gap-3 text-sm text-gray-500 mb-2">
+                                <div className="flex items-center gap-1">
+                                  <Users className="h-4 w-4" />
+                                  <span>{car.seats} seats</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Settings className="h-4 w-4" />
+                                  <span>{car.transmission}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Car className="h-4 w-4" />
+                                  <span>{car.selfDrive ? 'Self-drive' : 'With driver'}</span>
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-1 text-sm text-gray-500">
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="h-4 w-4" />
+                                  <span className="truncate">{car.garageAddress} - {car.distance} km away</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Phone className="h-4 w-4" />
+                                  <span>{car.ownerContact}</span>
+                                </div>
                               </div>
                             </div>
                           </div>

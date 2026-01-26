@@ -1,6 +1,13 @@
 export type CarType = "sedan" | "suv" | "van";
 export type Transmission = "automatic" | "manual";
 
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  photo?: string;
+};
+
 export type GarageLocation = {
   address: string;
   city: string;
@@ -49,6 +56,7 @@ export type SearchState = {
   startDate: string; // ISO yyyy-mm-dd
   endDate: string; // ISO yyyy-mm-dd
   carType?: CarType;
+  user?: User;
 };
 
 export type FulfillmentState =
