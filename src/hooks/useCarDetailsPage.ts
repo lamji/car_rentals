@@ -14,6 +14,7 @@ export function useCarDetailsPage() {
   const router = useRouter();
   const params = useParams();
   const [showMapModal, setShowMapModal] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const dispatch = useAppDispatch();
 
   const { position, loading } = useGeolocationContext();
@@ -41,6 +42,12 @@ export function useCarDetailsPage() {
     setShowMapModal(prev => !prev);
   }, []);
 
+  const selectImage = useCallback((index: number) => {
+    setSelectedImageIndex(index);
+  }, []);
+
+  const notesText = "When you continue to booking, this unit will be placed on hold for 2 minutes to avoid double bookings. If you don't complete the booking within 2 minutes, the unit will become available again for other users."
+
   return {
     // State
     showMapModal,
@@ -49,10 +56,13 @@ export function useCarDetailsPage() {
     distanceText,
     loading,
     id,
+    selectedImageIndex,
+    notesText,
     
     // Actions
     goToBooking,
     toggleMapModal,
     setShowMapModal,
+    selectImage,
   };
 }

@@ -139,4 +139,23 @@
   .cursor-not-allowed {
     cursor: not-allowed !important;
   }
+
+  /* Date picker modal animations */
+  .animate-in {
+    animation-duration: 0.3s;
+    animation-fill-mode: both;
+  }
+  
+  .slide-in-from-bottom {
+    animation-name: slideInFromBottom;
+  }
+  
+  @keyframes slideInFromBottom {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
 }

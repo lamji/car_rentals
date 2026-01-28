@@ -35,6 +35,26 @@ export function RentalDetailsForm({ onDataChange }: RentalDetailsFormProps) {
     return `${hour}:00 ${period}`
   }
 
+  // Helper function to check if a time is in the past for today's booking
+  const isTimeInPast = (time: string) => {
+    if (!bookingDetails.startDate) return false;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(bookingDetails.startDate);
+    selectedDate.setHours(0, 0, 0, 0);
+    
+    // Only check for today's bookings
+    if (today.getTime() !== selectedDate.getTime()) return false;
+    
+    const now = new Date();
+    const [hours] = time.split(':').map(Number);
+    const selectedTime = new Date();
+    selectedTime.setHours(hours, 0, 0, 0);
+    
+    return selectedTime.getTime() <= now.getTime();
+  }
+
   // Helper function to calculate rental duration in hours
   const calculateRentalDuration = () => {
     if (!bookingDetails.startDate || !bookingDetails.endDate || !bookingDetails.startTime || !bookingDetails.endTime) {
@@ -128,14 +148,20 @@ export function RentalDetailsForm({ onDataChange }: RentalDetailsFormProps) {
               const period = i < 12 ? 'AM' : 'PM';
               const displayTime = `${hour}:00 ${period}`;
               const value = `${i.toString().padStart(2, '0')}:00`;
+              const isPast = isTimeInPast(value);
               
               return (
-                <option key={i} value={value}>
-                  {displayTime}
+                <option key={i} value={value} disabled={isPast}>
+                  {displayTime} {isPast && '(Past)'}
                 </option>
               );
             })}
           </select>
+          {bookingDetails.startDate && bookingDetails.startTime && isTimeInPast(bookingDetails.startTime) && (
+            <div className="text-red-600 text-xs mt-1 bg-red-50 p-2 rounded border border-red-200">
+              ⚠️ Start time cannot be in the past for today&apos;s booking. Please select a future time.
+            </div>
+          )}
         </div>
         
         <div>

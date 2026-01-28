@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { RentalOptions } from "@/components/cars/RentalOptions";
 import { CarImages } from "@/components/cars/CarImages";
 import { useCarDetailsPage } from "@/hooks/useCarDetailsPage";
+import { getFutureUnavailableDates } from "@/utils/dateHelpers";
 
 export function CarDetailsPageContent() {
   const {
@@ -287,78 +288,81 @@ export function CarDetailsPageContent() {
               </div>
             </div>
 
-            {car.availability.unavailableDates.length > 0 && (
-              <div
-                data-testid="unavailable-dates-section"
-                className="border-t border-gray-200 pt-8"
-              >
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  Unavailable Dates
-                </h2>
-                <div className="bg-red-50 border border-red-200 rounded-xl p-5">
-                  <div className="flex items-center gap-3 mb-4">
-                    <svg
-                      className="h-5 w-5 text-red-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+            {(() => {
+              const futureDates = getFutureUnavailableDates(car.availability.unavailableDates);
+              return futureDates.length > 0 && (
+                <div
+                  data-testid="unavailable-dates-section"
+                  className="border-t border-gray-200 pt-8"
+                >
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                    Unavailable Dates
+                  </h2>
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-5">
+                    <div className="flex items-center gap-3 mb-4">
+                      <svg
+                        className="h-5 w-5 text-red-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <div>
+                        <h3 className="text-sm font-semibold text-red-900">
+                          Already Booked
+                        </h3>
+                        <p className="text-xs text-red-600">
+                          {futureDates.length} dates
+                          unavailable
+                        </p>
+                      </div>
+                    </div>
+                    <div
+                      data-testid="unavailable-dates-list"
+                      className="grid gap-2 sm:grid-cols-2"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                    <div>
-                      <h3 className="text-sm font-semibold text-red-900">
-                        Already Booked
-                      </h3>
-                      <p className="text-xs text-red-600">
-                        {car.availability.unavailableDates.length} dates
-                        unavailable
-                      </p>
+                      {futureDates
+                        .slice()
+                        .sort()
+                        .map((date) => (
+                          <div
+                            key={date}
+                            data-testid={`unavailable-date-${date}`}
+                            className="flex items-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-800"
+                          >
+                            <svg
+                              className="h-3.5 w-3.5 text-red-500"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            <span>
+                              {new Date(date).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                            </span>
+                          </div>
+                        ))}
                     </div>
                   </div>
-                  <div
-                    data-testid="unavailable-dates-list"
-                    className="grid gap-2 sm:grid-cols-2"
-                  >
-                    {car.availability.unavailableDates
-                      .slice()
-                      .sort()
-                      .map((date) => (
-                        <div
-                          key={date}
-                          data-testid={`unavailable-date-${date}`}
-                          className="flex items-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-800"
-                        >
-                          <svg
-                            className="h-3.5 w-3.5 text-red-500"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                          <span>
-                            {new Date(date).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
-                          </span>
-                        </div>
-                      ))}
-                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             <div
               data-testid="booking-section"

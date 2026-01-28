@@ -3,6 +3,7 @@
 import React from 'react'
 import { SelectedCarCard } from '@/components/booking/SelectedCarCard'
 import { RentalDetailsForm } from '@/components/booking/RentalDetailsForm'
+import { MobileRentalDetailsForm } from '@/components/booking/MobileRentalDetailsForm'
 import { PersonalInfoForm } from '@/components/booking/PersonalInfoForm'
 import { BookingConfirmation } from '@/components/booking/BookingConfirmation'
 import { PaymentModal } from '@/components/booking/PaymentModal'
@@ -42,7 +43,18 @@ export default function BookingPage() {
       case 1:
         return <SelectedCarCard />
       case 2:
-        return <RentalDetailsForm onDataChange={handleRentalDetailsChange} />
+        return (
+          <div>
+            {/* Mobile Version */}
+            <div className="sm:hidden">
+              <MobileRentalDetailsForm onDataChange={handleRentalDetailsChange} />
+            </div>
+            {/* Desktop Version */}
+            <div className="hidden sm:block">
+              <RentalDetailsForm onDataChange={handleRentalDetailsChange} />
+            </div>
+          </div>
+        )
       case 3:
         return <PersonalInfoForm onValidationChange={handlePersonalInfoValidationChange} />
       case 4:
