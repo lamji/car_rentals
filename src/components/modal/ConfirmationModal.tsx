@@ -5,9 +5,20 @@ import { useConfirmation } from "@/hooks/useConfirmation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AlertTriangle, Info, CheckCircle, XCircle } from "lucide-react";
 
 export function ConfirmationModal() {
   const { isOpen, options, isConfirming, confirm, cancel } = useConfirmation();
+
+  const getIcon = () => {
+    switch (options?.variant) {
+      case 'destructive':
+        return <AlertTriangle className="h-5 w-5 text-red-500" />;
+      case 'default':
+      default:
+        return <Info className="h-5 w-5 text-blue-500" />;
+    }
+  };
 
   const handleConfirm = async () => {
     await confirm();
@@ -21,13 +32,11 @@ export function ConfirmationModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && cancel()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="w-[90%] max-w-[90%] sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
+            {getIcon()}
             {options?.title || "Confirm Action"}
-            {options?.variant === "destructive" && (
-              <Badge variant="destructive">Destructive</Badge>
-            )}
           </DialogTitle>
         </DialogHeader>
         

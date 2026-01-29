@@ -1,0 +1,649 @@
+# Component Usage Rules
+
+## 1. ALWAYS Use shadcn/ui Components
+**MANDATORY**: Always use shadcn/ui components instead of plain HTML elements.
+
+### Check Process:
+1. Look for the component in `src/components/ui/`
+2. If it doesn't exist, install it using: `npx shadcn@latest add [component-name]`
+3. Only then import and use the component
+4. **NEVER** use plain HTML elements when shadcn/ui equivalent exists
+
+### Common shadcn/ui Components (USE THESE):
+- Button: `src/components/ui/button.tsx` ← ALWAYS use instead of `<button>`
+- Card: `src/components/ui/card.tsx` ← ALWAYS use instead of `<div>` with card styling
+- Input: `src/components/ui/input.tsx` ← ALWAYS use instead of `<input>`
+- Dialog: `src/components/ui/dialog.tsx` ← ALWAYS use instead of custom modals
+- Badge: `src/components/ui/badge.tsx` ← ALWAYS use instead of custom badges
+- Avatar: `src/components/ui/avatar.tsx` ← ALWAYS use instead of custom avatars
+- etc.
+
+### Example Workflow:
+```bash
+# Check if Button exists
+ls src/components/ui/button.tsx
+
+# If it doesn't exist, install it
+npx shadcn@latest add button
+
+# Now you can safely import and use it
+import { Button } from '@/components/ui/button'
+```
+
+## 2. Import Verification
+Always verify imports work before proceeding:
+- Check the file exists at the import path
+- Verify the component is properly exported
+- Test the import resolves correctly
+
+## 3. NO Fallback Strategy
+**DO NOT** fall back to plain HTML elements:
+- If shadcn/ui component has issues, install it properly
+- Use shadcn/ui color classes (bg-primary, text-primary-foreground, etc.)
+- Maintain consistent styling patterns
+- **ALWAYS** prefer shadcn/ui over custom implementations
+
+## 4. Installation Commands
+Keep these handy:
+```bash
+npx shadcn@latest add button
+npx shadcn@latest add card
+npx shadcn@latest add input
+npx shadcn@latest add dialog
+npx shadcn@latest add badge
+npx shadcn@latest add avatar
+npx shadcn@latest add tabs
+npx shadcn@latest add separator
+npx shadcn@latest add toast
+npx shadcn@latest add tooltip
+```
+
+## 5. shadcn/ui First Principle
+**RULE**: When in doubt, check if shadcn/ui has a component first. If it exists, use it. If it doesn't exist, install it. Only use custom elements as last resort.
+
+## 6. Separation of Concerns - UI vs Logic
+**MANDATORY**: Always separate UI components from business logic.
+
+### UI Components (Presentational):
+- **Purpose**: Pure presentation and user interactions
+- **Location**: `src/components/` and `src/app/` pages
+- **Characteristics**:
+  - No complex business logic
+  - No API calls or data fetching
+  - No state management (except simple UI state)
+  - Receive data via props
+  - Handle user interactions and events
+
+### Business Logic (Hooks):
+- **Purpose**: Data manipulation, API calls, complex logic
+- **Location**: `src/hooks/` 
+- **Characteristics**:
+  - All data fetching and API integration
+  - Complex state management
+  - Business rules and validation
+  - Data transformation
+  - Side effects and calculations
+
+### Example Pattern:
+```typescript
+// ❌ BAD - Mixed UI and Logic in Component
+export default function BookingsPage() {
+  const [bookings, setBookings] = useState([])
+  const [loading, setLoading] = useState(false)
+  
+  // API call in component - BAD
+  useEffect(() => {
+    fetch('/api/bookings').then(res => res.json()).then(setBookings)
+  }, [])
+  
+  return <div>{/* UI */}</div>
+}
+
+// ✅ GOOD - Separated UI and Logic
+// Hook handles all logic
+export function useBookings() {
+  const [bookings, setBookings] = useState([])
+  const [loading, setLoading] = useState(false)
+  
+  useEffect(() => {
+    fetchBookings().then(setBookings)
+  }, [])
+  
+  return { bookings, loading, refetch: fetchBookings }
+}
+
+// Component is pure UI
+export default function BookingsPage() {
+  const { bookings, loading } = useBookings()
+  return <div>{/* Pure UI */}</div>
+}
+```
+
+### Benefits:
+- **Testability**: Logic can be tested independently
+- **Reusability**: Hooks can be reused across components
+- **Maintainability**: Clear separation makes code easier to understand
+- **Performance**: UI components stay lightweight
+
+## 7. Hook Documentation Standards
+**MANDATORY**: Always add comprehensive comments to hooks.
+
+### Required Comments:
+1. **Hook-Level Comment**: JSDoc comment explaining the hook's purpose
+2. **Function Comments**: JSDoc for each function within the hook
+3. **Flow Comments**: Inline comments for complex logic flows
+4. **State Comments**: Explain important state variables
+
+### Example Pattern:
+```typescript
+/**
+ * Custom hook for managing bookings page state and logic
+ * Handles filtering, booking selection, and status styling
+ * @returns {Object} Bookings state and utility functions
+ */
+export function useBookings() {
+  const [filter, setFilter] = useState('all') // Current filter status
+  
+  /**
+   * Filter bookings based on selected status
+   * @returns {Booking[]} Filtered bookings array
+   */
+  const filteredBookings = useMemo(() => {
+    // Filter logic - only show bookings matching current filter
+    return mockBookings.filter(booking => filter === 'all' || booking.status === filter)
+  }, [filter]) // Recalculate when filter changes
+  
+  /**
+   * Handle booking selection for modal display
+   * @param {Booking | null} booking - Booking to select or null to close
+   */
+  const selectBooking = (booking) => {
+    setSelectedBooking(booking)
+    // Log selection for debugging
+    console.log('Booking selected:', booking?.id)
+  }
+  
+  return { filteredBookings, selectBooking, filter, setFilter }
+}
+```
+
+### Comment Requirements:
+- **JSDoc Format**: Use /** */ for function documentation
+- **Parameter Types**: Document all parameters with @param
+- **Return Types**: Document return values with @returns
+- **Inline Comments**: Explain complex logic or business rules
+- **Flow Comments**: Document data flow and side effects
+- **State Purpose**: Explain why each state variable exists
+
+### Benefits:
+- **Readability**: Easy to understand hook purpose and usage
+- **Maintenance**: Clear documentation for future developers
+- **Debugging**: Comments help trace logic flows
+- **Collaboration**: Team members can quickly understand code
+
+## 8. Mock API Pattern Reference
+**REFERENCE**: When creating mock APIs, always follow the pattern in `src/lib/api/useResetPassword.ts`
+
+### Key Pattern Elements:
+1. **Hook Structure**: Export function with `use` prefix
+2. **Mock Integration**: Use `useMockApi()` and `useMockPasswordReset()` patterns
+3. **Response Creation**: Mock response functions with status codes
+4. **API Simulation**: `simulateApiCall()` with timeout and progress
+5. **Error Handling**: Handle different status codes (400, 200, etc.)
+6. **Loader Integration**: Dispatch loader actions for UX
+
+### Example Reference Pattern:
+```typescript
+// Reference: src/lib/api/useResetPassword.ts
+export function useResetPassword() {
+  const dispatch = useAppDispatch()
+  const { simulateApiCall } = useMockApi()
+  const { createMockResponse } = useMockPasswordReset()
+
+  const sendResetPasswordOTP = React.useCallback(async (args: SendResetPasswordArgs): Promise<SendResetPasswordResponse> => {
+    const { email, timeoutMs = 2000, progressIntervalMs = 400, isMock = true, statusCode = 200 } = args
+
+    if (isMock) {
+      // Handle invalid email case (400)
+      if (statusCode === 400 || !isValidEmail(email)) {
+        return createMockResponse(400, email)
+      }
+
+      // Simulate API call with progress
+      const response = await simulateApiCall<SendResetPasswordResponse>(
+        {
+          timeoutMs,
+          progressIntervalMs,
+          loaderMessage: 'Sending password reset code...'
+        },
+        () => createMockResponse(statusCode, email)
+      )
+      
+      dispatch(hideLoader())
+      return response
+    }
+  }, [dispatch, simulateApiCall, createMockResponse, isValidEmail])
+}
+```
+
+### Required Elements:
+- ✅ **React.useCallback**: For performance optimization
+- ✅ **Mock Parameters**: timeoutMs, progressIntervalMs, isMock, statusCode
+- ✅ **Error Handling**: Different status code responses
+- ✅ **Loader Management**: Show/hide loader for UX
+- ✅ **Type Safety**: Proper TypeScript interfaces
+- ✅ **Dependency Array**: Include all dependencies in useCallback
+
+### Usage Pattern:
+```typescript
+// Always reference this pattern for new mock APIs
+const mockApiFunction = React.useCallback(async (args: ArgsType): Promise<ResponseType> => {
+  // Follow useResetPassword.ts structure
+}, [dependencies])
+```
+
+## 9. API Integration Location
+**MANDATORY**: All API integration must be in `src/lib/api`
+
+### Location Rules:
+1. **API Hooks**: All API-related hooks go in `src/lib/api/`
+2. **No API in Components**: Never put API calls in UI components
+3. **No API in Pages**: Never put API calls in page components
+4. **Centralized**: All API logic centralized in one location
+
+### File Structure:
+```
+src/lib/api/
+├── useResetPassword.ts      # Password reset API
+├── useAuth.ts              # Authentication API
+├── useBookings.ts          # Bookings API
+├── useCars.ts              # Cars API
+├── useUsers.ts             # Users API
+└── index.ts                # Export all API hooks
+```
+
+### Correct Pattern:
+```typescript
+// ✅ CORRECT - API in src/lib/api/
+// File: src/lib/api/useBookings.ts
+export function useBookingsApi() {
+  const fetchBookings = React.useCallback(async () => {
+    // API logic here
+  }, [])
+  
+  return { fetchBookings }
+}
+
+// ✅ CORRECT - Component uses API hook
+// File: src/hooks/useBookings.ts
+export function useBookings() {
+  const { fetchBookings } = useBookingsApi()
+  // UI logic here
+}
+```
+
+### Incorrect Patterns:
+```typescript
+// ❌ WRONG - API in component
+export default function BookingsPage() {
+  useEffect(() => {
+    fetch('/api/bookings') // Don't do this!
+  }, [])
+}
+
+// ❌ WRONG - API in page hook
+export function useBookings() {
+  useEffect(() => {
+    fetch('/api/bookings') // Don't do this!
+  }, [])
+}
+```
+
+### Benefits:
+- **Centralized**: All API logic in one place
+- **Maintainable**: Easy to update API endpoints
+- **Testable**: API logic can be tested independently
+- **Reusable**: API hooks can be reused across the app
+- **Separation**: Clear separation between API and UI logic
+
+## 10. Testing Data ID Requirements
+**MANDATORY**: All UI components must have unique data-id attributes for testing.
+
+### Data ID Rules:
+1. **All UI Elements**: EVERY visible element needs a unique data-id
+2. **Testing Purpose**: Use data-id for E2E and unit testing
+3. **Debugging Purpose**: Use data-id for UI debugging and inspection
+4. **Naming Convention**: Use kebab-case with descriptive names
+5. **Hierarchy**: Include component name for context
+
+### Naming Convention:
+```typescript
+// Format: [component-name]-[element-type]-[description]
+data-id="bookings-page-back-button"
+data-id="bookings-filter-all-button"
+data-id="bookings-list-item-1"
+data-id="booking-modal-view-receipt-button"
+```
+
+### Required Elements:
+```typescript
+// ✅ CORRECT - ALL UI elements have data-id
+<div data-id="bookings-page">
+  <div data-id="bookings-header">
+    <h1 data-id="bookings-title">Bookings</h1>
+    <p data-id="bookings-subtitle">Manage all car rental bookings</p>
+    <button data-id="bookings-back-button">
+      <ArrowLeft />
+    </button>
+  </div>
+  
+  <div data-id="bookings-filters">
+    <button data-id="bookings-filter-all-button">All</button>
+    <button data-id="bookings-filter-upcoming-button">Upcoming</button>
+  </div>
+  
+  <div data-id="bookings-list">
+    {bookings.map((booking, index) => (
+      <div key={booking.id} data-id={`bookings-item-${index}`}>
+        <div data-id={`bookings-item-${index}-image`}>
+          <Image />
+        </div>
+        <h3 data-id={`bookings-item-${index}-title`}>{booking.carName}</h3>
+        <p data-id={`bookings-item-${index}-date`}>{booking.startDate}</p>
+        <span data-id={`bookings-item-${index}-price`}>{booking.totalPrice}</span>
+      </div>
+    ))}
+  </div>
+</div>
+```
+
+### Elements That Need data-id:
+- ✅ **ALL Elements**: Every visible UI element must have data-id
+- ✅ **Containers**: All div containers and wrappers
+- ✅ **Text Elements**: Headings, paragraphs, spans
+- ✅ **Images**: All image elements
+- ✅ **Buttons**: All button elements
+- ✅ **Links**: All navigation links
+- ✅ **Forms**: All form inputs and submit buttons
+- ✅ **Modals**: Modal triggers and close buttons
+- ✅ **Lists**: List items and list containers
+- ✅ **Navigation**: Navigation elements
+- ✅ **Interactive Elements**: Clickable divs, etc.
+- ✅ **Static Content**: Any visible content for debugging
+
+### Elements That Don't Need data-id:
+- ❌ **Fragment/React.Fragment**: React fragments
+- ❌ **Invisible Elements**: Hidden elements, script tags
+- ❌ **Utility Components**: Pure logic components without UI
+
+### Testing & Debugging Benefits:
+- **E2E Testing**: Easy element selection for automated tests
+- **Unit Testing**: Reliable test selectors
+- **UI Debugging**: Easy element identification and inspection
+- **Development**: Quick element location during development
+- **Accessibility**: Better test coverage
+- **Maintenance**: Stable selectors that don't break with CSS changes
+- **Visual Inspection**: Easy to identify elements in browser dev tools
+- **Team Collaboration**: Clear element identification for team members
+
+### Example Implementation:
+```typescript
+export default function BookingsPage() {
+  return (
+    <div data-id="bookings-page">
+      <div data-id="bookings-header">
+        <button data-id="bookings-back-button">
+          <ArrowLeft />
+        </button>
+      </div>
+      
+      <div data-id="bookings-filters">
+        <button data-id="bookings-filter-all-button">All</button>
+        <button data-id="bookings-filter-upcoming-button">Upcoming</button>
+      </div>
+      
+      <div data-id="bookings-list">
+        {bookings.map((booking, index) => (
+          <div key={booking.id} data-id={`bookings-item-${index}`}>
+            {/* Booking content */}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+```
+
+## 11. Check Existing Patterns First
+**MANDATORY**: Always check existing codebase patterns before troubleshooting or implementing new solutions.
+
+### Troubleshooting Order:
+1. **Check Existing Patterns**: Search codebase for similar implementations
+2. **Verify Working Examples**: See how other components solve the same problem
+3. **Follow Established Patterns**: Use the same approach that works elsewhere
+4. **Only Then Troubleshoot**: If patterns don't work, then investigate issues
+
+### Example - Import Issues:
+```typescript
+// ❌ WRONG - Immediately troubleshooting without checking patterns
+// Can't import Button? Let's try different paths, reinstall, etc.
+
+// ✅ CORRECT - Check existing patterns first
+// Step 1: Search how other components import Button
+grep -r "import.*Button.*from" src/
+
+// Step 2: See the pattern
+// All other files use: import { Button } from "@/components/ui/button"
+
+// Step 3: Use the same pattern
+import { Button } from "@/components/ui/button"
+
+// Step 4: Only if it doesn't work, then investigate why
+```
+
+### Search Commands to Use:
+```bash
+# Check import patterns
+grep -r "import.*Button.*from" src/
+grep -r "import.*from.*@/components" src/
+
+# Check usage patterns
+grep -r "Button" src/ --include="*.tsx" --include="*.ts"
+
+# Check API patterns
+grep -r "useBookings" src/
+grep -r "fetch.*api" src/
+```
+
+### Benefits:
+- **Consistency**: Follow established patterns
+- **Efficiency**: Don't reinvent the wheel
+- **Reliability**: Use proven solutions
+- **Maintenance**: Easier for team to understand
+- **Problem Solving**: Faster issue resolution
+
+### Real Example:
+When Button import failed:
+- ❌ **Bad Approach**: Try different import paths, reinstall packages, modify component
+- ✅ **Good Approach**: Check how 20+ other components import Button → use same pattern → investigate only if pattern fails
+
+## 12. Always Split Components to Avoid Long Code
+**MANDATORY**: Always split large components into smaller, focused pieces to avoid long lines of code.
+
+### Splitting Guidelines:
+1. **Component Size**: Keep components under 100-150 lines
+2. **Single Responsibility**: Each component should have one clear purpose
+3. **Extract Repeated UI**: Move repeated UI patterns to separate components
+4. **Logical Grouping**: Group related functionality together
+
+### When to Split:
+- **Lines > 100**: Component is getting too long
+- **Multiple Responsibilities**: Component handles too many concerns
+- **Repeated JSX**: Same UI pattern appears multiple times
+- **Complex Logic**: Mixed UI and complex business logic
+- **Deep Nesting**: Too many nested levels of JSX
+
+### Example - Before Splitting:
+```typescript
+// ❌ BAD - Long component with mixed responsibilities
+export default function BookingsPage() {
+  const router = useRouter()
+  const { filteredBookings, filter, setFilter, selectedBooking, setSelectedBooking } = useBookings()
+  
+  return (
+    <div data-id="bookings-page" className="min-h-screen bg-white">
+      {/* Header - 20 lines */}
+      <div data-id="bookings-header">
+        <Button data-id="bookings-back-button" onClick={() => router.back()}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+        <h1 data-id="bookings-title">Bookings</h1>
+        <p data-id="bookings-subtitle">Manage all car rental bookings</p>
+      </div>
+      
+      {/* Filters - 15 lines */}
+      <div data-id="bookings-filters">
+        {['all', 'upcoming', 'active', 'completed', 'cancelled'].map((status) => (
+          <Button key={status} onClick={() => setFilter(status)}>
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </Button>
+        ))}
+      </div>
+      
+      {/* Bookings List - 50 lines */}
+      <div data-id="bookings-list">
+        {filteredBookings.map((booking, index) => (
+          <div key={booking.id} data-id={`bookings-item-${index}`}>
+            {/* Complex booking item JSX - 30 lines */}
+            <div data-id={`bookings-item-${index}-mobile`}>...</div>
+            <div data-id={`bookings-item-${index}-desktop`}>...</div>
+          </div>
+        ))}
+      </div>
+      
+      {/* Modal - 40 lines */}
+      {selectedBooking && (
+        <div data-id="booking-modal">
+          {/* Complex modal JSX */}
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+### Example - After Splitting:
+```typescript
+// ✅ GOOD - Split into focused components
+
+// Main page component - orchestrates layout
+export default function BookingsPage() {
+  const { filteredBookings, filter, setFilter, selectedBooking, setSelectedBooking } = useBookings()
+  
+  return (
+    <div data-id="bookings-page" className="min-h-screen bg-white">
+      <BookingsHeader />
+      <BookingsFilters filter={filter} setFilter={setFilter} />
+      <BookingsList 
+        bookings={filteredBookings} 
+        onSelectBooking={setSelectedBooking} 
+      />
+      <BookingModal 
+        booking={selectedBooking} 
+        onClose={() => setSelectedBooking(null)} 
+      />
+    </div>
+  )
+}
+
+// Header component - 15 lines
+function BookingsHeader() {
+  const router = useRouter()
+  
+  return (
+    <div data-id="bookings-header" className="bg-white shadow-sm sticky top-0 z-10">
+      <div data-id="bookings-header-container" className="px-4 py-4 sm:px-6 sm:py-6">
+        <div data-id="bookings-header-content" className="flex items-center space-x-4">
+          <Button data-id="bookings-back-button" variant="ghost" onClick={() => router.back()}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+          <div data-id="bookings-title-container">
+            <h1 data-id="bookings-title" className="text-2xl sm:text-3xl font-bold text-gray-900">Bookings</h1>
+            <p data-id="bookings-subtitle" className="text-gray-600 mt-1">Manage all car rental bookings</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Filters component - 20 lines
+function BookingsFilters({ filter, setFilter }: { filter: string; setFilter: (filter: string) => void }) {
+  const statuses = ['all', 'upcoming', 'active', 'completed', 'cancelled']
+  
+  return (
+    <div data-id="bookings-filters" className="bg-white border-b">
+      <div data-id="bookings-filters-container" className="px-4 sm:px-6">
+        <div data-id="bookings-filters-list" className="flex space-x-1 sm:space-x-2 overflow-x-auto py-3">
+          {statuses.map((status) => (
+            <Button
+              key={status}
+              data-id={`bookings-filter-${status}-button`}
+              variant={filter === status ? 'default' : 'secondary'}
+              onClick={() => setFilter(status)}
+              className="px-3 sm:px-4 py-2 text-sm sm:text-base font-medium whitespace-nowrap"
+            >
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </Button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Individual booking item component - 30 lines
+function BookingItem({ booking, index, onSelect }: { 
+  booking: Booking; 
+  index: number; 
+  onSelect: (booking: Booking) => void 
+}) {
+  return (
+    <div
+      key={booking.id}
+      data-id={`bookings-item-${index}`}
+      className="bg-white hover:bg-gray-50 transition-colors cursor-pointer"
+      onClick={() => onSelect(booking)}
+    >
+      <div data-id={`bookings-item-${index}-content`} className="p-4 sm:p-6">
+        <BookingItemMobile booking={booking} index={index} />
+        <BookingItemDesktop booking={booking} index={index} />
+      </div>
+    </div>
+  )
+}
+```
+
+### Benefits:
+- **Readability**: Smaller components are easier to understand
+- **Maintainability**: Changes are isolated to specific components
+- **Reusability**: Components can be reused in other places
+- **Testing**: Smaller components are easier to test
+- **Performance**: Better optimization opportunities
+- **Collaboration**: Team members can work on different components
+
+### File Organization:
+```
+src/app/bookings/
+├── page.tsx              # Main page (20-30 lines)
+├── components/
+│   ├── BookingsHeader.tsx    # Header component
+│   ├── BookingsFilters.tsx   # Filters component
+│   ├── BookingsList.tsx      # List container
+│   ├── BookingItem.tsx       # Individual item
+│   ├── BookingItemMobile.tsx # Mobile layout
+│   ├── BookingItemDesktop.tsx# Desktop layout
+│   └── BookingModal.tsx      # Modal component
+```

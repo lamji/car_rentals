@@ -1,15 +1,14 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useParams } from "next/navigation";
-import { useAppDispatch } from "@/lib/store";
-import { setSelectedCar, setBookingDetails, openPaymentModal, closePaymentModal, nextStep, previousStep } from "@/lib/slices/bookingSlice";
-import { calculatePaymentSummary } from "@/lib/paymentSummaryHelper";
+import type { PersonalInfoData } from "@/components/booking/PersonalInfoForm";
 import { useBookingPersistence } from "@/hooks/useBookingPersistence";
 import { useCar } from "@/hooks/useCar";
-import type { PersonalInfoData } from "@/components/booking/PersonalInfoForm";
+import { calculatePaymentSummary } from "@/lib/paymentSummaryHelper";
 import type { BookingDetails } from "@/lib/slices/bookingSlice";
+import { closePaymentModal, nextStep, openPaymentModal, previousStep, setBookingDetails, setSelectedCar } from "@/lib/slices/bookingSlice";
+import { useAppDispatch } from "@/lib/store";
+import { useParams, useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 export function useBookingPage() {
   const router = useRouter();

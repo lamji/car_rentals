@@ -9,6 +9,7 @@ interface CarGridProps {
 export function CarGrid({ filteredCars, detailsHrefFor }: CarGridProps) {
   return (
     <div className="lg:col-span-3">
+      <h2 className="text-lg font-semibold mb-4">Available Cars</h2>
       <div className="grid gap-2 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-5">
         {filteredCars.map((car) => {
           console.log("test:cars", car);

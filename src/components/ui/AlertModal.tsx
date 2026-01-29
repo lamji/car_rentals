@@ -93,7 +93,7 @@ export function AlertModal() {
 
   return (
     <Dialog open={true} onOpenChange={() => dispatch(removeAlert(latestAlert.id))}>
-      <DialogContent className={`sm:max-w-md border ${getBorderColor(latestAlert.type)}`}>
+      <DialogContent className="sm:max-w-md">
         {/* Accessibility: VisuallyHidden title and description */}
         <VisuallyHidden.Root>
           <DialogTitle>{latestAlert.title || 'Alert'}</DialogTitle>

@@ -2,9 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { Car, Calendar, User, Search } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 
 interface HeaderProps {
   state?: {
@@ -21,6 +23,9 @@ export function Header({
   handleClearLocation = () => {},
 }: HeaderProps) {
   const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
+  const pathname = usePathname();
+  const isProfilePage = pathname === '/profile';
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -98,13 +103,39 @@ export function Header({
             <span>Book a Ride</span>
           </button>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => router.push('/login')}
-            >
-              Login
-            </Button>
+            {!isProfilePage && (
+              <>
+                {isAuthenticated && user ? (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => router.push('/profile')}
+                    className="flex items-center gap-2"
+                  >
+                    {user.photo ? (
+                      <img 
+                        src={user.photo} 
+                        alt={user.name}
+                        className="h-6 w-6 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center">
+                        <User className="h-4 w-4 text-primary-foreground" />
+                      </div>
+                    )}
+                    <span>{user.name}</span>
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => router.push('/login')}
+                  >
+                    Login
+                  </Button>
+                )}
+              </>
+            )}
             <Button 
               variant="ghost" 
               size="sm" 

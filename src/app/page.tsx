@@ -119,7 +119,7 @@ function HomeContent() {
           />
 
           <div
-            className="pt-10 lg:col-span-3 px-5 lg:px-0 -mt-20 lg:-mt-0 rounded-tl-[3rem] rounded-tr-[3rem] bg-white border-0 border-gray-200 relative"
+            className="pt-10 lg:col-span-3 px-5 lg:px-0 -mt-20 lg:-mt-0 rounded-tl-[1rem] rounded-tr-[1rem] bg-white border-0 border-gray-200 relative"
             data-testid="car-main-content"
           >
             <CarGrid

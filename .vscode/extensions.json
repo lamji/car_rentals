@@ -1,0 +1,21 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "dsznajder.es7-react-js-snippets",
+    "formulahendry.auto-rename-tag",
+    "coenraads.bracket-pair-colorizer-2",
+    "eamodio.gitlens",
+    "bradlc.vscode-tailwindcss",
+    "ms-vscode.vscode-typescript-next",
+    "christian-kohler.path-intellisense",
+    "ms-vscode.vscode-json",
+    "yzhang.markdown-all-in-one",
+    "gruntfuggly.todo-tree",
+    "streetsidesoftware.code-spell-checker"
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-typescript",
+    "hookyqr.beautify"
+  ]
+}

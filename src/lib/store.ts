@@ -9,6 +9,7 @@ import bookingReducer from './slices/bookingSlice';
 import globalLoaderReducer from './slices/globalLoaderSlice';
 import alertReducer from './slices/alertSlice';
 import confirmationReducer from './slices/confirmationSlice';
+import navigationReducer from './slices/navigationSlice';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { combineReducers } from '@reduxjs/toolkit';
@@ -38,6 +39,7 @@ const rootReducer = combineReducers({
   globalLoader: globalLoaderReducer,
   alerts: alertReducer,
   confirmation: confirmationReducer,
+  navigation: navigationReducer,
 });
 
 // Root persist config (optional - for entire store if needed)
@@ -52,7 +54,8 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
+        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE', 'confirmation/openConfirmation'],
+        ignoredPaths: ['confirmation.options.onConfirm'],
       },
     }),
 });

@@ -23,12 +23,18 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
   const distanceText = distance ? formatDistance(distance) : null;
   
   return (
-    <Card className="transition-shadow hover:shadow-lg h-full flex flex-col">
+    <Card className="transition-shadow hover:shadow-lg h-full flex flex-col gap-2 border shadow-sm bg-gray-50 sm:bg-background">
       <CardContent className="p-0 flex-1 flex flex-col">
         {/* Image on top */}
-        <div className="relative h-36 w-full overflow-hidden bg-white p-2">
+        <div className="relative h-36 w-full overflow-hidden bg-white p-2 border border-white rounded-[20px] sm:h-40">
           <div className="relative w-full h-full">
-            <Image src={car.imageUrls[0]} alt={car.name} fill className="object-cover" />
+            <Image 
+              src={car.imageUrls[0]} 
+              alt={car.name} 
+              fill 
+              className="object-contain sm:object-cover"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            />
           </div>
           {/* Availability badge on top of image */}
           <div className="absolute top-2 right-2">
@@ -44,7 +50,7 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
             <div className="truncate text-sm font-semibold sm:text-base">
               {car.name} {car.year}
             </div>
-            <div className="mt-1 text-xs text-muted-foreground sm:text-sm">
+            <div className="mt-1 text-[10px]  text-muted-foreground sm:text-sm">
               {car.seats} seats • {car.transmission}
             </div>
             {loading ? (
@@ -52,28 +58,14 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
                 <div className="h-3 w-16 bg-muted animate-pulse rounded"></div>
               </div>
             ) : distanceText ? (
-              <div className="mt-1 text-xs text-muted-foreground">
+              <div className="mt-1 text-xs text-muted-foreground text-[10px] ">
                 📍 {distanceText}
               </div>
             ) : null}
-            <div className="mt-1 text-xs text-muted-foreground">
-              🏢 Cebu City, Philippines
+            <div className="mt-1 text-[10px] text-muted-foreground sm:text-xs">
+              🏢 {car.garageAddress}
             </div>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                <span>{car.rating}</span>
-              </div>
-              <span className="hidden sm:inline">•</span>
-              <span className="sm:hidden">·</span>
-              <span>{car.rentedCount} rented</span>
-              <span className="hidden sm:inline">•</span>
-              <span className="sm:hidden">·</span>
-              <div className="flex items-center gap-1">
-                <CarIcon className="h-2.5 w-2.5" />
-                <span className="whitespace-nowrap">{car.selfDrive ? "Self-drive" : "With driver"}</span>
-              </div>
-            </div>
+
           </div>
  
           
@@ -83,19 +75,19 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
               {isAvailable ? (
                 <>
                   <CheckCircle className="h-3 w-3 text-green-600" />
-                  <span className="text-green-600 font-medium">Available today</span>
+                  <span className="text-green-600 font-medium">Available</span>
                 </>
               ) : (
                 <>
                   <XCircle className="h-3 w-3 text-red-600" />
-                  <span className="text-red-600 font-medium">Not available today</span>
+                  <span className="text-red-600 font-medium">Not available</span>
                 </>
               )}
             </div>
           </div>
         </div>
       </CardContent>
-      <CardFooter className="p-4 pt-0">
+      <CardFooter className="p-2 pt-0 sm:p-4 sm:pt-0">
         <Button asChild className="w-full" disabled={!isAvailable}>
           <Link href={href}>{isAvailable ? "View Details" : "Check Other Dates"}</Link>
         </Button>
