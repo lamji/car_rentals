@@ -1,11 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { Car, Calendar, User, Search } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { Calendar, Car, Search, User } from "lucide-react";
+import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 
 interface HeaderProps {
@@ -28,14 +28,14 @@ export function Header({
   const isProfilePage = pathname === '/profile';
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       {/* Mobile Header */}
       <div className="sm:hidden">
         <div className="flex items-center px-2 py-4 gap-2">
           {/* Logo */}
           <button 
             onClick={() => router.push('/')}
-            className="flex items-center gap-1.5 flex-shrink-0 bg-primary p-2 rounded-lg"
+            className="flex items-center gap-1.5 shrink-0 bg-primary p-2 rounded-lg"
           >
             <Car className="h-7 w-7 sm:h-6 sm:w-6 text-primary-foreground" />
           </button>
@@ -68,7 +68,7 @@ export function Header({
           </div>
           
           {/* User Actions */}
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
             <Button 
               variant="ghost" 
               size="sm" 
@@ -99,8 +99,8 @@ export function Header({
             onClick={() => router.push('/')}
             className="flex items-center gap-2 text-lg font-semibold"
           >
-            <Car className="h-6 w-6" />
-            <span>Book a Ride</span>
+            <Car className="h-6 w-6 text-primary" />
+            <span>Car Rentals</span>
           </button>
           <div className="flex items-center gap-2">
             {!isProfilePage && (
@@ -113,9 +113,11 @@ export function Header({
                     className="flex items-center gap-2"
                   >
                     {user.photo ? (
-                      <img 
+                      <Image 
                         src={user.photo} 
                         alt={user.name}
+                        width={24}
+                        height={24}
                         className="h-6 w-6 rounded-full object-cover"
                       />
                     ) : (

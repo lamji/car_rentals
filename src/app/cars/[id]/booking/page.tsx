@@ -1,13 +1,14 @@
 'use client'
 
-import React from 'react'
-import { SelectedCarCard } from '@/components/booking/SelectedCarCard'
-import { RentalDetailsForm } from '@/components/booking/RentalDetailsForm'
-import { MobileRentalDetailsForm } from '@/components/booking/MobileRentalDetailsForm'
-import { PersonalInfoForm } from '@/components/booking/PersonalInfoForm'
 import { BookingConfirmation } from '@/components/booking/BookingConfirmation'
+import { MobileRentalDetailsForm } from '@/components/booking/MobileRentalDetailsForm'
 import { PaymentModal } from '@/components/booking/PaymentModal'
+import { PersonalInfoForm } from '@/components/booking/PersonalInfoForm'
+import { RentalDetailsForm } from '@/components/booking/RentalDetailsForm'
+import { SelectedCarCard } from '@/components/booking/SelectedCarCard'
+import { Button } from '@/components/ui/button'
 import { useBookingPage } from '@/hooks/useBookingPage'
+import React from 'react'
 
 export default function BookingPage() {
   const {
@@ -140,28 +141,21 @@ export default function BookingPage() {
           
           {/* Navigation Buttons */}
           <div className="flex justify-between mt-8">
-            <button
+            <Button
               onClick={handlePrevious}
               disabled={currentStep === 1}
-              className={`px-6 py-2 rounded-md font-medium transition-colors ${
-                currentStep === 1
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+              variant="secondary"
+              className="px-6 py-2"
             >
               Previous
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={currentStep === 4 ? handleComplete : handleNext}
               disabled={!canProceedToNext()}
-              className={`px-6 py-2 rounded-md font-medium transition-colors ${
-                !canProceedToNext()
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
+              className="px-6 py-2"
             >
               {currentStep === 4 ? 'Complete Booking' : 'Next'}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

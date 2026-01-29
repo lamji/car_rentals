@@ -1,12 +1,12 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
+import { ForgotPasswordModal } from "@/components/auth/ForgotPasswordModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Car, Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { ForgotPasswordModal } from "@/components/auth/ForgotPasswordModal";
+import { Car, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import Link from "next/link";
+import * as React from "react";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = React.useState(false);
@@ -24,7 +24,12 @@ export default function LoginPage() {
           <div className="text-center space-y-3 sm:space-y-4">
             <div className="flex items-center justify-center mb-2 sm:mb-3">
               <div className="relative">
-                <Car className="h-14 w-14 sm:h-16 sm:w-16 text-primary" />
+                {/* eslint-disable-next-line @next/next/no-img-element -- Using img tag for logo display */}
+                <img
+                  src="/apple-touch-icon.png"
+                  alt="Car Rentals Logo"
+                  className="w-32 h-32 sm:w-40 sm:h-40"
+                />
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
               </div>
             </div>
@@ -105,7 +110,7 @@ export default function LoginPage() {
               <div className="w-full border-t border-gray-300"></div>
             </div>
             <div className="relative flex justify-center text-xs sm:text-sm">
-              <span className="px-2 bg-gradient-to-br from-blue-50 via-white to-indigo-50 text-gray-500">
+              <span className="px-2 bg-linear-to-br from-blue-50 via-white to-indigo-50 text-gray-500">
                 New to Book a Ride?
               </span>
             </div>
