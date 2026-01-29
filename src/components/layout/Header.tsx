@@ -103,7 +103,7 @@ export function Header({
             <span>Car Rentals</span>
           </button>
           <div className="flex items-center gap-2">
-            {!isProfilePage && (
+            {!isProfilePage && !pathname.includes('admin') && (
               <>
                 {isAuthenticated && user ? (
                   <Button 

@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Bell, BellOff, Send } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { sendNotification, subscribeUser, unsubscribeUser } from '../actions'
 import type { SerializedPushSubscription } from '../types'
 import { isPushNotificationSupported, urlBase64ToUint8Array } from '../utils'
 
@@ -17,7 +16,13 @@ export function PushNotificationManager() {
   const [isSupported, setIsSupported] = useState(false)
   const [subscription, setSubscription] = useState<PushSubscription | null>(null)
   const [message, setMessage] = useState('')
+  const [subscriberId, setSubscriberId] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+
+  // Generate a simple ID from subscription endpoint for display
+  const currentDeviceId = subscription ? 
+    subscription.endpoint.split('/').pop()?.substring(0, 8) || 'unknown' : 
+    'not-subscribed'
 
   useEffect(() => {
     // Check if push notifications are supported
@@ -57,9 +62,26 @@ export function PushNotificationManager() {
         ) as BufferSource,
       })
       setSubscription(sub)
+      
       // Serialize subscription for server storage
       const serializedSub: SerializedPushSubscription = JSON.parse(JSON.stringify(sub))
-      await subscribeUser(serializedSub)
+      
+      // Subscribe with the current device ID via API
+      const response = await fetch('/api/pwa/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscription: serializedSub,
+          subscriptionId: currentDeviceId,
+          userId: undefined // Can be set later for user association
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success && result.subscriptionId) {
+        console.log(`✅ Subscribed with ID: ${result.subscriptionId}`)
+      }
     } catch (error) {
       console.error('Failed to subscribe to push notifications:', error)
     } finally {
@@ -75,7 +97,20 @@ export function PushNotificationManager() {
     try {
       await subscription?.unsubscribe()
       setSubscription(null)
-      await unsubscribeUser()
+      
+      // Unsubscribe using the current device ID via API
+      const response = await fetch('/api/pwa/unsubscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscriptionId: currentDeviceId
+        })
+      })
+      
+      const result = await response.json()
+      if (result.success) {
+        console.log(`✅ Unsubscribed: ${currentDeviceId}`)
+      }
     } catch (error) {
       console.error('Failed to unsubscribe from push notifications:', error)
     } finally {
@@ -91,8 +126,28 @@ export function PushNotificationManager() {
     
     setIsLoading(true)
     try {
-      await sendNotification(message)
-      setMessage('')
+      // Pass the subscription ID for experimentation
+      const targetId = subscriberId || currentDeviceId
+      console.log('🔔 Sending notification to subscriber ID:', targetId)
+      console.log('📱 Message:', message)
+      
+      // Send notification via API
+      const response = await fetch('/api/pwa/send-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: message,
+          subscriptionId: targetId
+        })
+      })
+      
+      const result = await response.json()
+      if (result.success) {
+        console.log(`✅ Notification sent successfully`)
+        setMessage('')
+      } else {
+        console.error('Failed to send notification:', result.error)
+      }
     } catch (error) {
       console.error('Failed to send notification:', error)
     } finally {
@@ -125,22 +180,41 @@ export function PushNotificationManager() {
             You are subscribed to push notifications.
           </p>
           
-          <div className="flex gap-2">
+          <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+            <p className="text-xs text-gray-600 mb-1">Current Device ID:</p>
+            <p className="text-sm font-mono text-gray-900 break-all">
+              {currentDeviceId}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Full endpoint: {subscription.endpoint.substring(0, 50)}...
+            </p>
+          </div>
+          
+          <div className="space-y-2">
             <Input
               type="text"
-              placeholder="Enter notification message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="flex-1"
+              placeholder="Subscriber ID (for experimentation)"
+              value={subscriberId}
+              onChange={(e) => setSubscriberId(e.target.value)}
+              className="w-full"
             />
-            <Button
-              onClick={sendTestNotification}
-              disabled={isLoading || !message.trim()}
-              size="sm"
-            >
-              <Send className="h-4 w-4 mr-1" />
-              Send
-            </Button>
+            <div className="flex gap-2">
+              <Input
+                type="text"
+                placeholder="Enter notification message"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                onClick={sendTestNotification}
+                disabled={isLoading || !message.trim()}
+                size="sm"
+              >
+                <Send className="h-4 w-4 mr-1" />
+                Send
+              </Button>
+            </div>
           </div>
 
           <Button
