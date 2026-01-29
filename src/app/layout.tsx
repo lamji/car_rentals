@@ -6,6 +6,8 @@ import { LayoutContent } from "@/components/layout/LayoutContent";
 import { GeolocationWrapper } from "@/components/providers/GeolocationWrapper";
 import ReduxProvider from "@/components/providers/ReduxProvider";
 import { LocationPermissionBanner } from "@/components/ui/LocationPermissionBanner";
+import { InstallPrompt } from "@/lib/pwaService/components/InstallPrompt";
+import { PushNotificationManager } from "@/lib/pwaService/components/PushNotificationManager";
 
 
 const geistSans = Geist({
@@ -61,6 +63,11 @@ export default function RootLayout({
         <ReduxProvider>
           <GeolocationWrapper>
             <LocationPermissionBanner />
+            {/* PWA Components for Testing */}
+            <div className="container mx-auto px-4 py-4 space-y-4">
+              <PushNotificationManager />
+              <InstallPrompt />
+            </div>
             <LayoutContent>
               {children}
             </LayoutContent>

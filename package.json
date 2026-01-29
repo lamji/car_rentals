@@ -35,7 +35,8 @@
     "react-hook-form": "^7.71.1",
     "react-redux": "^9.2.0",
     "redux-persist": "^6.0.0",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.4.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
@@ -44,6 +45,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9.39.2",
     "eslint-config-next": "^15.1.4",
     "tailwindcss": "^4",
