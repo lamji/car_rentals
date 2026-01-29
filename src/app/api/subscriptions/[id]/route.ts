@@ -1,8 +1,8 @@
-import {
-  PUSH_SUBSCRIPTIONS_COLLECTION,
-  PushSubscriptionDocument
-} from '@/lib/models/PushSubscription'
 import { getDatabase } from '@/lib/mongodb'
+import {
+    PUSH_SUBSCRIPTIONS_COLLECTION,
+    PushSubscriptionDocument
+} from '@/lib/pwaService/models/PushSubscription'
 import { NextRequest, NextResponse } from 'next/server'
 
 /**

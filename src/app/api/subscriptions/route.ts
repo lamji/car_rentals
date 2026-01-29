@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { getDatabase } from '@/lib/mongodb';
 import {
-  PUSH_SUBSCRIPTIONS_COLLECTION,
-  PUSH_SUBSCRIPTION_INDEXES,
-  PushSubscriptionDocument
-} from '@/lib/models/PushSubscription'
-import { getDatabase } from '@/lib/mongodb'
-import { NextRequest, NextResponse } from 'next/server'
+    PUSH_SUBSCRIPTIONS_COLLECTION,
+    PUSH_SUBSCRIPTION_INDEXES,
+    PushSubscriptionDocument
+} from "@/lib/pwaService/models/PushSubscription";
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * GET /api/subscriptions

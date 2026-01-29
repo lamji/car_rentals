@@ -21,6 +21,7 @@ export interface SerializedPushSubscription {
 export interface PushActionResponse {
   success: boolean
   error?: string
+  statusCode?: number
 }
 
 /**

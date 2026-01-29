@@ -41,8 +41,30 @@ export function InstallPrompt() {
     const handleAppInstalled = () => {
       console.log("🎉 PWA was installed successfully!");
 
-      // Set flag to indicate app was just installed
-      localStorage.setItem("pwa-just-installed", "true");
+      // Set flag to indicate app was just installed with timestamp
+      localStorage.setItem("pwa-just-installed", Date.now().toString());
+      localStorage.setItem("pwa-install-timestamp", Date.now().toString());
+
+      // Detect Android for special handling
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      const isChrome = /Chrome/i.test(navigator.userAgent);
+
+      if (isAndroid && isChrome) {
+        console.log("🤖 Android Chrome installation detected");
+
+        // Set additional Android-specific flags
+        localStorage.setItem("pwa-android-installed", "true");
+
+        // Trigger immediate launch attempt
+        setTimeout(() => {
+          console.log("🚀 Triggering Android auto-launch");
+          window.dispatchEvent(
+            new CustomEvent("pwa-installed", {
+              detail: { platform: "android", browser: "chrome" },
+            }),
+          );
+        }, 100);
+      }
 
       // Try to launch the app after installation (Android Chrome)
       if ("getInstalledRelatedApps" in navigator) {
@@ -53,14 +75,16 @@ export function InstallPrompt() {
               navigator as any
             ).getInstalledRelatedApps();
             if (relatedApps.length > 0) {
-              // App is installed, try to launch it
-              const currentUrl = window.location.href;
-              window.location.href = currentUrl;
+              console.log(
+                "📱 App confirmed installed via getInstalledRelatedApps",
+              );
+              // Set additional confirmation flag
+              localStorage.setItem("pwa-confirmed-installed", "true");
             }
           } catch (error) {
             console.log("Could not check installed apps:", error);
           }
-        }, 1000);
+        }, 500);
       }
 
       // Hide the install prompt

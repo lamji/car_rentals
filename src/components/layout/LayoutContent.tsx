@@ -49,6 +49,9 @@ export function LayoutContent({ children }: LayoutContentProps) {
   // Check if current page is bookings page
   const isBookingsPage = pathname === "/bookings";
 
+  // Check if current page is admin route
+  const isAdminRoute = pathname.includes("admin");
+
   /**
    * Handle closing the location modal
    * @returns {void}
@@ -59,7 +62,7 @@ export function LayoutContent({ children }: LayoutContentProps) {
 
   return (
     <>
-      {!isProfilePage && !isBookingsPage && (
+      {!isProfilePage && !isBookingsPage && !isAdminRoute && (
         <div className="hidden lg:block fixed top-0 left-0 right-0 z-40 bg-white">
           <HeaderWithLocation />
         </div>

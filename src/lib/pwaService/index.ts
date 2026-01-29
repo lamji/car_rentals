@@ -8,19 +8,44 @@
  */
 
 // Components
-export { PushNotificationManager, InstallPrompt } from './components'
+export { InstallPrompt, PWAAutoLauncher, PushNotificationManager } from './components'
+
+// Providers
+export { SubscriptionPersistenceProvider } from './providers/SubscriptionPersistenceProvider'
+
+// Hooks
+export { useSubscriptionPersistence } from './hooks/useSubscriptionPersistence'
+
+// Database Actions
+export {
+    getAllSubscriptionIdsDB, sendNotificationDB,
+    sendNotificationToAllDB, subscribeUserDB,
+    unsubscribeUserDB
+} from './db-actions'
+
+// Persistence Service
+export {
+    getSubscriptionStatus, initializeSubscriptionPersistence,
+    manualRefreshSubscription
+} from './subscription-persistence'
 
 // Utilities
 export {
-  urlBase64ToUint8Array,
-  isIOSDevice,
-  isStandaloneMode,
-  isPushNotificationSupported,
+    isIOSDevice, isPushNotificationSupported, isStandaloneMode, urlBase64ToUint8Array
 } from './utils'
 
 // Types
 export type {
-  SerializedPushSubscription,
-  PushActionResponse,
-  PushNotificationPayload,
+    PushActionResponse,
+    PushNotificationPayload, SerializedPushSubscription
 } from './types'
+
+// Models
+export {
+    PUSH_SUBSCRIPTIONS_COLLECTION,
+    PUSH_SUBSCRIPTION_INDEXES
+} from './models/PushSubscription'
+export type {
+    PushSubscriptionDocument
+} from './models/PushSubscription'
+

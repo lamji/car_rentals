@@ -14,16 +14,108 @@ export function PWAAutoLauncher() {
      * Uses multiple strategies to ensure the app opens after installation
      */
     function handlePWALaunch() {
-      // Check if app was just installed
+      // Check if app was just installed (with timestamp validation)
       const justInstalled = localStorage.getItem("pwa-just-installed");
+      const installTimestamp = localStorage.getItem("pwa-install-timestamp");
+
       if (!justInstalled) return;
 
-      console.log("🚀 Attempting to auto-launch PWA...");
+      // Check if installation was recent (within last 30 seconds)
+      const now = Date.now();
+      const installTime = installTimestamp ? parseInt(installTimestamp) : 0;
+      const timeDiff = now - installTime;
 
-      // Clear the flag
+      if (timeDiff > 30000) {
+        // Installation was too long ago, clear flags
+        localStorage.removeItem("pwa-just-installed");
+        localStorage.removeItem("pwa-install-timestamp");
+        localStorage.removeItem("pwa-android-installed");
+        return;
+      }
+
+      console.log("🚀 Attempting to auto-launch PWA...", {
+        timeDiff,
+        installTime,
+      });
+
+      // Clear the flags after successful detection
       localStorage.removeItem("pwa-just-installed");
+      localStorage.removeItem("pwa-install-timestamp");
 
-      // Strategy 1: Use Web App Manifest start_url (most reliable)
+      // Detect platform
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      const isChrome = /Chrome/i.test(navigator.userAgent);
+      const isEdge = /Edg/i.test(navigator.userAgent);
+      const isSamsung = /SamsungBrowser/i.test(navigator.userAgent);
+
+      // Strategy 1: Android Chrome/Edge/Samsung Browser - Modern approach
+      if (isAndroid && (isChrome || isEdge || isSamsung)) {
+        console.log(
+          "🤖 Android browser detected, using modern launch strategy",
+        );
+
+        // Check if we're already in standalone mode
+        if (window.matchMedia("(display-mode: standalone)").matches) {
+          console.log(
+            "📱 Already in standalone mode - PWA launched successfully",
+          );
+          localStorage.removeItem("pwa-android-installed");
+          return;
+        }
+
+        // Android-specific launch sequence
+        const androidLaunchSequence = async () => {
+          try {
+            // Method 1: Try to trigger PWA launch with location change
+            console.log("📱 Android Method 1: Location change");
+            window.location.href =
+              window.location.origin + "/?pwa-launch=android";
+
+            // Wait a bit and check if we're still in browser
+            setTimeout(() => {
+              if (!window.matchMedia("(display-mode: standalone)").matches) {
+                console.log("📱 Android Method 2: History manipulation");
+                // Method 2: Use history API
+                window.history.pushState(
+                  {},
+                  "",
+                  window.location.origin + "/?pwa-auto=true",
+                );
+                window.location.reload();
+              }
+            }, 800);
+
+            // Method 3: Force close browser tab (aggressive approach)
+            setTimeout(() => {
+              if (!window.matchMedia("(display-mode: standalone)").matches) {
+                console.log("📱 Android Method 3: Aggressive launch");
+                // Try to close the browser tab to force PWA launch
+                try {
+                  window.close();
+                } catch {
+                  // If close fails, try navigation
+                  window.location.href = "about:blank";
+                  setTimeout(() => {
+                    window.location.href = window.location.origin;
+                  }, 100);
+                }
+              }
+            }, 1500);
+          } catch (error) {
+            console.log("📱 Android launch sequence error:", error);
+            // Fallback: Simple reload
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+          }
+        };
+
+        // Execute Android launch sequence
+        androidLaunchSequence();
+        return;
+      }
+
+      // Strategy 2: Generic PWA launch using manifest
       if (
         "serviceWorker" in navigator &&
         "getRegistrations" in navigator.serviceWorker
@@ -50,25 +142,6 @@ export function PWAAutoLauncher() {
               });
           }
         });
-      }
-
-      // Strategy 2: For Android Chrome - use custom URL scheme (if configured)
-      const isAndroid = /Android/i.test(navigator.userAgent);
-      const isChrome = /Chrome/i.test(navigator.userAgent);
-
-      if (isAndroid && isChrome) {
-        setTimeout(() => {
-          // Try to open the app using intent URL
-          const intentUrl = `intent://${window.location.host}${window.location.pathname}#Intent;scheme=https;package=com.android.chrome;end`;
-          console.log("🤖 Attempting Android Chrome intent launch");
-
-          try {
-            window.location.href = intentUrl;
-          } catch (error) {
-            console.log("Intent launch failed, using fallback", error);
-            window.location.href = window.location.href;
-          }
-        }, 500);
       }
 
       // Strategy 3: iOS Safari - limited options due to security restrictions
@@ -113,9 +186,21 @@ export function PWAAutoLauncher() {
       setTimeout(handlePWALaunch, 100);
     }
 
+    /**
+     * Handle custom PWA installation event
+     */
+    function handlePWAInstallEvent(event: CustomEvent) {
+      console.log("🎯 Custom PWA install event received:", event.detail);
+      setTimeout(handlePWALaunch, 200);
+    }
+
     // Set up event listeners
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("focus", handleWindowFocus);
+    window.addEventListener(
+      "pwa-installed",
+      handlePWAInstallEvent as EventListener,
+    );
 
     // Run launch check on component mount
     handlePWALaunch();
@@ -124,6 +209,10 @@ export function PWAAutoLauncher() {
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("focus", handleWindowFocus);
+      window.removeEventListener(
+        "pwa-installed",
+        handlePWAInstallEvent as EventListener,
+      );
     };
   }, []);
 

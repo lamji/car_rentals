@@ -17,7 +17,7 @@ interface HeaderProps {
   handleClearLocation?: () => void;
 }
 
-export function Header({ 
+export function Header({
   state = { location: "" },
   setIsLocationModalOpen = () => {},
   handleClearLocation = () => {},
@@ -25,7 +25,7 @@ export function Header({
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const pathname = usePathname();
-  const isProfilePage = pathname === '/profile';
+  const isProfilePage = pathname === "/profile";
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
@@ -33,13 +33,13 @@ export function Header({
       <div className="sm:hidden">
         <div className="flex items-center px-2 py-4 gap-2">
           {/* Logo */}
-          <button 
-            onClick={() => router.push('/')}
+          <button
+            onClick={() => router.push("/")}
             className="flex items-center gap-1.5 shrink-0 bg-primary p-2 rounded-lg"
           >
             <Car className="h-7 w-7 sm:h-6 sm:w-6 text-primary-foreground" />
           </button>
-          
+
           {/* Search Bar - takes remaining space */}
           <div className="flex-1 min-w-0">
             <div className="relative">
@@ -49,9 +49,13 @@ export function Header({
                 className="w-full pl-10 pr-10 h-9 bg-gray-100 border border-black flex items-center cursor-pointer text-gray-900 placeholder-gray-500 rounded-md"
               >
                 {state.location ? (
-                  <span className="text-gray-900 truncate">{state.location}</span>
+                  <span className="text-gray-900 truncate">
+                    {state.location}
+                  </span>
                 ) : (
-                  <span className="text-gray-500 truncate">Search location...</span>
+                  <span className="text-gray-500 truncate">
+                    Search location...
+                  </span>
                 )}
               </div>
               {state.location && (
@@ -59,32 +63,42 @@ export function Header({
                   onClick={handleClearLocation}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
                 >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               )}
             </div>
           </div>
-          
+
           {/* User Actions */}
           <div className="flex items-center gap-1 shrink-0">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8 w-8 p-0 relative" 
-              onClick={() => router.push('/bookings')}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 relative"
+              onClick={() => router.push("/bookings")}
             >
               <Calendar className="h-4 w-4" />
               <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 flex items-center justify-center text-[10px]">
                 3
               </Badge>
             </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8 w-8 p-0" 
-              onClick={() => router.push('/login')}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => router.push("/login")}
             >
               <User className="h-4 w-4" />
             </Button>
@@ -95,26 +109,26 @@ export function Header({
       {/* Desktop Header */}
       <div className="hidden sm:block">
         <div className="flex w-full items-center justify-between px-4 py-3">
-          <button 
-            onClick={() => router.push('/')}
+          <button
+            onClick={() => router.push("/")}
             className="flex items-center gap-2 text-lg font-semibold"
           >
             <Car className="h-6 w-6 text-primary" />
             <span>Car Rentals</span>
           </button>
           <div className="flex items-center gap-2">
-            {!isProfilePage && !pathname.includes('admin') && (
+            {!isProfilePage && !pathname.includes("admin") && (
               <>
                 {isAuthenticated && user ? (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => router.push('/profile')}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => router.push("/profile")}
                     className="flex items-center gap-2"
                   >
                     {user.photo ? (
-                      <Image 
-                        src={user.photo} 
+                      <Image
+                        src={user.photo}
                         alt={user.name}
                         width={24}
                         height={24}
@@ -128,21 +142,21 @@ export function Header({
                     <span>{user.name}</span>
                   </Button>
                 ) : (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => router.push('/login')}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => router.push("/login")}
                   >
                     Login
                   </Button>
                 )}
               </>
             )}
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="relative" 
-              onClick={() => router.push('/bookings')}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="relative"
+              onClick={() => router.push("/bookings")}
             >
               <Calendar className="h-5 w-5" />
               <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">

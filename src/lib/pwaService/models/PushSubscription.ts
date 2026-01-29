@@ -16,6 +16,10 @@ export interface PushSubscriptionDocument {
   createdAt: Date
   updatedAt: Date
   isActive: boolean
+  lastValidated?: Date
+  lastHeartbeat?: Date
+  expiredAt?: Date
+  clientTimestamp?: Date
 }
 
 /**

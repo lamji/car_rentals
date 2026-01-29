@@ -1,12 +1,12 @@
 'use server'
 
-import webpush from 'web-push'
 import { getDatabase } from '@/lib/mongodb'
-import { 
-  PushSubscriptionDocument, 
-  PUSH_SUBSCRIPTIONS_COLLECTION 
-} from '@/lib/models/PushSubscription'
-import type { SerializedPushSubscription, PushActionResponse } from './types'
+import webpush from 'web-push'
+import {
+  PUSH_SUBSCRIPTIONS_COLLECTION,
+  PushSubscriptionDocument
+} from './models/PushSubscription'
+import type { PushActionResponse, SerializedPushSubscription } from './types'
 
 /**
  * Configure VAPID details for web push
@@ -120,6 +120,7 @@ export async function unsubscribeUserDB(subscriptionId?: string): Promise<PushAc
 
 /**
  * Send a push notification to a specific subscription ID (Database version)
+ * Automatically cleans up expired subscriptions (410 errors)
  * @param message - The notification message body
  * @param subscriptionId - The target subscription ID (optional - uses any available if not provided)
  * @returns Success or error response
@@ -174,25 +175,58 @@ export async function sendNotificationDB(message: string, subscriptionId?: strin
       expirationTime: targetSubscription.expirationTime
     }
     
-    await webpush.sendNotification(
-      webpushSubscription as unknown as webpush.PushSubscription,
-      JSON.stringify({
-        title: 'Car Rentals',
-        body: message,
-        icon: '/android-chrome-192x192.png',
-        data: {
-          targetId: subscriptionId,
-          timestamp: Date.now(),
-          source: 'admin-portal'
+    try {
+      // Attempt to send notification
+      await webpush.sendNotification(
+        webpushSubscription as unknown as webpush.PushSubscription,
+        JSON.stringify({
+          title: 'Car Rentals',
+          body: message,
+          icon: '/android-chrome-192x192.png',
+          data: {
+            targetId: subscriptionId,
+            timestamp: Date.now(),
+            source: 'admin-portal'
+          }
+        })
+      )
+      
+      console.log(`✅ Notification sent successfully to: ${subscriptionId}`)
+      return { success: true }
+    } catch (pushError: any) {
+      // Check if it's a 410 Gone error (subscription expired/unsubscribed)
+      if (pushError.statusCode === 410) {
+        console.log(`🗑️ Subscription expired, cleaning up: ${subscriptionId}`)
+        
+        // Automatically remove expired subscription from database
+        await collection.updateOne(
+          { subscriptionId },
+          { 
+            $set: { 
+              isActive: false, 
+              updatedAt: new Date(),
+              expiredAt: new Date()
+            } 
+          }
+        )
+        
+        return { 
+          success: false, 
+          error: 'Subscription expired and automatically removed',
+          statusCode: 410
         }
-      })
-    )
-    
-    console.log(`✅ Notification sent successfully to: ${subscriptionId}`)
-    return { success: true }
-  } catch (error) {
+      }
+      
+      // For other errors, re-throw to be handled by outer catch
+      throw pushError
+    }
+  } catch (error: any) {
     console.error('Error sending push notification:', error)
-    return { success: false, error: 'Failed to send notification' }
+    return { 
+      success: false, 
+      error: error.message || 'Failed to send notification',
+      statusCode: error.statusCode
+    }
   }
 }
 
