@@ -1,6 +1,6 @@
 import { getDatabase } from '@/lib/mongodb'
 import { NextRequest, NextResponse } from 'next/server'
-import { subscribeUserDB } from '../../../../lib/pwaService/db-actions'
+import { subscribeUserDB } from '../../../../lib/npm-ready-stack/pwaService/db-actions'
 
 /**
  * POST /api/pwa/subscribe

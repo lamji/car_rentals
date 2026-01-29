@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   sendNotificationDB,
   sendNotificationToAllDB,
-} from "@/lib/pwaService/db-actions";
+} from "@/lib/npm-ready-stack/pwaService/db-actions";
 import { showAlert } from "@/lib/slices/alertSlice";
 import {
   createColumnHelper,

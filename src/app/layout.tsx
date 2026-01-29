@@ -6,8 +6,8 @@ import { LayoutContent } from "@/components/layout/LayoutContent";
 import ReactProvider from "@/components/providers/ReactProvider";
 import ReduxProvider from "@/components/providers/ReduxProvider";
 import { SmartSubscriptionAlertWrapper } from "@/components/wrapper/SmartSubscriptionAlertWrapper";
-import { InstallPrompt } from "@/lib/pwaService/components/InstallPrompt";
-import { PWAAutoLauncher } from "../lib/pwaService/components/PWAAutoLauncher";
+import { InstallPrompt } from "@/lib/npm-ready-stack/pwaService/components/InstallPrompt";
+import { PWAAutoLauncher } from "../lib/npm-ready-stack/pwaService/components/PWAAutoLauncher";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

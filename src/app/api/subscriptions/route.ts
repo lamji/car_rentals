@@ -4,7 +4,7 @@ import {
     PUSH_SUBSCRIPTIONS_COLLECTION,
     PUSH_SUBSCRIPTION_INDEXES,
     PushSubscriptionDocument
-} from "@/lib/pwaService/models/PushSubscription";
+} from "@/lib/npm-ready-stack/pwaService/models/PushSubscription";
 import { NextRequest, NextResponse } from 'next/server';
 
 /**

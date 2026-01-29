@@ -1,4 +1,4 @@
-import { sendNotificationDB } from '@/lib/pwaService/db-actions'
+import { sendNotificationDB } from '@/lib/npm-ready-stack/pwaService/db-actions'
 import { NextRequest, NextResponse } from 'next/server'
 
 /**

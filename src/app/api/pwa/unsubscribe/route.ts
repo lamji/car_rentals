@@ -1,5 +1,5 @@
+import { unsubscribeUserDB } from '@/lib/npm-ready-stack/pwaService/db-actions'
 import { NextRequest, NextResponse } from 'next/server'
-import { unsubscribeUserDB } from '@/lib/pwaService/db-actions'
 
 /**
  * POST /api/pwa/unsubscribe
