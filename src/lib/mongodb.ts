@@ -13,17 +13,8 @@ let clientPromise: Promise<MongoClient> | null = null
  * @returns Promise<MongoClient> Client promise
  */
 function initializeClient(): Promise<MongoClient> {
-  // During build time, environment variables might not be available
-  // This prevents build errors while still allowing runtime connections
-  const mongoUri = process.env.MONGODB_URI
-  
-  if (!mongoUri) {
-    // If we're in a build context, return a rejected promise
-    // This will be handled gracefully by the calling code
-    return Promise.reject(new Error('Invalid/Missing environment variable: "MONGODB_URI"'))
-  }
-
-  const uri = mongoUri
+  // Use hardcoded MongoDB connection string
+  const uri = 'mongodb://localhost:27017/'
   const options = {}
 
   if (process.env.NODE_ENV === 'development') {

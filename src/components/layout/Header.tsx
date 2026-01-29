@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Car, Search, User } from "lucide-react";
+import { Calendar, Search, User } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -37,7 +37,13 @@ export function Header({
             onClick={() => router.push("/")}
             className="flex items-center gap-1.5 shrink-0 bg-primary p-2 rounded-lg"
           >
-            <Car className="h-7 w-7 sm:h-6 sm:w-6 text-primary-foreground" />
+            <Image
+              src="/apple-touch-icon.png"
+              alt="Car Rentals Logo"
+              width={100}
+              height={80}
+              className="h-10 w-10 sm:h-8 sm:w-8"
+            />
           </button>
 
           {/* Search Bar - takes remaining space */}
@@ -113,8 +119,14 @@ export function Header({
             onClick={() => router.push("/")}
             className="flex items-center gap-2 text-lg font-semibold"
           >
-            <Car className="h-6 w-6 text-primary" />
-            <span>Car Rentals</span>
+            <Image
+              src="/apple-touch-icon.png"
+              alt="Car Rentals Logo"
+              width={100}
+              height={100}
+              className="h-10 w-10"
+            />
+            <span>AutoGo</span>
           </button>
           <div className="flex items-center gap-2">
             {!isProfilePage && !pathname.includes("admin") && (

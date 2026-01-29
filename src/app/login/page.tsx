@@ -15,7 +15,6 @@ export default function LoginPage() {
   return (
     <div className="mt-5 min-h-screen flex flex-col max-lg:w-full mx-auto">
       {/* Header */}
-    
 
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center px-9 sm:px-4 pb-4 sm:pb-8">
@@ -28,20 +27,27 @@ export default function LoginPage() {
                 <img
                   src="/apple-touch-icon.png"
                   alt="Car Rentals Logo"
-                  className="w-100 h-100 sm:w-40 sm:h-40"
+                  className="w-55 h-40 sm:w-40 sm:h-40"
                 />
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
               </div>
             </div>
-            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Welcome Back</h2>
-            <p className="text-sm sm:text-base text-gray-600">Sign in to continue your car rental experience</p>
+            <p className="text-sm sm:text-base text-gray-600">
+              Sign in to continue your car rental experience
+            </p>
           </div>
 
           {/* Login Form */}
-          <form className="space-y-4 sm:space-y-6" onSubmit={(e) => e.preventDefault()}>
+          <form
+            className="space-y-4 sm:space-y-6"
+            onSubmit={(e) => e.preventDefault()}
+          >
             {/* Email Field */}
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="email"
+                className="text-sm font-medium text-gray-700"
+              >
                 Email Address
               </Label>
               <div className="relative">
@@ -58,7 +64,10 @@ export default function LoginPage() {
 
             {/* Password Field */}
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="password"
+                className="text-sm font-medium text-gray-700"
+              >
                 Password
               </Label>
               <div className="relative">
@@ -96,7 +105,7 @@ export default function LoginPage() {
             </div>
 
             {/* Sign In Button */}
-            <Button 
+            <Button
               type="submit"
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-medium transition-all transform hover:scale-[1.02] active:scale-[0.98]"
             >
@@ -119,11 +128,11 @@ export default function LoginPage() {
           {/* Sign Up Link */}
           <div className="text-center">
             <p className="text-sm sm:text-base text-gray-600">
-              Create an account and start your journey with{' '}
+              Create an account and start your journey with{" "}
               <span className="font-semibold text-primary">Book a Ride</span>
             </p>
-            <Link 
-              href="/signup" 
+            <Link
+              href="/signup"
               className="inline-flex items-center justify-center w-full mt-3 sm:mt-4 bg-white border border-gray-300 text-gray-700 py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-medium hover:bg-gray-50 hover:border-gray-400 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
             >
               Create Account
@@ -140,16 +149,36 @@ export default function LoginPage() {
             </div>
             <div className="text-center">
               <div className="w-8 h-8 sm:w-12 sm:h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-1 sm:mb-2">
-                <svg className="h-4 w-4 sm:h-6 sm:w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="h-4 w-4 sm:h-6 sm:w-6 text-green-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               </div>
               <p className="text-xs text-gray-600">Easy Booking</p>
             </div>
             <div className="text-center">
               <div className="w-8 h-8 sm:w-12 sm:h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-1 sm:mb-2">
-                <svg className="h-4 w-4 sm:h-6 sm:w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="h-4 w-4 sm:h-6 sm:w-6 text-purple-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               </div>
               <p className="text-xs text-gray-600">24/7 Support</p>

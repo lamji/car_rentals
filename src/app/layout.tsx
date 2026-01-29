@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import { LayoutContent } from "@/components/layout/LayoutContent";
+import ReactProvider from "@/components/providers/ReactProvider";
 import ReduxProvider from "@/components/providers/ReduxProvider";
 import { SmartSubscriptionAlertWrapper } from "@/components/wrapper/SmartSubscriptionAlertWrapper";
 import { InstallPrompt } from "@/lib/pwaService/components/InstallPrompt";
@@ -58,12 +59,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ReduxProvider>
-          <SmartSubscriptionAlertWrapper />
-          <InstallPrompt />
-          <LayoutContent>{children}</LayoutContent>
-          <PWAAutoLauncher />
-        </ReduxProvider>
+        <ReactProvider>
+          <ReduxProvider>
+            <SmartSubscriptionAlertWrapper />
+            <InstallPrompt />
+            <LayoutContent>{children}</LayoutContent>
+            <PWAAutoLauncher />
+          </ReduxProvider>
+        </ReactProvider>
       </body>
     </html>
   );
