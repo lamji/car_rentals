@@ -1,7 +1,8 @@
-import Image from "next/image";
-import { Car, Zap, Headphones } from "lucide-react";
 import { LocationSearch } from "@/components/location/LocationSearch";
-import { useLocationModal } from "@/contexts/LocationModalContext";
+import { openLocationModal } from "@/lib/slices/uiSlice";
+import { Car, Headphones, Zap } from "lucide-react";
+import Image from "next/image";
+import { useDispatch } from "react-redux";
 
 interface HeroProps {
   state: {
@@ -18,7 +19,15 @@ export function Hero({
   handleClearLocation,
   className,
 }: HeroProps) {
-  const { openLocationModal } = useLocationModal();
+  const dispatch = useDispatch();
+  
+  /**
+   * Handle opening the location modal via Redux
+   * @returns {void}
+   */
+  const handleOpenLocationModal = () => {
+    dispatch(openLocationModal());
+  };
   return (
     <div className={className}>
       <div className="relative h-[100vh] sm:h-[60vh] md:h-[60vh] lg:h-[60vh] w-full overflow-hidden">
@@ -68,7 +77,7 @@ export function Hero({
             {/* Address Search inside hero */}
             <LocationSearch
               state={state}
-              setIsLocationModalOpen={openLocationModal}
+              setIsLocationModalOpen={handleOpenLocationModal}
               handleLocationChange={handleLocationChange}
               handleClearLocation={handleClearLocation}
               className="mt-8 max-w-2xl mx-auto"

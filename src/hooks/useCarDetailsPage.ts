@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { useParams } from "next/navigation";
-import { useGeolocationContext } from "@/contexts/GeolocationContext";
-import { useAppDispatch } from "@/lib/store";
-import { setSelectedCar } from "@/lib/slices/bookingSlice";
 import { useBooking } from "@/hooks/useBooking";
 import { useCar } from "@/hooks/useCar";
+import { setSelectedCar } from "@/lib/slices/bookingSlice";
+import { useAppDispatch } from "@/lib/store";
 import { calculateDistanceToCar, formatDistance } from "@/utils/distance";
+import { useParams, useRouter } from "next/navigation";
+import { useCallback, useState } from "react";
+import { useGeolocation } from "../lib/npm-ready-stack/locationPicker";
 
 export function useCarDetailsPage() {
   const router = useRouter();
@@ -17,7 +16,7 @@ export function useCarDetailsPage() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const dispatch = useAppDispatch();
 
-  const { position, loading } = useGeolocationContext();
+  const { position, loading } = useGeolocation();
   const id = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
   const car = useCar(id);
 

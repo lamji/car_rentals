@@ -1,9 +1,10 @@
 "use client";
 
-import { LocateFixed } from "lucide-react";
-import { useLocationModal } from "@/contexts/LocationModalContext";
 import { MobileCategoryFilter } from "@/components/home/MobileCategoryFilter";
+import { openLocationModal } from "@/lib/slices/uiSlice";
 import type { CarType } from "@/lib/types";
+import { LocateFixed } from "lucide-react";
+import { useDispatch } from "react-redux";
 
 interface Category {
   value: CarType | "all";
@@ -27,7 +28,15 @@ export function MobileHero({
   selectedCategory,
   setSelectedCategory,
 }: MobileHeroProps) {
-  const { openLocationModal } = useLocationModal();
+  const dispatch = useDispatch();
+  
+  /**
+   * Handle opening the location modal via Redux
+   * @returns {void}
+   */
+  const handleOpenLocationModal = () => {
+    dispatch(openLocationModal());
+  };
 
   // Function to truncate text to specific character count
   const truncateText = (text: string, maxLength: number) => {
@@ -48,7 +57,7 @@ export function MobileHero({
       </p>
       <div className="mt-4 flex gap-2 max-w-md mx-auto ">
         <button
-          onClick={openLocationModal}
+          onClick={handleOpenLocationModal}
           className="flex-1 px-4 py-3 rounded-lg bg-white/10 border-2 border-white text-white placeholder-white/60 hover:bg-white/20 transition-colors text-left flex items-center gap-3 min-w-0"
         >
           <LocateFixed className="w-4 h-4 text-white flex-shrink-0" />

@@ -1,20 +1,23 @@
 "use client";
 
-import React from "react";
-import { useConfirmation } from "@/hooks/useConfirmation";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Info, CheckCircle, XCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useConfirmation } from "@/hooks/useConfirmation";
+import { AlertTriangle, Info } from "lucide-react";
 
 export function ConfirmationModal() {
   const { isOpen, options, isConfirming, confirm, cancel } = useConfirmation();
 
   const getIcon = () => {
     switch (options?.variant) {
-      case 'destructive':
+      case "destructive":
         return <AlertTriangle className="h-5 w-5 text-red-500" />;
-      case 'default':
+      case "default":
       default:
         return <Info className="h-5 w-5 text-blue-500" />;
     }
@@ -39,7 +42,7 @@ export function ConfirmationModal() {
             {options?.title || "Confirm Action"}
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="py-4">
           {isConfirming ? (
             <div className="flex items-center justify-center py-4">
@@ -52,21 +55,23 @@ export function ConfirmationModal() {
             </div>
           )}
         </div>
-        
+
         <div className="flex justify-end gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={handleCancel}
             disabled={isConfirming}
           >
             {options?.cancelText || "Cancel"}
           </Button>
-          <Button 
+          <Button
             onClick={handleConfirm}
             disabled={isConfirming}
-            variant={options?.variant === "destructive" ? "destructive" : "default"}
+            variant={
+              options?.variant === "destructive" ? "destructive" : "default"
+            }
           >
-            {isConfirming ? "Processing..." : (options?.confirmText || "Confirm")}
+            {isConfirming ? "Processing..." : options?.confirmText || "Confirm"}
           </Button>
         </div>
       </DialogContent>

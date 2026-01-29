@@ -3,12 +3,10 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import { LayoutContent } from "@/components/layout/LayoutContent";
-import { GeolocationWrapper } from "@/components/providers/GeolocationWrapper";
 import ReduxProvider from "@/components/providers/ReduxProvider";
-import { LocationPermissionBanner } from "@/components/ui/LocationPermissionBanner";
-import { SmartSubscriptionAlert } from "@/components/ui/SmartSubscriptionAlert";
+import { SmartSubscriptionAlertWrapper } from "@/components/wrapper/SmartSubscriptionAlertWrapper";
 import { InstallPrompt } from "@/lib/pwaService/components/InstallPrompt";
-
+import { PWAAutoLauncher } from "../lib/pwaService/components/PWAAutoLauncher";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,20 +25,20 @@ export const metadata: Metadata = {
     icon: [
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon.ico", sizes: "48x48" }
+      { url: "/favicon.ico", sizes: "48x48" },
     ],
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }
-    ]
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Car Rentals"
+    title: "Car Rentals",
   },
   formatDetection: {
-    telephone: false
-  }
+    telephone: false,
+  },
 };
 
 export const viewport = {
@@ -61,17 +59,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ReduxProvider>
-          <GeolocationWrapper>
-            <LocationPermissionBanner />
-            {/* PWA Components for Testing */}
-            <div className="container mx-auto px-4 py-4 space-y-4">
-              <SmartSubscriptionAlert />
-              <InstallPrompt />
-            </div>
-            <LayoutContent>
-              {children}
-            </LayoutContent>
-          </GeolocationWrapper>
+          <SmartSubscriptionAlertWrapper />
+          <InstallPrompt />
+          <LayoutContent>{children}</LayoutContent>
+          <PWAAutoLauncher />
         </ReduxProvider>
       </body>
     </html>

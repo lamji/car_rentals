@@ -1,47 +1,29 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { MapPin, Loader2, Crosshair, RefreshCw } from "lucide-react";
+import { Crosshair, Loader2, MapPin, RefreshCw } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useReduxPSGCLocations } from "@/hooks/useReduxPSGCLocations";
-import { useGeolocationContext } from "@/contexts/GeolocationContext";
-import { PSGCRegion } from "@/lib/slices/regionsSlice";
 
-export interface LocationData {
-  region?: string;
-  province?: string;
-  city?: string;
-  barangay?: string;
-  landmark?: string;
-}
+import { useGeolocation } from "../hooks/useGeolocation";
+import { usePSGCLocations } from "../hooks/usePSGCLocations";
+import type { LocationData, LocationModalProps, PSGCLocation, PSGCRegion } from "../types";
 
-interface PSGCLocation {
-  psgc_id: string;
-  name: string;
-  correspondence_code: string;
-  geographic_level: "Reg" | "Prov" | "City" | "Bgy";
-  old_names: string;
-  city_class: string;
-  income_classification: string;
-  urban_rural: string;
-  population: string;
-  status: string;
-}
-
-interface LocationModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onLocationSelect: (location: string, locationData?: LocationData) => void;
-  initialData?: LocationData;
-  title?: string;
-  showLandmark?: boolean;
-  required?: boolean[];
-}
-
+/**
+ * LocationModal component for selecting Philippine locations
+ * Supports both manual cascading selection and geolocation-based selection
+ * @param isOpen - Whether the modal is open
+ * @param onClose - Callback when modal is closed
+ * @param onLocationSelect - Callback when location is selected
+ * @param initialData - Initial location data to populate fields
+ * @param title - Modal title
+ * @param showLandmark - Whether to show landmark input
+ * @param required - Object of required fields {region, province, city, barangay}
+ * @returns {JSX.Element} LocationModal component
+ */
 export function LocationModal({ 
   isOpen, 
   onClose, 
@@ -49,15 +31,20 @@ export function LocationModal({
   initialData,
   title = "Select Location",
   showLandmark = true,
-  required = [true, true, true, true] // region, province, city, barangay
+  required = {
+    region: true,
+    province: true,
+    city: true,
+    barangay: true
+  }
 }: LocationModalProps) {
-  // Input states
+  // Local input states
   const [localProvinceQuery, setLocalProvinceQuery] = useState(initialData?.province || "");
   const [localCityQuery, setLocalCityQuery] = useState(initialData?.city || "");
   const [localBarangayQuery, setLocalBarangayQuery] = useState(initialData?.barangay || "");
   const [landmark, setLandmark] = useState(initialData?.landmark || "");
   
-  // Dropdown states
+  // Dropdown visibility states
   const [showRegionDropdown, setShowRegionDropdown] = useState(false);
   const [showProvinceDropdown, setShowProvinceDropdown] = useState(false);
   const [showCityDropdown, setShowCityDropdown] = useState(false);
@@ -67,13 +54,17 @@ export function LocationModal({
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [activeDropdown, setActiveDropdown] = useState<'region' | 'province' | 'city' | 'barangay' | null>(null);
   
-  // Refs
+  // Geolocation toggle state
+  const [useCurrentLocation, setUseCurrentLocation] = useState(false);
+  
+  // Input refs for focus management
   const regionInputRef = useRef<HTMLInputElement>(null);
   const provinceInputRef = useRef<HTMLInputElement>(null);
   const cityInputRef = useRef<HTMLInputElement>(null);
   const barangayInputRef = useRef<HTMLInputElement>(null);
   const landmarkInputRef = useRef<HTMLInputElement>(null);
   
+  // PSGC locations hook
   const { 
     filteredRegions, 
     regionsLoading, 
@@ -93,19 +84,24 @@ export function LocationModal({
     setProvinceQuery,
     setCityQuery,
     setBarangayQuery,
-  } = useReduxPSGCLocations();
+    fetchRegions,
+  } = usePSGCLocations();
 
   // Geolocation hook
   const { 
     address, 
     loading: locationLoading, 
-    requestLocation,
+    getCurrentPosition,
     requestLocationPermission,
     permissionDenied
-  } = useGeolocationContext();
+  } = useGeolocation();
 
-  // Geolocation switch state
-  const [useCurrentLocation, setUseCurrentLocation] = useState(false);
+  // Fetch regions when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchRegions();
+    }
+  }, [isOpen, fetchRegions]);
 
   // Initialize with initial data
   useEffect(() => {
@@ -118,37 +114,22 @@ export function LocationModal({
     }
   }, [initialData, isOpen, setRegionQuery]);
 
-  // Handle geolocation toggle
+  /**
+   * Handle geolocation toggle switch
+   * @param enabled - Whether geolocation is enabled
+   * @returns {void}
+   */
   const handleLocationToggle = (enabled: boolean) => {
-    console.log('🔄 Location Toggle:', enabled ? 'ON' : 'OFF');
-    console.log('🔄 Current address before toggle:', address);
-    console.log('🔄 isOpen:', isOpen);
-    console.log('🔄 useCurrentLocation before:', useCurrentLocation);
-    
     setUseCurrentLocation(enabled);
     
-    // Log the new state
-    setTimeout(() => {
-      console.log('🔄 useCurrentLocation after:', useCurrentLocation);
-    }, 100);
-    
     if (enabled) {
-      console.log('📍 Activating geolocation...');
       if (permissionDenied) {
-        // If permission was denied, request it again
-        console.log('🔐 Permission was denied, requesting again...');
         requestLocationPermission();
       } else if (!address) {
-        // If no address available, request location
-        console.log('📍 No address available, requesting location...');
-        requestLocation();
-      } else {
-        console.log('📍 Address already available, will populate form');
+        getCurrentPosition();
       }
-      // If address is available, the effect below will populate the inputs
     } else {
       // Clear inputs when toggled off
-      console.log('🧹 Clearing location inputs...');
       setRegionQuery("");
       setLocalProvinceQuery("");
       setLocalCityQuery("");
@@ -156,39 +137,27 @@ export function LocationModal({
     }
   };
 
-  // Populate inputs when geolocation address is available and switch is on
+  // Populate inputs when geolocation address is available
   useEffect(() => {
     if (useCurrentLocation && address && isOpen) {
-      console.log('📍 Populating form with geocoded address:', address);
-      console.log('📍 Form population details:', {
-        region: address.region,
-        province: address.province,
-        city: address.city || address.municipality,
-        barangay: address.barangay,
-        fullAddress: address.formattedAddress
-      });
-      
       setRegionQuery(address.region || "");
       setLocalProvinceQuery(address.province || "");
       setLocalCityQuery(address.city || address.municipality || "");
       setLocalBarangayQuery(address.barangay || "");
-      
-      console.log('📍 Form populated with location data');
     }
   }, [useCurrentLocation, address, isOpen, setRegionQuery]);
 
-  // Check if form is valid for submission
+  /**
+   * Check if form is valid for submission
+   * @returns {boolean} Whether form is valid
+   */
   const isFormValid = () => {
-    // If current location is enabled and we have address data, it's valid
-    if (useCurrentLocation && address) {
-      return true;
-    }
+    if (useCurrentLocation && address) return true;
 
-    // Otherwise check manual entry validation
-    if (required[0] && !cascadingState.selectedRegion) return false;
-    if (required[1] && !cascadingState.selectedProvince) return false;
-    if (required[2] && !cascadingState.selectedCity) return false;
-    if (required[3] && !cascadingState.selectedBarangay) return false;
+    if (required.region && !cascadingState.selectedRegion) return false;
+    if (required.province && !cascadingState.selectedProvince) return false;
+    if (required.city && !cascadingState.selectedCity) return false;
+    if (required.barangay && !cascadingState.selectedBarangay) return false;
     
     return true;
   };
@@ -200,16 +169,18 @@ export function LocationModal({
     }
   }, [isOpen]);
 
-  // Handle region query change
+  /**
+   * Handle region query input change
+   * @param newQuery - New query string
+   * @returns {void}
+   */
   const handleRegionQueryChange = (newQuery: string) => {
     setRegionQuery(newQuery);
     setSelectedIndex(-1);
     setShowRegionDropdown(newQuery.length >= 1);
     setActiveDropdown('region');
     
-    if (newQuery.trim()) {
-      // Filter regions will be handled by the hook
-    } else {
+    if (!newQuery.trim()) {
       setSelectedRegion(null);
       setSelectedProvince(null);
       setSelectedCity(null);
@@ -220,52 +191,69 @@ export function LocationModal({
     }
   };
 
-  // Handle province query change
+  /**
+   * Handle province query input change
+   * @param newQuery - New query string
+   * @returns {void}
+   */
   const handleProvinceQueryChange = (newQuery: string) => {
     setLocalProvinceQuery(newQuery);
-    setProvinceQuery(newQuery); // Redux setter
+    setProvinceQuery(newQuery);
     setSelectedIndex(-1);
     setShowProvinceDropdown(newQuery.length >= 1);
     setActiveDropdown('province');
   };
 
-  // Handle city query change
+  /**
+   * Handle city query input change
+   * @param newQuery - New query string
+   * @returns {void}
+   */
   const handleCityQueryChange = (newQuery: string) => {
     setLocalCityQuery(newQuery);
-    setCityQuery(newQuery); // Redux setter
+    setCityQuery(newQuery);
     setSelectedIndex(-1);
     setShowCityDropdown(newQuery.length >= 1);
     setActiveDropdown('city');
   };
 
-  // Handle barangay query change
+  /**
+   * Handle barangay query input change
+   * @param newQuery - New query string
+   * @returns {void}
+   */
   const handleBarangayQueryChange = (newQuery: string) => {
     setLocalBarangayQuery(newQuery);
-    setBarangayQuery(newQuery); // Redux setter
+    setBarangayQuery(newQuery);
     setSelectedIndex(-1);
     setShowBarangayDropdown(newQuery.length >= 1);
     setActiveDropdown('barangay');
   };
 
-  // Selection handlers
+  /**
+   * Handle region selection from dropdown
+   * @param region - Selected region
+   * @returns {void}
+   */
   const handleRegionSelect = (region: PSGCRegion) => {
     setRegionQuery(region.name);
     setSelectedRegion(region);
     setShowRegionDropdown(false);
     setActiveDropdown(null);
     
-    // Clear downstream selections
-    setSelectedProvince(null);
-    setSelectedCity(null);
-    setSelectedBarangay(null);
-    setProvinceQuery("");
-    setCityQuery("");
-    setBarangayQuery("");
+    // Clear downstream
+    setLocalProvinceQuery("");
+    setLocalCityQuery("");
+    setLocalBarangayQuery("");
     
-    // Focus province input
     setTimeout(() => provinceInputRef.current?.focus(), 100);
   };
 
+  /**
+   * Handle province selection from dropdown
+   * @param province - Selected province
+   * @returns {void}
+   */
   const handleProvinceSelect = (province: PSGCLocation) => {
     setLocalProvinceQuery(province.name);
     setProvinceQuery(province.name);
@@ -273,18 +261,18 @@ export function LocationModal({
     setShowProvinceDropdown(false);
     setActiveDropdown(null);
     
-    // Clear downstream selections
-    setSelectedCity(null);
-    setSelectedBarangay(null);
-    setCityQuery("");
-    setBarangayQuery("");
+    // Clear downstream
     setLocalCityQuery("");
     setLocalBarangayQuery("");
     
-    // Focus city input
     setTimeout(() => cityInputRef.current?.focus(), 100);
   };
 
+  /**
+   * Handle city selection from dropdown
+   * @param city - Selected city
+   * @returns {void}
+   */
   const handleCitySelect = (city: PSGCLocation) => {
     setLocalCityQuery(city.name);
     setCityQuery(city.name);
@@ -292,15 +280,17 @@ export function LocationModal({
     setShowCityDropdown(false);
     setActiveDropdown(null);
     
-    // Clear downstream selections
-    setSelectedBarangay(null);
-    setBarangayQuery("");
+    // Clear downstream
     setLocalBarangayQuery("");
     
-    // Focus barangay input
     setTimeout(() => barangayInputRef.current?.focus(), 100);
   };
 
+  /**
+   * Handle barangay selection from dropdown
+   * @param barangay - Selected barangay
+   * @returns {void}
+   */
   const handleBarangaySelect = (barangay: PSGCLocation) => {
     setLocalBarangayQuery(barangay.name);
     setBarangayQuery(barangay.name);
@@ -308,15 +298,18 @@ export function LocationModal({
     setShowBarangayDropdown(false);
     setActiveDropdown(null);
     
-    // Focus landmark input if shown
     if (showLandmark) {
       setTimeout(() => landmarkInputRef.current?.focus(), 100);
     }
   };
 
-  // Handle location submit
+  /**
+   * Handle form submission
+   * Builds location string and calls onLocationSelect callback
+   * @returns {void}
+   */
   const handleLocationSubmit = () => {
-    // If current location is enabled and we have address data, proceed with validation
+    // If using current location with address data
     if (useCurrentLocation && address) {
       const locationData: LocationData = {
         region: address.region,
@@ -332,21 +325,13 @@ export function LocationModal({
       return;
     }
 
-    // Check required fields for manual entry
-    if (required[0] && !cascadingState.selectedRegion) {
-      return;
-    }
-    if (required[1] && !cascadingState.selectedProvince) {
-      return;
-    }
-    if (required[2] && !cascadingState.selectedCity) {
-      return;
-    }
-    if (required[3] && !cascadingState.selectedBarangay) {
-      return;
-    }
+    // Validate required fields for manual entry
+    if (required.region && !cascadingState.selectedRegion) return;
+    if (required.province && !cascadingState.selectedProvince) return;
+    if (required.city && !cascadingState.selectedCity) return;
+    if (required.barangay && !cascadingState.selectedBarangay) return;
 
-    // Build location string
+    // Build location string from selections
     const parts = [];
     if (cascadingState.selectedBarangay) parts.push(cascadingState.selectedBarangay.name);
     if (cascadingState.selectedCity) parts.push(cascadingState.selectedCity.name);
@@ -358,7 +343,6 @@ export function LocationModal({
       locationString += ` (Near: ${landmark.trim()})`;
     }
 
-    // Prepare location data
     const locationData: LocationData = {
       region: cascadingState.selectedRegion?.name,
       province: cascadingState.selectedProvince?.name,
@@ -371,24 +355,22 @@ export function LocationModal({
     onClose();
   };
 
-  // Handle current location selection (for quick use button)
+  /**
+   * Handle quick current location selection
+   * @returns {Promise<void>}
+   */
   const handleCurrentLocation = async () => {
     if (permissionDenied) {
-      // If permission was denied, request permission again
       requestLocationPermission();
       return;
     }
 
     if (!address) {
-      // Request location if not available
-      requestLocation();
+      getCurrentPosition();
       return;
     }
 
-    // Use the full geocoded address
     const locationString = address.formattedAddress;
-    
-    // Create a location data object with proper administrative divisions
     const locationData: LocationData = {
       region: address.region,
       province: address.province,
@@ -397,21 +379,27 @@ export function LocationModal({
       landmark: undefined
     };
 
-    console.log('📍 Quick selecting location with data:', locationData);
     onLocationSelect(locationString, locationData);
     onClose();
   };
 
+  /**
+   * Handle retry/refresh location button
+   * @returns {void}
+   */
   const handleRetryLocation = () => {
     if (permissionDenied) {
       requestLocationPermission();
       return;
     }
-
-    requestLocation();
+    getCurrentPosition();
   };
 
-  // Handle modal close
+  /**
+   * Handle modal close
+   * Clears all dropdown states
+   * @returns {void}
+   */
   const handleModalClose = () => {
     setShowRegionDropdown(false);
     setShowProvinceDropdown(false);
@@ -421,20 +409,20 @@ export function LocationModal({
     onClose();
   };
 
-  // Handle keyboard navigation
+  /**
+   * Handle keyboard navigation in dropdowns
+   * @param e - Keyboard event
+   * @param dropdownType - Type of dropdown being navigated
+   * @returns {void}
+   */
   const handleKeyDown = (e: React.KeyboardEvent, dropdownType: 'region' | 'province' | 'city' | 'barangay') => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
       let items;
-      if (dropdownType === 'region') {
-        items = filteredRegions;
-      } else if (dropdownType === 'province') {
-        items = filteredProvinces;
-      } else if (dropdownType === 'city') {
-        items = filteredCities;
-      } else {
-        items = filteredBarangays;
-      }
+      if (dropdownType === 'region') items = filteredRegions;
+      else if (dropdownType === 'province') items = filteredProvinces;
+      else if (dropdownType === 'city') items = filteredCities;
+      else items = filteredBarangays;
       setSelectedIndex(prev => prev < items.length - 1 ? prev + 1 : prev);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
@@ -442,30 +430,18 @@ export function LocationModal({
     } else if (e.key === "Enter") {
       e.preventDefault();
       let items;
-      if (dropdownType === 'region') {
-        items = filteredRegions;
-      } else if (dropdownType === 'province') {
-        items = filteredProvinces;
-      } else if (dropdownType === 'city') {
-        items = filteredCities;
-      } else {
-        items = filteredBarangays;
-      }
+      if (dropdownType === 'region') items = filteredRegions;
+      else if (dropdownType === 'province') items = filteredProvinces;
+      else if (dropdownType === 'city') items = filteredCities;
+      else items = filteredBarangays;
+      
       if (selectedIndex >= 0 && items[selectedIndex]) {
         const selectedItem = items[selectedIndex];
         switch (dropdownType) {
-          case 'region':
-            handleRegionSelect(selectedItem as PSGCRegion);
-            break;
-          case 'province':
-            handleProvinceSelect(selectedItem);
-            break;
-          case 'city':
-            handleCitySelect(selectedItem);
-            break;
-          case 'barangay':
-            handleBarangaySelect(selectedItem);
-            break;
+          case 'region': handleRegionSelect(selectedItem as PSGCRegion); break;
+          case 'province': handleProvinceSelect(selectedItem); break;
+          case 'city': handleCitySelect(selectedItem); break;
+          case 'barangay': handleBarangaySelect(selectedItem); break;
         }
       }
     } else if (e.key === "Escape") {
@@ -499,10 +475,10 @@ export function LocationModal({
           </DialogTitle>
         </DialogHeader>
         
-        {/* Current Location Preview with Switch */}
+        {/* Current Location Section */}
         <div className="flex items-start justify-between p-3 border rounded-lg bg-gray-50 gap-4">
           <div className="flex items-start gap-3 flex-1 min-w-0">
-            <Crosshair className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+            <Crosshair className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
               <button
                 onClick={handleCurrentLocation}
@@ -514,9 +490,7 @@ export function LocationModal({
                     ? "Getting location..." 
                     : permissionDenied 
                       ? "Location Access Denied"
-                      : address 
-                        ? "Use Current Location" 
-                        : "Use Current Location"
+                      : "Use Current Location"
                   }
                 </span>
                 {permissionDenied && (
@@ -531,23 +505,21 @@ export function LocationModal({
                 )}
               </button>
 
-            
-                <div className="mt-2">
-                  <Button
-                    type="button"
-                    onClick={handleRetryLocation}
-                    variant="default"
-                    size="sm"
-                    className="h-9 text-xs bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    <RefreshCw className="h-3 w-3 mr-1" />
-                    Refresh Location
-                  </Button>
-                </div>
-              
+              <div className="mt-2">
+                <Button
+                  type="button"
+                  onClick={handleRetryLocation}
+                  variant="default"
+                  size="sm"
+                  className="h-9 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Refresh Location
+                </Button>
+              </div>
             </div>
           </div>
-          <div className="flex-shrink-0 pt-1">
+          <div className="shrink-0 pt-1">
             <Switch
               checked={useCurrentLocation}
               onCheckedChange={handleLocationToggle}
@@ -575,7 +547,6 @@ export function LocationModal({
                   </div>
                 )}
                 
-                {/* Region Dropdown */}
                 {showRegionDropdown && (
                   <div className="absolute top-full left-0 right-0 z-50 mt-1 border rounded-md max-h-60 overflow-y-auto bg-white shadow-lg">
                     {filteredRegions.length > 0 ? (
@@ -592,11 +563,9 @@ export function LocationModal({
                             }`}
                             onClick={() => handleRegionSelect(region)}
                           >
-                            <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                            <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm font-medium truncate">
-                                {region.name}
-                              </div>
+                              <div className="text-sm font-medium truncate">{region.name}</div>
                               <div className="text-xs text-muted-foreground truncate">
                                 Population: {region.population?.trim()}
                               </div>
@@ -606,7 +575,7 @@ export function LocationModal({
                       </>
                     ) : (
                       <div className="px-3 py-2 text-gray-500 text-sm">
-                        No regions found matching &quot;{regionQuery}&quot;. Showing all regions.
+                        No regions found matching &quot;{regionQuery}&quot;
                       </div>
                     )}
                   </div>
@@ -630,7 +599,6 @@ export function LocationModal({
                   </div>
                 )}
                 
-                {/* Province Dropdown */}
                 {showProvinceDropdown && (
                   <div className="absolute top-full left-0 right-0 z-50 mt-1 border rounded-md max-h-60 overflow-y-auto bg-white shadow-lg">
                     {filteredProvinces.length > 0 ? (
@@ -647,11 +615,9 @@ export function LocationModal({
                             }`}
                             onClick={() => handleProvinceSelect(province)}
                           >
-                            <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                            <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm font-medium truncate">
-                                {province.name}
-                              </div>
+                              <div className="text-sm font-medium truncate">{province.name}</div>
                               <div className="text-xs text-muted-foreground truncate">
                                 {province.geographic_level}
                               </div>
@@ -661,14 +627,14 @@ export function LocationModal({
                       </>
                     ) : (
                       <div className="px-3 py-2 text-gray-500 text-sm">
-                        {provincesLoading ? 'Loading provinces...' : 'No provinces found matching "' + localProvinceQuery + '"'}
+                        {provincesLoading ? 'Loading provinces...' : `No provinces found matching "${localProvinceQuery}"`}
                       </div>
                     )}
                   </div>
                 )}
               </div>
 
-              {/* City/Municipality Input */}
+              {/* City Input */}
               <div className="relative">
                 <Input
                   ref={cityInputRef}
@@ -685,13 +651,12 @@ export function LocationModal({
                   </div>
                 )}
                 
-                {/* City Dropdown */}
                 {showCityDropdown && (
                   <div className="absolute top-full left-0 right-0 z-50 mt-1 border rounded-md max-h-60 overflow-y-auto bg-white shadow-lg">
                     {filteredCities.length > 0 ? (
                       <>
                         <div className="px-3 py-2 text-xs text-gray-500 border-b bg-gray-50">
-                          Cities/Municipalities in {cascadingState.selectedProvince?.name} ({filteredCities.length})
+                          Cities in {cascadingState.selectedProvince?.name} ({filteredCities.length})
                         </div>
                         {filteredCities.map((city, index) => (
                           <button
@@ -702,11 +667,9 @@ export function LocationModal({
                             }`}
                             onClick={() => handleCitySelect(city)}
                           >
-                            <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                            <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm font-medium truncate">
-                                {city.name}
-                              </div>
+                              <div className="text-sm font-medium truncate">{city.name}</div>
                               <div className="text-xs text-muted-foreground truncate">
                                 {city.geographic_level}
                               </div>
@@ -716,7 +679,7 @@ export function LocationModal({
                       </>
                     ) : (
                       <div className="px-3 py-2 text-gray-500 text-sm">
-                        {citiesLoading ? 'Loading cities...' : 'No cities found matching "' + localCityQuery + '"'}
+                        {citiesLoading ? 'Loading cities...' : `No cities found matching "${localCityQuery}"`}
                       </div>
                     )}
                   </div>
@@ -740,7 +703,6 @@ export function LocationModal({
                   </div>
                 )}
                 
-                {/* Barangay Dropdown */}
                 {showBarangayDropdown && (
                   <div className="absolute top-full left-0 right-0 z-50 mt-1 border rounded-md max-h-60 overflow-y-auto bg-white shadow-lg">
                     {filteredBarangays.length > 0 ? (
@@ -757,11 +719,9 @@ export function LocationModal({
                             }`}
                             onClick={() => handleBarangaySelect(barangay)}
                           >
-                            <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                            <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm font-medium truncate">
-                                {barangay.name}
-                              </div>
+                              <div className="text-sm font-medium truncate">{barangay.name}</div>
                               <div className="text-xs text-muted-foreground truncate">
                                 {barangay.geographic_level}
                               </div>
@@ -771,7 +731,7 @@ export function LocationModal({
                       </>
                     ) : (
                       <div className="px-3 py-2 text-gray-500 text-sm">
-                        {barangaysLoading ? 'Loading barangays...' : 'No barangays found matching "' + localBarangayQuery + '"'}
+                        {barangaysLoading ? 'Loading barangays...' : `No barangays found matching "${localBarangayQuery}"`}
                       </div>
                     )}
                   </div>

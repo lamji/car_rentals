@@ -1,32 +1,57 @@
 'use client'
 
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { showAlert } from '@/lib/slices/alertSlice'
 import {
   getDeviceId,
   isDeviceSubscribedLocally,
   setLocalSubscriptionStatus
 } from '@/lib/utils/deviceId'
-import { Bell, CheckCircle, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useDispatch } from 'react-redux'
 
 /**
- * Smart subscription alert that checks local storage and database
- * Only shows subscription prompt if device is not already subscribed
+ * Alert configuration interface for different alert systems
  */
-export function SmartSubscriptionAlert() {
+export interface AlertConfig {
+  showAlert?: (alert: {
+    type: 'success' | 'error' | 'warning' | 'info'
+    title: string
+    message: string
+    duration?: number
+  }) => void
+}
+
+/**
+ * Configuration interface for smart subscription API endpoints and alert system
+ */
+export interface SmartSubscriptionConfig {
+  endpoints?: {
+    checkDevice?: string
+    subscribe?: string
+  }
+  alertHandler?: AlertConfig['showAlert']
+}
+
+/**
+ * Custom hook for managing smart subscription alert business logic
+ * Handles device ID validation, subscription status checking, and notification permissions
+ * @param {SmartSubscriptionConfig} config - Optional configuration for API endpoints
+ * @returns {Object} Subscription state and utility functions
+ */
+export function useSmartSubscription(config: SmartSubscriptionConfig = {}) {
   const [showSubscriptionPrompt, setShowSubscriptionPrompt] = useState(false)
   const [isChecking, setIsChecking] = useState(true)
   const [isSubscribing, setIsSubscribing] = useState(false)
-  const dispatch = useDispatch()
 
-  /**
-   * Check if device should show subscription alert
-   * Validates both local storage and database to prevent duplicates
-   */
+  // Get API endpoints from config or use defaults
+  const apiEndpoints = {
+    checkDevice: config.endpoints?.checkDevice || '/api/subscriptions/check-device',
+    subscribe: config.endpoints?.subscribe || '/api/pwa/subscribe'
+  }
+
+  // Get alert handler from config or use fallback
+  const alertHandler = config.alertHandler || ((alert) => {
+    // Fallback to console.log if no alert handler provided
+    console.log(`[${alert.type.toUpperCase()}] ${alert.title}: ${alert.message}`)
+  })
 
   /**
    * Check if notification permission has been revoked and show alert if needed
@@ -36,8 +61,7 @@ export function SmartSubscriptionAlert() {
       // Only check if we think we're subscribed locally
       if (isDeviceSubscribedLocally()) {
         const permission = Notification.permission
-        console.log('🔍 Periodic permission check:', permission)
-        
+    
         // If permission was revoked, show the alert again
         if (permission === 'denied' || permission === 'default') {
           console.log('⚠️ Permission revoked - showing subscription alert again')
@@ -62,7 +86,7 @@ export function SmartSubscriptionAlert() {
 
         // Check database for definitive status
         const deviceId = getDeviceId()
-        const response = await fetch('/api/subscriptions/check-device', {
+        const response = await fetch(apiEndpoints.checkDevice, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -105,33 +129,30 @@ export function SmartSubscriptionAlert() {
     } else {
       setIsChecking(false)
     }
-  }, [])
+  }, [apiEndpoints.checkDevice])
 
   /**
    * Check notification permission status and request if not granted
    * @returns {Promise<boolean>} True if permission is granted, false otherwise
    */
   async function checkAndRequestPermission(): Promise<boolean> {
-    console.log('🔐 Checking notification permission status...')
-    
+
     // Check current permission status
     let permission = Notification.permission
-    console.log('🔐 Current permission:', permission)
-    
-    if (permission === 'granted') {
-      console.log('✅ Notification permission already granted')
-      return true
-    }
     
     if (permission === 'denied') {
       console.log('❌ Notification permission denied - cannot request again')
-      dispatch(showAlert({
+      alertHandler({
         type: 'warning',
         title: 'Notifications Blocked',
         message: 'Notifications are blocked. Please enable them in your browser settings to receive updates.',
         duration: 6000
-      }))
+      })
       return false
+    }
+    
+    if (permission === 'granted') {
+      return true
     }
     
     // Permission is 'default' - request permission
@@ -144,12 +165,12 @@ export function SmartSubscriptionAlert() {
       return true
     } else {
       console.log('❌ Notification permission denied by user')
-      dispatch(showAlert({
+      alertHandler({
         type: 'warning',
         title: 'Notifications Denied',
         message: 'Notifications were denied. You can enable them later in your browser settings.',
         duration: 5000
-      }))
+      })
       return false
     }
   }
@@ -166,12 +187,12 @@ export function SmartSubscriptionAlert() {
       console.log('📋 Checking service worker support...')
       if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
         console.log('❌ Push notifications not supported')
-        dispatch(showAlert({
+        alertHandler({
           type: 'error',
           title: 'Notifications Not Supported',
           message: 'Push notifications are not supported in this browser. Please try a modern browser.',
           duration: 5000
-        }))
+        })
         return
       }
       console.log('✅ Service worker supported')
@@ -203,12 +224,12 @@ export function SmartSubscriptionAlert() {
 
       if (!vapidKey) {
         console.log('❌ VAPID key missing')
-        dispatch(showAlert({
+        alertHandler({
           type: 'error',
           title: 'Configuration Error',
           message: 'Push notification configuration is missing. Please contact support.',
           duration: 5000
-        }))
+        })
         return
       }
 
@@ -222,7 +243,7 @@ export function SmartSubscriptionAlert() {
 
       // Send subscription to server with device ID
       console.log('🌐 Sending subscription to server...')
-      const response = await fetch('/api/pwa/subscribe', {
+      const response = await fetch(apiEndpoints.subscribe, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -247,30 +268,30 @@ export function SmartSubscriptionAlert() {
         
         // Show success message
         console.log('🎉 Subscription successful!')
-        dispatch(showAlert({
+        alertHandler({
           type: 'success',
           title: 'Notifications Enabled!',
           message: 'You will now receive push notifications from Car Rentals.',
           duration: 4000
-        }))
+        })
       } else {
         console.log('❌ Subscription failed:', result.error)
-        dispatch(showAlert({
+        alertHandler({
           type: 'error',
           title: 'Subscription Failed',
           message: result.error || 'Failed to subscribe to notifications. Please try again.',
           duration: 5000
-        }))
+        })
       }
     } catch (error: unknown) {
       console.error('💥 Subscription error:', error)
       const errorMessage = error instanceof Error ? error.message : 'An error occurred while subscribing to notifications.'
-      dispatch(showAlert({
+      alertHandler({
         type: 'error',
         title: 'Subscription Error',
         message: errorMessage,
         duration: 5000
-      }))
+      })
     } finally {
       console.log('🏁 Subscription process completed')
       setIsSubscribing(false)
@@ -286,66 +307,11 @@ export function SmartSubscriptionAlert() {
     sessionStorage.setItem('car_rentals_subscription_dismissed', 'true')
   }
 
-  // Don't render anything while checking or if alert shouldn't be shown
-  if (isChecking || !showSubscriptionPrompt) {
-    return null
+  return {
+    showSubscriptionPrompt,
+    isChecking,
+    isSubscribing,
+    handleSubscribe,
+    handleDismiss
   }
-
-  return (
-    <div className="fixed bottom-4 left-4 right-4 z-60 md:left-auto md:right-4 md:max-w-md">
-      <Card className="border-primary/20 bg-white shadow-lg">
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            {/* Icon */}
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <Bell className="w-5 h-5 text-primary" />
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-gray-900">Stay Updated</h3>
-                <Badge variant="secondary" className="text-xs">New</Badge>
-              </div>
-              
-              <p className="text-sm text-gray-600 mb-3">
-                Get instant notifications about your bookings, special offers, and car availability updates.
-              </p>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={handleSubscribe}
-                  disabled={isSubscribing}
-                  size="sm"
-                  className="flex-1"
-                >
-                  {isSubscribing ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                      Subscribing...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Enable Notifications
-                    </>
-                  )}
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleDismiss}
-                  className="px-2"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
 }

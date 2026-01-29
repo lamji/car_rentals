@@ -1,18 +1,18 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
-import regionsReducer from './slices/regionsSlice';
-import provincesReducer from './slices/provincesSlice';
-import citiesReducer from './slices/citiesSlice';
-import barangaysReducer from './slices/barangaysSlice';
-import addressReducer from './slices/addressSlice';
-import bookingReducer from './slices/bookingSlice';
-import globalLoaderReducer from './slices/globalLoaderSlice';
-import alertReducer from './slices/alertSlice';
-import confirmationReducer from './slices/confirmationSlice';
-import navigationReducer from './slices/navigationSlice';
-import { persistStore, persistReducer } from 'redux-persist';
+import { persistReducer, persistStore } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
-import { combineReducers } from '@reduxjs/toolkit';
+import addressReducer from './slices/addressSlice';
+import alertReducer from './slices/alertSlice';
+import barangaysReducer from './slices/barangaysSlice';
+import bookingReducer from './slices/bookingSlice';
+import citiesReducer from './slices/citiesSlice';
+import confirmationReducer from './slices/confirmationSlice';
+import globalLoaderReducer from './slices/globalLoaderSlice';
+import navigationReducer from './slices/navigationSlice';
+import provincesReducer from './slices/provincesSlice';
+import regionsReducer from './slices/regionsSlice';
+import uiReducer from './slices/uiSlice';
 
 // Persist config for address slice only (to cache geocoded addresses)
 const addressPersistConfig = {
@@ -40,6 +40,7 @@ const rootReducer = combineReducers({
   alerts: alertReducer,
   confirmation: confirmationReducer,
   navigation: navigationReducer,
+  ui: uiReducer,
 });
 
 // Root persist config (optional - for entire store if needed)

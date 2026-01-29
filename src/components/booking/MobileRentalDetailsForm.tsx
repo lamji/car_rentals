@@ -1,15 +1,13 @@
 "use client";
 
-import React, { useState } from 'react'
-import { Clock, MapPin, Truck, Calendar } from 'lucide-react'
-import { useAppSelector, useAppDispatch } from '@/lib/store'
-import { setBookingDetails } from '@/lib/slices/bookingSlice'
-import { LocationModal } from '@/components/location/LocationModal'
-import { DatePickerModal } from '@/components/ui/DatePickerModal'
-import { format } from 'date-fns'
-import { LocationData } from '@/components/location/LocationModal'
+import { DatePickerModal } from '@/components/ui/DatePickerModal';
+import { LocationData, LocationModal } from '@/lib/npm-ready-stack/locationPicker';
+import { BookingDetails, setBookingDetails } from '@/lib/slices/bookingSlice';
+import { useAppDispatch, useAppSelector } from '@/lib/store';
 import { formatDateToYYYYMMDD } from '@/utils/dateHelpers';
-import { BookingDetails } from '@/lib/slices/bookingSlice'
+import { format } from 'date-fns';
+import { Calendar, Clock, MapPin, Truck } from 'lucide-react';
+import React, { useState } from 'react';
 
 interface MobileRentalDetailsFormProps {
   onDataChange?: (data: Partial<BookingDetails>) => void

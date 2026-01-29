@@ -3,19 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import type { Car } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { useGeolocationContext } from "@/contexts/GeolocationContext";
+import { useGeolocation } from "@/lib/npm-ready-stack/locationPicker";
+import type { Car } from "@/lib/types";
 import { calculateDistanceToCar, formatDistance } from "@/utils/distance";
 
-export function CarCard(props: {
-  car: Car;
-  href: string;
-}) {
+export function CarCard(props: { car: Car; href: string }) {
   const car = props.car;
-  const { position } = useGeolocationContext();
+  const { position } = useGeolocation();
 
   // Simple debug to see if this is being called
   console.log(`🚗 CarCard: ${car.name}, has position: ${!!position}`);
@@ -29,7 +26,12 @@ export function CarCard(props: {
       <CardContent className="p-4">
         <div className="flex gap-4">
           <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-md bg-muted">
-            <Image src={car.imageUrls[0]} alt={car.name} fill className="object-contain p-2" />
+            <Image
+              src={car.imageUrls[0]}
+              alt={car.name}
+              fill
+              className="object-contain p-2"
+            />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">

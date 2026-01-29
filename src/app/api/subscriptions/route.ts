@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   PUSH_SUBSCRIPTIONS_COLLECTION,
   PUSH_SUBSCRIPTION_INDEXES,

@@ -1,14 +1,19 @@
 "use client";
 
-import React from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "@/lib/store";
-import { removeAlert } from "@/lib/slices/alertSlice";
-import type { Alert } from "@/lib/slices/alertSlice";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, AlertTriangle, Info } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import type { Alert } from "@/lib/slices/alertSlice";
+import { removeAlert } from "@/lib/slices/alertSlice";
+import { RootState } from "@/lib/store";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
+import { AlertTriangle, CheckCircle, Info, XCircle } from "lucide-react";
+import React from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 export function AlertModal() {
   const dispatch = useDispatch();
@@ -16,13 +21,13 @@ export function AlertModal() {
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'success':
+      case "success":
         return <CheckCircle className="h-6 w-6 text-green-500" />;
-      case 'error':
+      case "error":
         return <XCircle className="h-6 w-6 text-red-500" />;
-      case 'warning':
+      case "warning":
         return <AlertTriangle className="h-6 w-6 text-yellow-500" />;
-      case 'info':
+      case "info":
         return <Info className="h-6 w-6 text-blue-500" />;
       default:
         return <Info className="h-6 w-6 text-blue-500" />;
@@ -31,46 +36,31 @@ export function AlertModal() {
 
   const getIconBg = (type: string) => {
     switch (type) {
-      case 'success':
-        return 'bg-green-100';
-      case 'error':
-        return 'bg-red-100';
-      case 'warning':
-        return 'bg-yellow-100';
-      case 'info':
-        return 'bg-blue-100';
+      case "success":
+        return "bg-green-100";
+      case "error":
+        return "bg-red-100";
+      case "warning":
+        return "bg-yellow-100";
+      case "info":
+        return "bg-blue-100";
       default:
-        return 'bg-blue-100';
-    }
-  };
-
-  const getBorderColor = (type: string) => {
-    switch (type) {
-      case 'success':
-        return 'border-green-200';
-      case 'error':
-        return 'border-red-200';
-      case 'warning':
-        return 'border-yellow-200';
-      case 'info':
-        return 'border-blue-200';
-      default:
-        return 'border-blue-200';
+        return "bg-blue-100";
     }
   };
 
   const getButtonColor = (type: string) => {
     switch (type) {
-      case 'success':
-        return 'bg-green-600 hover:bg-green-700';
-      case 'error':
-        return 'bg-red-600 hover:bg-red-700';
-      case 'warning':
-        return 'bg-yellow-600 hover:bg-yellow-700';
-      case 'info':
-        return 'bg-blue-600 hover:bg-blue-700';
+      case "success":
+        return "bg-green-600 hover:bg-green-700";
+      case "error":
+        return "bg-red-600 hover:bg-red-700";
+      case "warning":
+        return "bg-yellow-600 hover:bg-yellow-700";
+      case "info":
+        return "bg-blue-600 hover:bg-blue-700";
       default:
-        return 'bg-blue-600 hover:bg-blue-700';
+        return "bg-blue-600 hover:bg-blue-700";
     }
   };
 
@@ -92,19 +82,24 @@ export function AlertModal() {
   const latestAlert = alerts[alerts.length - 1];
 
   return (
-    <Dialog open={true} onOpenChange={() => dispatch(removeAlert(latestAlert.id))}>
+    <Dialog
+      open={true}
+      onOpenChange={() => dispatch(removeAlert(latestAlert.id))}
+    >
       <DialogContent className="sm:max-w-md">
         {/* Accessibility: VisuallyHidden title and description */}
         <VisuallyHidden.Root>
-          <DialogTitle>{latestAlert.title || 'Alert'}</DialogTitle>
+          <DialogTitle>{latestAlert.title || "Alert"}</DialogTitle>
           <DialogDescription>{latestAlert.message}</DialogDescription>
         </VisuallyHidden.Root>
-        
+
         <div className="relative">
           {/* Alert Content */}
           <div className="flex items-start space-x-4">
             {/* Icon */}
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${getIconBg(latestAlert.type)}`}>
+            <div
+              className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${getIconBg(latestAlert.type)}`}
+            >
               {getIcon(latestAlert.type)}
             </div>
 

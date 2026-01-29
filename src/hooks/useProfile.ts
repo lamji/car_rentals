@@ -77,6 +77,7 @@ export function useProfile() {
             message: 'Failed to logout. Please try again.',
             duration: 5000
           }));
+          console.error('❌ useProfile: Error logging out:', error);
         }
       }
     });
@@ -118,6 +119,7 @@ export function useProfile() {
           }
         } catch (error) {
           // If deletion fails, show error alert
+          console.error('❌ useProfile: Error deleting account:', error);
           dispatch(showAlert({
             type: 'error',
             title: 'Error',

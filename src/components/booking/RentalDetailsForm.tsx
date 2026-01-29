@@ -1,11 +1,10 @@
-import React, { useState } from 'react'
-import { Calendar, Clock, MapPin, Truck } from 'lucide-react'
-import { useAppSelector, useAppDispatch } from '@/lib/store'
-import { setBookingDetails } from '@/lib/slices/bookingSlice'
-import { LocationModal } from '@/components/location/LocationModal'
 import { Input } from '@/components/ui/input'
+import { LocationModal } from '@/lib/npm-ready-stack/locationPicker'
 import { calculatePaymentSummary, formatCurrency } from '@/lib/paymentSummaryHelper'
-import { BookingDetails } from '@/lib/slices/bookingSlice'
+import { BookingDetails, setBookingDetails } from '@/lib/slices/bookingSlice'
+import { useAppDispatch, useAppSelector } from '@/lib/store'
+import { Calendar, Clock, MapPin, Truck } from 'lucide-react'
+import React, { useState } from 'react'
 
 interface RentalDetailsFormProps {
   onDataChange?: (data: Partial<BookingDetails>) => void
@@ -418,7 +417,12 @@ The extra ${remainingHours.toFixed(1)} hour(s) will be charged hourly at ${forma
         onLocationSelect={handleLocationSelect}
         title="Select Pickup/Return Location"
         showLandmark={true}
-        required={[true, true, true, true]}
+        required={{
+          region: true,
+          province: true,
+          city: true,
+          barangay: true
+        }}
       />
     </div>
   )

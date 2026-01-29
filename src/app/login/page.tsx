@@ -28,7 +28,7 @@ export default function LoginPage() {
                 <img
                   src="/apple-touch-icon.png"
                   alt="Car Rentals Logo"
-                  className="w-32 h-32 sm:w-40 sm:h-40"
+                  className="w-100 h-100 sm:w-40 sm:h-40"
                 />
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
               </div>
