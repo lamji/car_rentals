@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { sendNotificationDB } from '@/lib/pwaService/db-actions'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * POST /api/pwa/send-notification

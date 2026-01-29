@@ -292,7 +292,7 @@ export function SmartSubscriptionAlert() {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:max-w-md">
+    <div className="fixed bottom-4 left-4 right-4 z-60 md:left-auto md:right-4 md:max-w-md">
       <Card className="border-primary/20 bg-white shadow-lg">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
