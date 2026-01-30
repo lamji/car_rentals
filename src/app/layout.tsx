@@ -6,7 +6,6 @@ import { LayoutContent } from "@/components/layout/LayoutContent";
 import ReactProvider from "@/components/providers/ReactProvider";
 import ReduxProvider from "@/components/providers/ReduxProvider";
 import { MapboxTestWrapper } from "@/components/wrappers/MapboxTestWrapper";
-import { WelcomeGuideWrapper } from "../components/onboarding/WelcomeGuideWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -63,7 +62,6 @@ export default function RootLayout({
       >
         <ReactProvider>
           <ReduxProvider>
-            <WelcomeGuideWrapper />
             <LayoutContent>{children}</LayoutContent>
             <MapboxTestWrapper />
           </ReduxProvider>

@@ -93,7 +93,8 @@ export function LayoutContent({ children }: LayoutContentProps) {
       >
         {children}
       </div>
-      {!isBookingsPage && <BottomNavigation />}
+      {pathname === "/" && <BottomNavigation />}
+
       <MessengerAlertWrapper />
       <AlertModal />
       <ConfirmationModal />
