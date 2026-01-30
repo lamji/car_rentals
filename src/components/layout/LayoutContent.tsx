@@ -9,10 +9,11 @@ import { MessengerAlertWrapper } from "@/components/wrapper/MessengerAlertWrappe
 import { useHomeContent } from "@/hooks/useHomeContent";
 import { useUrlBasedNavigation } from "@/hooks/useUrlBasedNavigation";
 import { LocationModal } from "@/lib/npm-ready-stack/locationPicker";
-
+import { useInitConfig } from "@/lib/npm-ready-stack/mapboxService";
 import { RootState } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { closeLocationModal } from "../../lib/slices/uiSlice";
 import { HeaderWithLocation } from "./HeaderWithLocation";
@@ -23,6 +24,7 @@ interface LayoutContentProps {
 
 export function LayoutContent({ children }: LayoutContentProps) {
   const dispatch = useDispatch();
+  const { setConfig } = useInitConfig();
   const {
     handleLocationSelect,
     isNearestGarageModalOpen,
@@ -31,6 +33,20 @@ export function LayoutContent({ children }: LayoutContentProps) {
     handleSelectGarage,
   } = useHomeContent();
   const pathname = usePathname();
+
+  // Set Mapbox configuration on component mount
+  useEffect(() => {
+    console.log("test:LayoutContent - Setting Mapbox config");
+    console.log(
+      "test:LayoutContent - Token:",
+      process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
+    );
+    setConfig({
+      token: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
+      style: "mapbox://styles/lamjilampago/ckg2ggpzw0r9j19mit7o0fr2n",
+    });
+    console.log("test:LayoutContent - Config set complete");
+  }, [setConfig]);
 
   // Get location modal state from Redux
   const isLocationModalOpen = useSelector(

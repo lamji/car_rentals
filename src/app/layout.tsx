@@ -6,6 +6,7 @@ import { LayoutContent } from "@/components/layout/LayoutContent";
 import ReactProvider from "@/components/providers/ReactProvider";
 import ReduxProvider from "@/components/providers/ReduxProvider";
 import { SmartSubscriptionAlertWrapper } from "@/components/wrapper/SmartSubscriptionAlertWrapper";
+import { MapboxTestWrapper } from "@/components/wrappers/MapboxTestWrapper";
 import { InstallPrompt } from "@/lib/npm-ready-stack/pwaService/components/InstallPrompt";
 import { PWAAutoLauncher } from "../lib/npm-ready-stack/pwaService/components/PWAAutoLauncher";
 
@@ -65,6 +66,7 @@ export default function RootLayout({
             <InstallPrompt />
             <LayoutContent>{children}</LayoutContent>
             <PWAAutoLauncher />
+            <MapboxTestWrapper />
           </ReduxProvider>
         </ReactProvider>
       </body>

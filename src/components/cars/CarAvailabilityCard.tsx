@@ -8,7 +8,9 @@ import { calculateDistanceToCar, formatDistance } from "@/utils/distance";
 import { CheckCircle, XCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useGeolocation } from "../../lib/npm-ready-stack/locationPicker";
+import { useReverseLocation } from "../../lib/npm-ready-stack/mapboxService";
 
 type Props = {
   car: Car;
@@ -20,6 +22,28 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
   const { position, loading } = useGeolocation();
   const distance = position ? calculateDistanceToCar(position, car) : null;
   const distanceText = distance ? formatDistance(distance) : null;
+  const [address, setAddress] = useState("Unknown location");
+  const { getLocationNameFromPoint } = useReverseLocation();
+
+  useEffect(() => {
+    const fetchAddress = async () => {
+      if (car?.garageLocation?.coordinates) {
+        try {
+          const locationName = await getLocationNameFromPoint(
+            car.garageLocation.coordinates,
+          );
+          setAddress(locationName);
+        } catch (error) {
+          console.error("Failed to fetch address:", error);
+          setAddress("Unknown location");
+        }
+      } else {
+        setAddress("Unknown location");
+      }
+    };
+
+    fetchAddress();
+  }, [car?.garageLocation?.coordinates, getLocationNameFromPoint]);
 
   return (
     <Card className="transition-shadow hover:shadow-lg h-full flex flex-col gap-2 border shadow-sm bg-gray-50 sm:bg-background">
@@ -65,7 +89,7 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
               </div>
             ) : null}
             <div className="mt-1 text-[10px] text-muted-foreground sm:text-xs">
-              🏢 {car.garageAddress}
+              🏢 {address}
             </div>
           </div>
 
