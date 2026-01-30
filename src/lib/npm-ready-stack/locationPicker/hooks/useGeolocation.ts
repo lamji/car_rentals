@@ -256,6 +256,42 @@ export function useGeolocation(options?: UseGeolocationOptions) {
     getCurrentPosition();
   }, [getCurrentPosition]);
 
+  /**
+   * Reset permission state to allow retry after accidental denial
+   * Clears all permission and error states for fresh request
+   * Also checks current browser permission status
+   * @returns {void}
+   */
+  const resetPermissionState = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      permissionGranted: null,
+      permissionDenied: false,
+      error: null,
+      loading: false,
+    }));
+    setUserInteractionRequired(false);
+
+    // Re-check browser permission status after reset
+    if ("permissions" in navigator) {
+      navigator.permissions
+        .query({ name: "geolocation" })
+        .then((result) => {
+          const isGranted = result.state === "granted";
+          const isDenied = result.state === "denied";
+
+          setState((prev) => ({
+            ...prev,
+            permissionGranted: isGranted,
+            permissionDenied: isDenied,
+          }));
+        })
+        .catch(() => {
+          // Permissions API not supported, continue with reset
+        });
+    }
+  }, []);
+
   // Check permission status on mount
   useEffect(() => {
     if ("permissions" in navigator) {
@@ -281,6 +317,7 @@ export function useGeolocation(options?: UseGeolocationOptions) {
     ...state,
     getCurrentPosition,
     requestLocationPermission,
+    resetPermissionState,
     userInteractionRequired,
     isIOSDevice: isIOSDevice(),
     isIOSPWA: isIOSPWA(),

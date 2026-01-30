@@ -1,19 +1,19 @@
-'use client'
+"use client";
 
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Bell, X } from 'lucide-react'
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Bell, X } from "lucide-react";
 
 /**
  * Type definition for SmartSubscriptionAlertUI component props
  */
 export interface SmartSubscriptionAlertUIProps {
-  showSubscriptionPrompt: boolean
-  isChecking: boolean
-  isSubscribing: boolean
-  onSubscribe: () => void
-  onDismiss: () => void
+  showSubscriptionPrompt: boolean;
+  isChecking: boolean;
+  isSubscribing: boolean;
+  onSubscribe: () => void;
+  onDismiss: () => void;
 }
 
 /**
@@ -31,11 +31,11 @@ export function SmartSubscriptionAlertUI({
   isChecking,
   isSubscribing,
   onSubscribe,
-  onDismiss
+  onDismiss,
 }: SmartSubscriptionAlertUIProps) {
   // Don't render anything while checking or if alert shouldn't be shown
   if (isChecking || !showSubscriptionPrompt) {
-    return null
+    return null;
   }
 
   return (
@@ -52,11 +52,22 @@ export function SmartSubscriptionAlertUI({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="font-semibold text-gray-900">Stay Updated</h3>
-                <Badge variant="secondary" className="text-xs">New</Badge>
+                <Badge variant="secondary" className="text-xs">
+                  New
+                </Badge>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onDismiss}
+                  className="px-3"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
               </div>
-              
+
               <p className="text-sm text-gray-600 mb-3">
-                Get instant notifications about your bookings, special offers, and important updates.
+                Get instant notifications about your bookings, special offers,
+                and important updates.
               </p>
 
               {/* Action buttons */}
@@ -73,17 +84,8 @@ export function SmartSubscriptionAlertUI({
                       Subscribing...
                     </>
                   ) : (
-                    'Enable Notifications'
+                    "Enable Notifications"
                   )}
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onDismiss}
-                  className="px-3"
-                >
-                  <X className="w-4 h-4" />
                 </Button>
               </div>
             </div>
@@ -91,5 +93,5 @@ export function SmartSubscriptionAlertUI({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
