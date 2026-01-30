@@ -17,9 +17,8 @@ function HomeContent() {
     handleClearLocation,
     handleLocationChange,
     detailsHrefFor,
+    currentAddress,
   } = useHomeContent();
-
-
 
   return (
     <div data-testid="home-page">
@@ -70,8 +69,8 @@ function HomeContent() {
                 </span>
               </div>
               <span className="text-white text-xs w-[60%] ml-7">
-                {state.location
-                  ? state.location
+                {currentAddress
+                  ? currentAddress
                   : "Search location in search box"}
               </span>
             </div>
@@ -92,7 +91,7 @@ function HomeContent() {
         {/* Center content */}
         <div className="relative z-10 flex-1 flex items-center justify-center text-center w-[100%]">
           <MobileHero
-            location={state.location}
+            location={currentAddress}
             onClearLocation={handleClearLocation}
             userName={state.user?.name}
             categories={categories}

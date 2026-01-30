@@ -5,7 +5,7 @@
 
 "use client";
 
-import { Building, CircleUserRound, Eye, EyeOff } from "lucide-react";
+import { Building, CircleUserRound, Eye, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useInitConfig } from "..";
 import { useMapboxRoute } from "../bl/hooks";
@@ -43,6 +43,7 @@ interface MapBoxServiceProps {
   pointB: { lng: number; lat: number };
   className?: string;
   ui?: string;
+  distanceText?: string;
 }
 
 /**
@@ -57,8 +58,10 @@ export function MapBoxService({
   pointB,
   className = "w-full h-full",
   ui = "default",
+  distanceText,
 }: MapBoxServiceProps) {
   const [showOverlay, setShowOverlay] = useState(true);
+  const [isMapReady, setIsMapReady] = useState(false);
   const { config } = useInitConfig();
 
   console.log("test:ui - MapBoxService config", config);
@@ -87,6 +90,7 @@ export function MapBoxService({
 
     if (!hasConfig) {
       console.log("test:ui - Skipping initialization, no config yet");
+      setIsMapReady(false);
       return;
     }
 
@@ -98,6 +102,7 @@ export function MapBoxService({
     // Initialize route data after a short delay to ensure map is ready
     const timer = setTimeout(() => {
       initializeRouteData(pointA, pointB);
+      setIsMapReady(true);
     }, 500);
 
     return () => {
@@ -145,10 +150,21 @@ export function MapBoxService({
 
   return (
     <div className={`relative ${className}`}>
+      {/* Loading State */}
+      {!isMapReady && (
+        <div className="absolute inset-0 bg-gray-200 flex items-center justify-center z-10">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto mb-2"></div>
+            <p className="text-sm text-gray-600">Loading map...</p>
+          </div>
+        </div>
+      )}
+      
+      {/* Map Container */}
       <div ref={mapContainerRef} className="w-full h-full" />
 
       {/* Route Details Overlay - Right Corner */}
-      {routeDetails && (
+      {routeDetails && isMapReady && (
         <div
           className={`absolute top-4 right-4 bg-transparent backdrop-blur-sm rounded-lg shadow-lg border border-white mt-10 ${showOverlay ? "w-72 md:w-80" : "w-auto"}`}
         >
@@ -160,10 +176,11 @@ export function MapBoxService({
                     Route Details
                   </div>
                   <button
-                    onClick={() => setShowOverlay(!showOverlay)}
+                    onClick={() => setShowOverlay(false)}
                     className="p-1 hover:bg-gray-700 rounded transition-colors"
+                    aria-label="Close route details"
                   >
-                    <EyeOff className="h-3 w-3 md:h-4 md:w-4 text-white" />
+                    <X className="h-3 w-3 md:h-4 md:w-4 text-white" />
                   </button>
                 </div>
 
@@ -199,7 +216,7 @@ export function MapBoxService({
                       Distance
                     </span>
                     <span className="text-xs md:text-sm font-semibold text-white">
-                      {(routeDetails.distance / 1000).toFixed(1)} km
+                      {distanceText || "Calculating..."}
                     </span>
                   </div>
 

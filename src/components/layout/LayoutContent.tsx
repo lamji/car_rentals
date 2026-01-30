@@ -75,6 +75,7 @@ export function LayoutContent({ children }: LayoutContentProps) {
   const handleCloseLocationModal = () => {
     dispatch(closeLocationModal());
   };
+  
 
   return (
     <>

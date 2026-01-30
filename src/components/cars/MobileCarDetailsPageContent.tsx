@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { MapLinkModal } from "@/components/ui/MapLinkModal";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,12 @@ export function MobileCarDetailsPageContent() {
     pointA,
     pointB,
     address,
+    mapBoxDistanceText
   } = useCarDetailsPage();
+
+  // Memoize map points to prevent unnecessary re-renders
+  const memoPointA = useMemo(() => pointA, [pointA]);
+  const memoPointB = useMemo(() => pointB, [pointB]);
 
   if (!car) {
     return (
@@ -55,9 +60,10 @@ export function MobileCarDetailsPageContent() {
       <div className="h-[60vh] bg-gray-200 relative">
         {/* Map as background */}
         <MapBoxService
-          pointA={pointA}
-          pointB={pointB}
+          pointA={memoPointA}
+          pointB={memoPointB}
           className="w-full h-full"
+          distanceText={mapBoxDistanceText}
         />
 
         {/* Header with back arrow and title - positioned over map */}
@@ -67,9 +73,9 @@ export function MobileCarDetailsPageContent() {
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0 text-white hover:text-white hover:bg-white/20 rounded-full"
-              onClick={() => router.push("/cars")}
+              onClick={() => router.push("/")}
             >
-              <MoveLeft className="h-5 w-5" />
+              <MoveLeft className="h-5 w-5" />  
             </Button>
             <h1 className="text-lg font-semibold text-white drop-shadow-lg">
               View Details

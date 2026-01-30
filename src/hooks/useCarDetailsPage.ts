@@ -6,12 +6,13 @@ import { setSelectedCar } from "@/lib/slices/bookingSlice";
 import { useAppDispatch } from "@/lib/store";
 import { calculateDistanceToCar, formatDistance } from "@/utils/distance";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useGeolocation } from "../lib/npm-ready-stack/locationPicker";
 import {
   useGetCurrentLocation,
   useReverseLocation,
 } from "../lib/npm-ready-stack/mapboxService";
+import useCalculateRotes from "../lib/npm-ready-stack/mapboxService/bl/hooks/useCalculateRotes";
 
 export function useCarDetailsPage() {
   const router = useRouter();
@@ -31,8 +32,6 @@ export function useCarDetailsPage() {
         ? params.id[0]
         : "";
   const car = useCar(id);
-
-  console.log("test:currentData", currentData);
 
   // Calculate distance from user's location to car's garage
   const distance =
@@ -88,6 +87,43 @@ export function useCarDetailsPage() {
     getCurrentLocation();
   }, []);
 
+  // Memoize pointA and pointB to prevent unnecessary re-renders
+  const pointA = useMemo(
+    () => ({
+      lat: currentData?.lat || 0,
+      lng: currentData?.lng || 0,
+    }),
+    [currentData?.lat, currentData?.lng],
+  );
+
+  const pointB = useMemo(
+    () => ({
+      lat: car?.garageLocation?.coordinates?.lat || 0,
+      lng: car?.garageLocation?.coordinates?.lng || 0,
+    }),
+    [
+      car?.garageLocation?.coordinates?.lat,
+      car?.garageLocation?.coordinates?.lng,
+    ],
+  );
+
+  // implement here
+  const {
+    distance: mapBoxDistance,
+    distanceText: mapBoxDistanceText,
+    chargePerKm,
+    totalCharge,
+    formattedCharge,
+  } = useCalculateRotes({ pointA, pointB });
+
+  console.log(
+    "test:mapbox",
+    mapBoxDistance,
+    mapBoxDistanceText,
+    chargePerKm,
+    totalCharge,
+    formattedCharge,
+  );
   return {
     // State
     showMapModal,
@@ -104,13 +140,12 @@ export function useCarDetailsPage() {
     toggleMapModal,
     setShowMapModal,
     selectImage,
-    pointA: {
-      lat: currentData?.lat || 0,
-      lng: currentData?.lng || 0,
-    },
-    pointB: {
-      lat: car?.garageLocation?.coordinates?.lat || 0,
-      lng: car?.garageLocation?.coordinates?.lng || 0,
-    },
+    pointA,
+    pointB,
+    mapBoxDistance,
+    mapBoxDistanceText,
+    chargePerKm,
+    totalCharge,
+    formattedCharge,
   };
 }

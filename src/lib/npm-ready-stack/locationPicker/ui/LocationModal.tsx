@@ -12,12 +12,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-
+import { setCurrentAddress } from "../../../slices/mapBoxSlice";
+import { useAppDispatch } from "../../../store";
 import type { BrowserInfo } from "../../../utils/browserDetection";
 import {
   detectBrowser,
   getLocationPermissionInstructions,
 } from "../../../utils/browserDetection";
+import useGetCurrentLocation from "../../mapboxService/bl/hooks/useGetCurrentLocation";
 import { useGeolocation } from "../hooks/useGeolocation";
 import { usePSGCLocations } from "../hooks/usePSGCLocations";
 import type {
@@ -53,17 +55,23 @@ export function LocationModal({
     barangay: true,
   },
 }: LocationModalProps) {
+  const dispatch = useAppDispatch();
+  // Mapbox current location hook
+  const {
+    address: mapBoxAddress,
+    getCurrentLocation: getMapboxCurrentLocation,
+  } = useGetCurrentLocation();
   // Local input states
   const [localProvinceQuery, setLocalProvinceQuery] = useState(
     initialData?.province || "",
   );
+  const [finalAddress, setFinalAddress] = useState<string>(mapBoxAddress || "");
   const [localCityQuery, setLocalCityQuery] = useState(initialData?.city || "");
   const [localBarangayQuery, setLocalBarangayQuery] = useState(
     initialData?.barangay || "",
   );
   const [landmark, setLandmark] = useState(initialData?.landmark || "");
   const [useCurrentLocation, setUseCurrentLocation] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [browserInfo, setBrowserInfo] = useState<BrowserInfo | null>(null);
   const [showRegionDropdown, setShowRegionDropdown] = useState(false);
   const [showProvinceDropdown, setShowProvinceDropdown] = useState(false);
@@ -415,7 +423,7 @@ export function LocationModal({
       requestLocationPermission();
       return;
     }
-    getCurrentPosition();
+    getMapboxCurrentLocation();
   };
 
   /**
@@ -505,6 +513,13 @@ export function LocationModal({
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    setFinalAddress(mapBoxAddress || "");
+    if (mapBoxAddress) {
+      dispatch(setCurrentAddress(mapBoxAddress));
+    }
+  }, [mapBoxAddress, dispatch]);
+
   return (
     <Dialog open={isOpen} onOpenChange={handleModalClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
@@ -557,11 +572,10 @@ export function LocationModal({
                     )}
                   </div>
                 )}
-                {address && !permissionDenied && (
-                  <span className="text-xs text-muted-foreground mt-1 leading-tight block">
-                    {address.formattedAddress}
-                  </span>
-                )}
+
+                <span className="text-xs text-muted-foreground mt-1 leading-tight block">
+                  {finalAddress}
+                </span>
               </button>
 
               <div className="mt-2">

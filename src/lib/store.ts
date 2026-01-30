@@ -9,6 +9,7 @@ import bookingReducer from './slices/bookingSlice';
 import citiesReducer from './slices/citiesSlice';
 import confirmationReducer from './slices/confirmationSlice';
 import globalLoaderReducer from './slices/globalLoaderSlice';
+import mapBoxReducer from './slices/mapBoxSlice';
 import navigationReducer from './slices/navigationSlice';
 import provincesReducer from './slices/provincesSlice';
 import regionsReducer from './slices/regionsSlice';
@@ -28,6 +29,13 @@ const bookingPersistConfig = {
   whitelist: ['selectedCar', 'bookingDetails', 'currentStep', 'isPaymentModalOpen'] // Persist all booking data including modal state
 };
 
+// Persist config for mapBox slice (to save current address and saved addresses)
+const mapBoxPersistConfig = {
+  key: 'mapBox',
+  storage,
+  whitelist: ['current', 'savedAddresses'] // Persist current address and saved addresses list
+};
+
 // Combine reducers
 const rootReducer = combineReducers({
   regions: regionsReducer,
@@ -39,6 +47,7 @@ const rootReducer = combineReducers({
   globalLoader: globalLoaderReducer,
   alerts: alertReducer,
   confirmation: confirmationReducer,
+  mapBox: persistReducer(mapBoxPersistConfig, mapBoxReducer),
   navigation: navigationReducer,
   ui: uiReducer,
 });
@@ -47,7 +56,7 @@ const rootReducer = combineReducers({
 const rootPersistConfig = {
   key: 'root',
   storage,
-  whitelist: ['address', 'booking'] // Persist address cache and booking data
+  whitelist: ['address', 'booking', 'mapBox'] // Persist address cache, booking data, and mapBox addresses
 };
 
 export const store = configureStore({
