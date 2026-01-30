@@ -114,6 +114,26 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+@tailwind utilities;
+
+/* Hide navigation elements during onboarding */
+.onboarding-active nav,
+.onboarding-active header,
+.onboarding-active .navigation,
+.onboarding-active .nav-button,
+.onboarding-active .bottom-nav,
+.onboarding-active .top-nav,
+.onboarding-active .header-nav,
+.onboarding-active .mobile-nav,
+.onboarding-active .desktop-nav {
+  display: none !important;
+}
+
+/* Ensure onboarding guide is above everything */
+.onboarding-active .welcome-guide {
+  z-index: 9999 !important;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

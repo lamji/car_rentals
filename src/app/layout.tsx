@@ -5,11 +5,8 @@ import "./globals.css";
 import { LayoutContent } from "@/components/layout/LayoutContent";
 import ReactProvider from "@/components/providers/ReactProvider";
 import ReduxProvider from "@/components/providers/ReduxProvider";
-import { SmartSubscriptionAlertWrapper } from "@/components/wrapper/SmartSubscriptionAlertWrapper";
 import { MapboxTestWrapper } from "@/components/wrappers/MapboxTestWrapper";
-import { InstallPrompt } from "@/lib/npm-ready-stack/pwaService/components/InstallPrompt";
-import { FloatingLocationTestButton } from "../components/location/FloatingLocationTestButton";
-import { PWAAutoLauncher } from "../lib/npm-ready-stack/pwaService/components/PWAAutoLauncher";
+import { WelcomeGuideWrapper } from "../components/onboarding/WelcomeGuideWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -66,11 +63,8 @@ export default function RootLayout({
       >
         <ReactProvider>
           <ReduxProvider>
-            <SmartSubscriptionAlertWrapper />
-            <InstallPrompt />
+            <WelcomeGuideWrapper />
             <LayoutContent>{children}</LayoutContent>
-            <FloatingLocationTestButton />
-            <PWAAutoLauncher />
             <MapboxTestWrapper />
           </ReduxProvider>
         </ReactProvider>
