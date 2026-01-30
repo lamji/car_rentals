@@ -1,8 +1,17 @@
 "use client";
 
 import { MapPin, Settings, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useGeolocation } from "../../lib/npm-ready-stack/locationPicker";
+import type { BrowserInfo } from "../../lib/utils/browserDetection";
+import {
+  detectBrowser,
+  getLocationPermissionInstructions,
+} from "../../lib/utils/browserDetection";
+import {
+  attemptOpenIOSSettings,
+  getSettingsAccessMessage,
+} from "../../lib/utils/iosSettings";
 import { Button } from "../ui/button";
 import {
   Card,
@@ -21,6 +30,7 @@ import { IOSLocationPermissionGuide } from "./IOSLocationPermissionGuide";
 export function FloatingLocationTestButton() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showIOSGuide, setShowIOSGuide] = useState(false);
+  const [browserInfo, setBrowserInfo] = useState<BrowserInfo | null>(null);
 
   const {
     position,
@@ -36,6 +46,13 @@ export function FloatingLocationTestButton() {
     requestLocationPermission,
     resetPermissionState,
   } = useGeolocation();
+
+  // Detect browser information on component mount
+  useEffect(() => {
+    const info = detectBrowser();
+    setBrowserInfo(info);
+    console.log("🔍 Browser detected:", info);
+  }, []);
 
   /**
    * Handle location permission request with iOS guide fallback
@@ -120,6 +137,24 @@ export function FloatingLocationTestButton() {
     );
   };
 
+  /**
+   * Handle iOS Settings opening attempt
+   * Tries to open iOS Settings app programmatically for location permissions
+   * @returns {void}
+   */
+  const handleOpenIOSSettings = () => {
+    console.log("🔧 Attempting to open iOS Settings...");
+    const message = getSettingsAccessMessage();
+    console.log("📱", message);
+
+    const success = attemptOpenIOSSettings();
+    if (!success) {
+      console.log("❌ Could not open Settings automatically");
+      // Show iOS guide as fallback
+      setShowIOSGuide(true);
+    }
+  };
+
   return (
     <>
       {/* Floating Button */}
@@ -156,6 +191,44 @@ export function FloatingLocationTestButton() {
             <CardContent className="space-y-3">
               {/* Device Info */}
               <div className="text-xs space-y-1">
+                {browserInfo && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Browser:</span>
+                      <span className="text-blue-600 font-medium">
+                        {browserInfo.name} {browserInfo.version}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Platform:</span>
+                      <span className="text-gray-600">
+                        {browserInfo.platform}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Mobile:</span>
+                      <span
+                        className={
+                          browserInfo.isMobile
+                            ? "text-green-600"
+                            : "text-gray-500"
+                        }
+                      >
+                        {browserInfo.isMobile ? "Yes" : "No"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">PWA:</span>
+                      <span
+                        className={
+                          browserInfo.isPWA ? "text-green-600" : "text-gray-500"
+                        }
+                      >
+                        {browserInfo.isPWA ? "Yes" : "No"}
+                      </span>
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">iOS Device:</span>
                   <span
@@ -233,23 +306,37 @@ export function FloatingLocationTestButton() {
                   <div className="font-medium text-red-700">Error:</div>
                   <div className="text-red-600">{error.message}</div>
                   <div className="text-red-500">Code: {error.code}</div>
-                  {error.code === 1 && (
+                  {error.code === 1 && browserInfo && (
                     <div className="text-red-600 mt-2 text-xs space-y-1">
                       <div className="font-medium">
-                        🔒 Permission Permanently Blocked
+                        🔒 Location Required - Permission Blocked
                       </div>
-                      <div>Manual reset required:</div>
-                      <div>
-                        • Chrome: Click 🔒 in address bar → Location → Allow
+                      <div className="text-red-700 font-medium">
+                        📍 This app needs location access to find cars near you
                       </div>
-                      <div>
-                        • Firefox: Click 🛡️ in address bar → Permissions
+                      <div className="font-medium">
+                        {browserInfo.name} {browserInfo.version} - Reset
+                        Instructions:
                       </div>
-                      <div>
-                        • Safari: Safari → Settings → Websites → Location
-                      </div>
-                      <div>
-                        • Mobile: Browser Settings → Site Settings → Location
+                      {getLocationPermissionInstructions(browserInfo).map(
+                        (instruction, index) => (
+                          <div key={index} className="text-red-600">
+                            {index + 1}. {instruction}
+                          </div>
+                        ),
+                      )}
+                      <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                        <div className="text-yellow-800 font-medium">
+                          💡 Why Location is Required:
+                        </div>
+                        <div className="text-yellow-700 text-xs">
+                          • Find available cars near your location
+                          <br />
+                          • Calculate distances and travel times
+                          <br />
+                          • Show pickup locations on the map
+                          <br />• Provide location-based recommendations
+                        </div>
                       </div>
                     </div>
                   )}
@@ -324,15 +411,27 @@ export function FloatingLocationTestButton() {
                 )}
 
                 {isIOSDevice && (
-                  <Button
-                    onClick={() => setShowIOSGuide(true)}
-                    variant="secondary"
-                    className="w-full"
-                    size="sm"
-                  >
-                    <Settings className="h-3 w-3 mr-1" />
-                    iOS Guide
-                  </Button>
+                  <>
+                    <Button
+                      onClick={handleOpenIOSSettings}
+                      variant="secondary"
+                      className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700"
+                      size="sm"
+                    >
+                      <Settings className="h-3 w-3 mr-1" />
+                      Open iOS Settings
+                    </Button>
+
+                    <Button
+                      onClick={() => setShowIOSGuide(true)}
+                      variant="outline"
+                      className="w-full"
+                      size="sm"
+                    >
+                      <Settings className="h-3 w-3 mr-1" />
+                      iOS Guide
+                    </Button>
+                  </>
                 )}
               </div>
             </CardContent>
