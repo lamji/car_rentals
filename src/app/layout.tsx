@@ -8,6 +8,7 @@ import ReduxProvider from "@/components/providers/ReduxProvider";
 import { SmartSubscriptionAlertWrapper } from "@/components/wrapper/SmartSubscriptionAlertWrapper";
 import { MapboxTestWrapper } from "@/components/wrappers/MapboxTestWrapper";
 import { InstallPrompt } from "@/lib/npm-ready-stack/pwaService/components/InstallPrompt";
+import { FloatingLocationTestButton } from "../components/location/FloatingLocationTestButton";
 import { PWAAutoLauncher } from "../lib/npm-ready-stack/pwaService/components/PWAAutoLauncher";
 
 const geistSans = Geist({
@@ -57,6 +58,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -65,6 +69,7 @@ export default function RootLayout({
             <SmartSubscriptionAlertWrapper />
             <InstallPrompt />
             <LayoutContent>{children}</LayoutContent>
+            <FloatingLocationTestButton />
             <PWAAutoLauncher />
             <MapboxTestWrapper />
           </ReduxProvider>

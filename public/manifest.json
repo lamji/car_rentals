@@ -1,0 +1,31 @@
+{
+  "name": "Car Rentals",
+  "short_name": "CarRentals",
+  "description": "Find and rent cars near you",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "permissions": [
+    "geolocation"
+  ],
+  "categories": ["travel", "transportation"],
+  "lang": "en",
+  "dir": "ltr"
+}
