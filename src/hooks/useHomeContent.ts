@@ -5,7 +5,6 @@ import {
   SearchNearestGarageResponse,
   useNearestGarage,
 } from "@/lib/api/useNearestGarage";
-import { CARS } from "@/lib/data/cars";
 import type { CarType } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
@@ -24,6 +23,7 @@ export function useHomeContent() {
   );
   const router = useRouter();
   const stateMapBox = useAppSelector((state) => state.mapBox);
+  const stateData = useAppSelector((state) => state.data);
 
   console.log("Hero - stateMapBox:", stateMapBox);
 
@@ -130,14 +130,21 @@ export function useHomeContent() {
     { label: "Van", value: "van" },
   ];
 
+  const radiusList = [25, 50, 100, 200];
+
   const [selectedCategory, setSelectedCategory] = useState<CarType | "all">(
     "all",
   );
 
   const filteredCars = useMemo(() => {
-    if (selectedCategory === "all") return CARS;
-    return CARS.filter((car) => car.type === selectedCategory);
-  }, [selectedCategory]);
+    // Extract car data from nearest garages or use empty array as fallback
+    const cars = stateData.nearestGarages.length > 0 
+      ? stateData.nearestGarages.map((garage: any) => garage.carData)
+      : stateData.cars;
+    
+    if (selectedCategory === "all") return cars;
+    return cars.filter((car: any) => car.type === selectedCategory);
+  }, [selectedCategory, stateData.cars, stateData.nearestGarages]);
 
   return {
     // State
@@ -148,7 +155,7 @@ export function useHomeContent() {
     selectedCategory,
     filteredCars,
     categories,
-
+    radiusList,
     // Actions
     setIsLocationModalOpen,
     setIsNearestGarageModalOpen,

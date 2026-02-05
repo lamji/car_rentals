@@ -5,12 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import type { Car } from "@/lib/types";
 import { calculateDistanceToCar, formatDistance } from "@/utils/distance";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle, MapPin, Car as CarIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { useGeolocation } from "../../lib/npm-ready-stack/locationPicker";
-import { useReverseLocation } from "../../lib/npm-ready-stack/mapboxService";
+
 
 type Props = {
   car: Car;
@@ -19,31 +18,6 @@ type Props = {
 };
 
 export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
-  const { position, loading } = useGeolocation();
-  const distance = position ? calculateDistanceToCar(position, car) : null;
-  const distanceText = distance ? formatDistance(distance) : null;
-  const [address, setAddress] = useState("Unknown location");
-  const { getLocationNameFromPoint } = useReverseLocation();
-
-  useEffect(() => {
-    const fetchAddress = async () => {
-      if (car?.garageLocation?.coordinates) {
-        try {
-          const locationName = await getLocationNameFromPoint(
-            car.garageLocation.coordinates,
-          );
-          setAddress(locationName);
-        } catch (error) {
-          console.error("Failed to fetch address:", error);
-          setAddress("Unknown location");
-        }
-      } else {
-        setAddress("Unknown location");
-      }
-    };
-
-    fetchAddress();
-  }, [car?.garageLocation?.coordinates, getLocationNameFromPoint]);
 
   return (
     <Card className="transition-shadow hover:shadow-lg h-full flex flex-col gap-2 border shadow-sm bg-gray-50 sm:bg-background">
@@ -79,17 +53,15 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
             <div className="mt-1 text-[10px]  text-muted-foreground sm:text-sm">
               {car.seats} seats • {car.transmission}
             </div>
-            {loading ? (
-              <div className="mt-1">
-                <div className="h-3 w-16 bg-muted animate-pulse rounded"></div>
+         
+              <div className="mt-1 text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
+                <CarIcon className="h-3 w-3" />
+                {car?.distanceText}
               </div>
-            ) : distanceText ? (
-              <div className="mt-1 text-xs text-muted-foreground text-[10px] ">
-                📍 {distanceText}
-              </div>
-            ) : null}
-            <div className="mt-1 text-[10px] text-muted-foreground sm:text-xs">
-              🏢 {address}
+          
+            <div className="mt-1 text-[9px] sm:text-[10px] text-muted-foreground flex items-start gap-1">
+              <MapPin className="h-3 w-3 mt-[1px] flex-shrink-0" />
+              <span className="break-words">{car?.garageAddress}</span>
             </div>
           </div>
 

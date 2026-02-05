@@ -8,6 +8,7 @@ import barangaysReducer from './slices/barangaysSlice';
 import bookingReducer from './slices/bookingSlice';
 import citiesReducer from './slices/citiesSlice';
 import confirmationReducer from './slices/confirmationSlice';
+import dataReducer from './slices/data';
 import globalLoaderReducer from './slices/globalLoaderSlice';
 import mapBoxReducer from './slices/mapBoxSlice';
 import navigationReducer from './slices/navigationSlice';
@@ -36,6 +37,13 @@ const mapBoxPersistConfig = {
   whitelist: ['current', 'savedAddresses'] // Persist current address and saved addresses list
 };
 
+// Persist config for data slice (to save nearest garages and cars)
+const dataPersistConfig = {
+  key: 'data',
+  storage,
+  whitelist: ['nearestGarages', 'cars'] // Persist nearest garages and cars data
+};
+
 // Combine reducers
 const rootReducer = combineReducers({
   regions: regionsReducer,
@@ -44,6 +52,7 @@ const rootReducer = combineReducers({
   barangays: barangaysReducer,
   address: persistReducer(addressPersistConfig, addressReducer),
   booking: persistReducer(bookingPersistConfig, bookingReducer),
+  data: persistReducer(dataPersistConfig, dataReducer),
   globalLoader: globalLoaderReducer,
   alerts: alertReducer,
   confirmation: confirmationReducer,
@@ -56,7 +65,7 @@ const rootReducer = combineReducers({
 const rootPersistConfig = {
   key: 'root',
   storage,
-  whitelist: ['address', 'booking', 'mapBox'] // Persist address cache, booking data, and mapBox addresses
+  whitelist: ['address', 'booking', 'mapBox', 'data'] // Persist address cache, booking data, mapBox addresses, and data slice
 };
 
 export const store = configureStore({

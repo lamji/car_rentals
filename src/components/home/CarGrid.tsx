@@ -1,34 +1,83 @@
 import { CarAvailabilityCard } from "@/components/cars/CarAvailabilityCard";
 import { Car } from "@/lib/types";
+import { useDispatch, useSelector } from "react-redux";
+import { setRadius } from "@/lib/slices/data";
+
 
 interface CarGridProps {
   filteredCars: Car[];
   detailsHrefFor: (id: string) => string;
+  radiusList: number[];
 }
 
-export function CarGrid({ filteredCars, detailsHrefFor }: CarGridProps) {
+export function CarGrid({ filteredCars, detailsHrefFor, radiusList }: CarGridProps) {
+  const dispatch = useDispatch();
+  const currentRadius = useSelector((state: any) => state.data.radius);
+  const isLoading = useSelector((state: any) => state.data.loading);
+
   return (
     <div className="lg:col-span-3">
-      <h2 className="text-lg font-semibold mb-4">Available Cars</h2>
-      <div className="grid gap-2 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-5">
-        {filteredCars.map((car) => {
-          console.log("test:cars", car);
-          // Get today's date and check if it's in unavailableDates
-          const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-          const isTodayUnavailable = car.availability.unavailableDates.includes(today);
-          const isAvailable = !isTodayUnavailable;
-          
-          return(
-            <CarAvailabilityCard
-              key={car.id}
-              car={car}
-              isAvailable={isAvailable}
-              href={detailsHrefFor(car.id)}
-            />
-          );
-        })}
+      {/* Header with title and radius selector */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">Available Cars</h2>
+          <p className="text-sm text-gray-600 mt-1">Find the perfect car for your journey</p>
+        </div>
+        
+        {/* Radius selector */}
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-gray-700">Search radius:</span>
+          <div className="inline-flex rounded-md border border-gray-200 bg-white p-1 ">
+            {radiusList.map((radius) => (
+              <button
+                key={radius}
+                className={`px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 ${
+                  currentRadius === radius
+                    ? "bg-primary text-white"
+                    : "text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+                onClick={() => {
+                  dispatch(setRadius(radius));
+                }}
+              >
+                {radius}km
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
-      {filteredCars.length === 0 && (
+      
+      {/* Car grid with loading state */}
+      {isLoading ? (
+        <div className="flex justify-center items-center py-12 min-h-[200px]">
+          <div className="flex flex-col items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span className="mt-3 text-gray-600 text-center">Finding nearby cars...</span>
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-2 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-5">
+          {filteredCars.map((car) => {
+            const today = new Date().toISOString().split('T')[0];
+            const isTodayUnavailable = car.availability.unavailableDates.includes(today);
+            const isAvailable = !isTodayUnavailable;
+
+            console.log("test:car", car);
+            
+            return(
+              <CarAvailabilityCard
+                key={car.id}
+                car={car}
+                isAvailable={isAvailable}
+                href={detailsHrefFor(car.id)}
+              />
+            );
+          })}
+        </div>
+      )}
+      
+      {/* No cars message (only show when not loading) */}
+      {!isLoading && filteredCars.length === 0 && (
         <div className="rounded-lg border bg-card p-4 text-center sm:p-6">
           <div className="text-sm font-semibold sm:text-base">No cars in this category</div>
           <div className="mt-1 text-xs text-muted-foreground sm:text-sm">Try selecting another category.</div>

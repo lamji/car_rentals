@@ -28,6 +28,7 @@ export type Car = {
   transmission: string
   fuel: string
   year: number
+  distanceText: string
   pricePerDay: number
   pricePer12Hours: number
   pricePer24Hours: number

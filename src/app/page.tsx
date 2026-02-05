@@ -18,6 +18,7 @@ function HomeContent() {
     handleLocationChange,
     detailsHrefFor,
     currentAddress,
+    radiusList
   } = useHomeContent();
 
   return (
@@ -124,6 +125,7 @@ function HomeContent() {
             <CarGrid
               filteredCars={filteredCars}
               detailsHrefFor={detailsHrefFor}
+              radiusList={radiusList}
               data-testid="car-grid-wrapper"
             />
           </div>
