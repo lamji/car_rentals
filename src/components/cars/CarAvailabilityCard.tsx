@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import type { Car } from "@/lib/types";
-import { MapPin, Car as CarIcon, Users, Settings } from "lucide-react";
+import { MapPin, Car as CarIcon, Users, Settings, Fuel } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -48,13 +48,30 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
             <div className="truncate text-sm font-semibold sm:text-base">
               {car.name} {car.year}
             </div>
+            <div className={`mt-1 flex items-center gap-1 text-[10px] text-muted-foreground sm:text-sm border px-2 py-1 ${
+                car.fuel.toLowerCase() === 'gasoline' 
+                  ? 'bg-green-50 bg-opacity-50 border-green-200' 
+                  : car.fuel.toLowerCase() === 'diesel'
+                  ? 'bg-primary bg-opacity-10 border-primary'
+                  : 'bg-gray-50 border-gray-200'
+              }`}>
+              <Fuel className={`h-3 w-3 ${
+                car.fuel.toLowerCase() === 'gasoline' 
+                  ? 'text-primary' 
+                  : 'text-white'
+              }`} />
+              <span className={`${
+                car.fuel.toLowerCase() === 'gasoline' 
+                  ? 'text-green-700' 
+                  : 'text-white'
+              }`}>{car.fuel}</span>
+            </div>
             <div className="mt-1 text-[10px] text-muted-foreground sm:text-sm flex justify-between gap-2 border-t pt-2">
-              <div className="flex-1 flex items-center gap-1">
+              <div className="flex items-center gap-1">
                 <Users className="h-3 w-3 text-primary" />
                 <span>{car.seats} seats</span>
               </div>
-              <span className="text-gray-400">|</span>
-              <div className="flex-1 flex items-center justify-end gap-1">
+              <div className="flex items-center gap-1">
                 <Settings className="h-3 w-3 text-primary" />
                 <span>{car.transmission}</span>
               </div>

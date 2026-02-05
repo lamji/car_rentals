@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { setCurrentAddress } from "../../../slices/mapBoxSlice";
+import { setCurrentAddress, setLoading } from "../../../slices/mapBoxSlice";
 import { useAppDispatch } from "../../../store";
 import type { BrowserInfo } from "../../../utils/browserDetection";
 import {
@@ -574,7 +574,13 @@ export function LocationModal({
                 )}
 
                 <span className="text-xs text-muted-foreground mt-1 leading-tight block">
-                  {finalAddress}
+                  {(() => {
+                    if (finalAddress) {
+                      dispatch(setCurrentAddress(finalAddress));
+                      dispatch(setLoading(false));
+                    }
+                    return finalAddress;
+                  })()}
                 </span>
               </button>
 
