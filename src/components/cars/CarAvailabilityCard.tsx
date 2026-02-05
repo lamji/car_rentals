@@ -53,7 +53,7 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
                 car.fuel.toLowerCase() === 'gasoline' 
                   ? 'bg-green-50 bg-opacity-50 border-green-200' 
                   : car.fuel.toLowerCase() === 'diesel'
-                  ? 'bg-primary bg-opacity-10 border-primary'
+                  ? 'bg-primary/20 border-primary'
                   : 'bg-gray-50 border-gray-200'
               }`}>
               <Fuel className={`h-3 w-3 ${
@@ -64,7 +64,7 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
               <span className={`${
                 car.fuel.toLowerCase() === 'gasoline' 
                   ? 'text-green-700' 
-                  : 'text-white'
+                  : 'text-primary/80'
               }`}>{car.fuel}</span>
             </div>
             <div className="mt-1 text-[10px] text-muted-foreground sm:text-sm flex justify-between gap-2 border-t pt-2">

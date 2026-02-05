@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { Crosshair, Loader2, MapPin, RefreshCw } from "lucide-react";
+import { Crosshair, Loader2, MapPin, RefreshCw, Info } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -149,6 +149,35 @@ export function LocationModal({
     }
   }, [initialData, isOpen, setRegionQuery]);
 
+  // Clear all fields when currentAddress is cleared in Redux
+  const isClearingRef = useRef(false);
+  useEffect(() => {
+    if (isOpen && !currentAddress && !isClearingRef.current) {
+      isClearingRef.current = true;
+      setRegionQuery("");
+      setLocalProvinceQuery("");
+      setLocalCityQuery("");
+      setLocalBarangayQuery("");
+      setLandmark("");
+      setSelectedRegion(null);
+      setSelectedProvince(null);
+      setSelectedCity(null);
+      setSelectedBarangay(null);
+      setProvinceQuery("");
+      setCityQuery("");
+      setBarangayQuery("");
+      setFinalAddress("");
+      setUseCurrentLocation(false);
+      
+      // Reset the ref after a short delay
+      setTimeout(() => {
+        isClearingRef.current = false;
+      }, 100);
+    } else if (currentAddress) {
+      isClearingRef.current = false;
+    }
+  }, [currentAddress, isOpen, setRegionQuery, setSelectedRegion, setSelectedProvince, setSelectedCity, setSelectedBarangay, setProvinceQuery, setCityQuery, setBarangayQuery]);
+
   /**
    * Handle geolocation toggle switch
    * @param enabled - Whether geolocation is enabled
@@ -187,7 +216,8 @@ export function LocationModal({
    * @returns {boolean} Whether form is valid
    */
   const isFormValid = () => {
-    if (useCurrentLocation && address) return true;
+    // If using current location, allow submission even if address is not yet available
+    if (useCurrentLocation) return true;
 
     if (required.region && !cascadingState.selectedRegion) return false;
     if (required.province && !cascadingState.selectedProvince) return false;
@@ -386,29 +416,20 @@ export function LocationModal({
    * @returns {Promise<void>}
    */
   const handleLocationSubmit = async () => {
-    // If using current location with address data
-    if (useCurrentLocation && address) {
-      const locationData: LocationData = {
-        region: address.region,
-        province: address.province,
-        city: address.city || address.municipality,
-        barangay: address.barangay,
-        landmark: landmark.trim() || undefined,
-      };
-
-      const locationString = address.formattedAddress;
-
-      // Convert location string to coordinates
-      const coordinates = await locationStringToCoordinates(locationString);
-      if (coordinates) {
-        console.log("debug-location: Current location coordinates", { locationString, coordinates });
-        // You can use coordinates here if needed for future functionality
-        onLocationSelect(locationString, locationData);
+    // If using current location
+    if (useCurrentLocation) {
+      console.log("debug-location: Current location enabled, using Redux currentAddress", { useCurrentLocation, currentAddress });
+      
+      if (currentAddress && currentAddress !== 'Location unavailable') {
+        console.log("debug-location: Using currentAddress from Redux", { currentAddress });
+        onLocationSelect(currentAddress);
         onClose();
         return;
+      } else {
+        console.log("debug-location: currentAddress not available, triggering getCurrentPosition", { currentAddress });
+        getCurrentPosition();
+        return;
       }
-
-
     }
 
     // Validate required fields for manual entry
@@ -595,6 +616,14 @@ export function LocationModal({
             {title}
           </DialogTitle>
         </DialogHeader>
+
+        {/* Info notice */}
+        <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-blue-700 leading-relaxed">
+            Results based on selected address, not current location (unless &quot;Use Current Location&quot; is enabled)
+          </p>
+        </div>
 
         {/* Current Location Section */}
         <div className="flex items-start justify-between p-3 border rounded-lg bg-gray-50 gap-4">

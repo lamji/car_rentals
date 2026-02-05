@@ -174,6 +174,9 @@ export function useHomeContent() {
   );
 
   const handleClearLocation = useCallback(() => {
+    // console.log("handleClearLocation called",{storeState});
+    dispatch(setCurrentAddress(''))
+    dispatch(setPosition({ lat: 0, lng: 0 }))
     setState({ location: "" });
     if (searchTimeout) {
       clearTimeout(searchTimeout);
@@ -181,7 +184,7 @@ export function useHomeContent() {
     }
     setNearestGarageResults(null);
     setIsNearestGarageModalOpen(false);
-  }, [setState, searchTimeout]);
+  }, [dispatch, setState, searchTimeout]);
 
   const handleLocationChange = useCallback(
     (value: string) => {
