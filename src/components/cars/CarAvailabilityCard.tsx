@@ -4,11 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import type { Car } from "@/lib/types";
-import { calculateDistanceToCar, formatDistance } from "@/utils/distance";
-import { CheckCircle, XCircle, MapPin, Car as CarIcon } from "lucide-react";
+import { MapPin, Car as CarIcon, Users, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useGeolocation } from "../../lib/npm-ready-stack/locationPicker";
 
 
 type Props = {
@@ -50,39 +48,31 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
             <div className="truncate text-sm font-semibold sm:text-base">
               {car.name} {car.year}
             </div>
-            <div className="mt-1 text-[10px]  text-muted-foreground sm:text-sm">
-              {car.seats} seats • {car.transmission}
-            </div>
-         
-              <div className="mt-1 text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
-                <CarIcon className="h-3 w-3" />
-                {car?.distanceText}
+            <div className="mt-1 text-[10px] text-muted-foreground sm:text-sm flex justify-between gap-2 border-t pt-2">
+              <div className="flex-1 flex items-center gap-1">
+                <Users className="h-3 w-3 text-primary" />
+                <span>{car.seats} seats</span>
               </div>
-          
-            <div className="mt-1 text-[9px] sm:text-[10px] text-muted-foreground flex items-start gap-1">
-              <MapPin className="h-3 w-3 mt-[1px] flex-shrink-0" />
+              <span className="text-gray-400">|</span>
+              <div className="flex-1 flex items-center justify-end gap-1">
+                <Settings className="h-3 w-3 text-primary" />
+                <span>{car.transmission}</span>
+              </div>
+            </div>
+
+            <div className="mt-1 text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1 border-t border-b py-2">
+              <CarIcon className="h-3 w-3 text-primary" />
+              {car?.distanceText}
+            </div>
+
+            <div className="mt-1 text-[9px] sm:text-[10px] text-muted-foreground flex items-start gap-1 border-b pb-2">
+              <MapPin className="h-3 w-3 mt-[1px] flex-shrink-0 text-primary" />
               <span className="break-words">{car?.garageAddress}</span>
             </div>
           </div>
 
           {/* Availability information */}
-          <div className="mt-3 p-2 rounded-md bg-muted/50">
-            <div className="flex items-center gap-2 text-xs">
-              {isAvailable ? (
-                <>
-                  <CheckCircle className="h-3 w-3 text-green-600" />
-                  <span className="text-green-600 font-medium">Available</span>
-                </>
-              ) : (
-                <>
-                  <XCircle className="h-3 w-3 text-red-600" />
-                  <span className="text-red-600 font-medium">
-                    Not available
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
+
         </div>
       </CardContent>
       <CardFooter className="p-2 pt-0 sm:p-4 sm:pt-0">
