@@ -7,6 +7,7 @@ import { AlertModal } from "@/components/ui/AlertModal";
 import { GlobalLoaderOverlay } from "@/components/ui/GlobalLoaderOverlay";
 import { MessengerAlertWrapper } from "@/components/wrapper/MessengerAlertWrapper";
 import { useHomeContent } from "@/hooks/useHomeContent";
+import { useLocationPermission } from "@/hooks/useLocationPermission";
 import { useUrlBasedNavigation } from "@/hooks/useUrlBasedNavigation";
 import { LocationModal } from "@/lib/npm-ready-stack/locationPicker";
 import { useInitConfig } from "@/lib/npm-ready-stack/mapboxService";
@@ -25,6 +26,7 @@ interface LayoutContentProps {
 export function LayoutContent({ children }: LayoutContentProps) {
   const dispatch = useDispatch();
   const { setConfig } = useInitConfig();
+  const { checkLocationOnce } = useLocationPermission();
   const {
     handleLocationSelect,
     isNearestGarageModalOpen,
@@ -36,17 +38,32 @@ export function LayoutContent({ children }: LayoutContentProps) {
 
   // Set Mapbox configuration on component mount
   useEffect(() => {
-    console.log("test:LayoutContent - Setting Mapbox config");
+    console.log("debug-location: Setting Mapbox config");
     console.log(
-      "test:LayoutContent - Token:",
+      "debug-location: Token:",
       process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
     );
     setConfig({
       token: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
       style: "mapbox://styles/lamjilampago/ckg2ggpzw0r9j19mit7o0fr2n",
     });
-    console.log("test:LayoutContent - Config set complete");
+    console.log("debug-location: Config set complete");
   }, [setConfig]);
+
+  /**
+   * In initial render, check location permission
+   * Store the result in mapBoxSlice
+   * The actual address will be save here setCurrentAddress
+   * The long lat will be save here setPosition
+   * If location not granted, alert the modal to enable location since it is needed to get the recomendation cars
+   * currentAddress is use in home page to display the address
+   * setPosition will be use in calculation of the distance
+   */
+  useEffect(() => {
+    if (pathname === "/") {
+      checkLocationOnce();
+    }
+  }, [pathname, checkLocationOnce]);
 
   // Get location modal state from Redux
   const isLocationModalOpen = useSelector(
@@ -74,8 +91,7 @@ export function LayoutContent({ children }: LayoutContentProps) {
    */
   const handleCloseLocationModal = () => {
     dispatch(closeLocationModal());
-  };
-  
+  };  
 
   return (
     <>
