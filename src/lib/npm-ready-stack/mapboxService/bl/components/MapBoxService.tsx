@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /**
  * MapBoxService Component - Dynamic map display for any web app
  * Usage: <MapBoxService pointA={{lng, lat}} pointB={{lng, lat}} />

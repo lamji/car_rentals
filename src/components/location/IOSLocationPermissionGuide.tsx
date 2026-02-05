@@ -45,12 +45,12 @@ export function IOSLocationPermissionGuide({
               For iOS Users
             </div>
             <div className="text-sm text-blue-600 space-y-2">
-              <p className="font-medium">If the permission popup doesn't appear:</p>
+              <p className="font-medium">If the permission popup doesn&apos;t appear:</p>
               <ol className="list-decimal list-inside space-y-1 text-xs">
                 <li>Go to Settings → Privacy & Security</li>
-                <li>Tap "Location Services"</li>
+                <li>Tap &quot;Location Services&quot;</li>
                 <li>Find this app in the list</li>
-                <li>Select "While Using App"</li>
+                <li>Select &quot;While Using App&quot;</li>
                 <li>Return to this app and try again</li>
               </ol>
             </div>

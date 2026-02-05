@@ -23,11 +23,9 @@ interface PaymentButtonProps {
  * @returns {JSX.Element} Payment button UI component
  */
 export function PaymentButton({
-  amount,
   selectedMethod,
   isProcessing,
   cardDetails,
-  formatAmount,
   onPayment,
 }: PaymentButtonProps) {
   /**

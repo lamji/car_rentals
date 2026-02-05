@@ -12,7 +12,6 @@ import { useEffect, useRef, useState } from "react";
 
 interface SimpleMapboxModalProps {
   isOpen: boolean;
-  onClose: () => void;
 }
 
 interface RouteGeometry {
@@ -27,10 +26,9 @@ const POINT_B = { lng: 121.02245594673593, lat: 14.558501989223595 }; // New Poi
 /**
  * Simple modal with direct Mapbox API call
  * @param isOpen - Whether modal is open
- * @param onClose - Close handler
  * @returns {JSX.Element} Simple modal with map
  */
-export function SimpleMapboxModal({ isOpen, onClose }: SimpleMapboxModalProps) {
+export function SimpleMapboxModal({ isOpen }: SimpleMapboxModalProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const [routeGeometry, setRouteGeometry] = useState<RouteGeometry | null>(

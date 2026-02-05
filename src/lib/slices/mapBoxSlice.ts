@@ -183,7 +183,7 @@ export const mapBoxSlice = createSlice({
      * Reset mapbox state to initial state
      * @param state - Redux state
      */
-    resetMapBox: (state) => {
+    resetMapBox: () => {
       return initialState;
     },
   },

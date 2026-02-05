@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import Image from "next/image";
@@ -12,6 +13,8 @@ import { formatCurrency } from "@/lib/currency";
 import { MapBoxService } from "@/lib/npm-ready-stack/mapboxService/ui";
 import { getFutureUnavailableDates } from "@/utils/dateHelpers";
 import { Calendar, Copy, MoveLeft, Phone, User } from "lucide-react";
+import { useAppSelector } from "@/lib/store";
+
 
 export function MobileCarDetailsPageContent() {
   const router = useRouter();
@@ -35,6 +38,7 @@ export function MobileCarDetailsPageContent() {
   // Memoize map points to prevent unnecessary re-renders
   const memoPointA = useMemo(() => pointA, [pointA]);
   const memoPointB = useMemo(() => pointB, [pointB]);
+  const mapBoxState = useAppSelector((state:any) => state.mapBox);
 
   if (!car) {
     return (
@@ -60,7 +64,7 @@ export function MobileCarDetailsPageContent() {
       <div className="h-[60vh] bg-gray-200 relative">
         {/* Map as background */}
         <MapBoxService
-          pointA={memoPointA}
+          pointA={mapBoxState.current.position || memoPointA} 
           pointB={memoPointB}
           className="w-full h-full"
           distanceText={mapBoxDistanceText}

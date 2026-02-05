@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { CarAvailabilityCard } from "@/components/cars/CarAvailabilityCard";
 import { Car } from "@/lib/types";
 import { useDispatch, useSelector } from "react-redux";

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Simple MapBox Configuration Hook
  * @returns setConfig function for basic Mapbox setup

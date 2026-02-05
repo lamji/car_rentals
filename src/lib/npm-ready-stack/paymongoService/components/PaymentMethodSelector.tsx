@@ -8,7 +8,6 @@
 import React from 'react';
 import Image from 'next/image';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PaymentMethodOption, PaymentMethodType } from '../types/paymentMethod';
 import { formatCurrency, getPaymentMethodIcon, formatPaymentMethodName } from '../utils/formatters';

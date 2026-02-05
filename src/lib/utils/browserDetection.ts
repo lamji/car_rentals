@@ -81,7 +81,7 @@ export function detectBrowser(): BrowserInfo {
 export function getLocationPermissionInstructions(
   browserInfo: BrowserInfo,
 ): string[] {
-  const { name, isMobile, isIOS, isPWA } = browserInfo;
+  const { name, isMobile, isIOS } = browserInfo;
 
   if (isIOS) {
     // ALL iOS PWAs use Safari WebView, regardless of installation browser

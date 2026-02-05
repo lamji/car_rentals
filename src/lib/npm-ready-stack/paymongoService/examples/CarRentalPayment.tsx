@@ -8,8 +8,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
-import React, { useState } from "react";
+import { useEffect, useState, useMemo } from 'react';
 import {
   DEFAULT_PAYMONGO_CONFIG,
   PaymentMethodSelector,
@@ -49,12 +50,12 @@ export function CarRentalPayment({
 }: CarRentalPaymentProps) {
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // PayMongo configuration
-  const paymongoConfig = {
+  // PayMongo configuration - wrapped in useMemo to prevent re-renders
+  const paymongoConfig = useMemo(() => ({
     publicKey: process.env.NEXT_PUBLIC_PAYMONGO_PUBLIC_KEY || "",
     secretKey: process.env.PAYMONGO_SECRET_KEY || "",
     ...DEFAULT_PAYMONGO_CONFIG,
-  };
+  }), []); // Empty dependency array since env vars and config are static
 
   // Calculate amounts
   const baseAmount = booking.dailyRate * booking.rentalDays * 100; // Convert to cents
@@ -97,7 +98,7 @@ export function CarRentalPayment({
   });
 
   // Initialize payment on component mount
-  React.useEffect(() => {
+  useEffect(() => {
     if (
       !isInitialized &&
       paymongoConfig.publicKey &&
@@ -145,9 +146,11 @@ export function CarRentalPayment({
         <h2 className="text-xl font-semibold mb-4">Booking Summary</h2>
 
         <div className="flex items-center space-x-4 mb-4">
-          <img
+          <Image
             src={booking.carImage}
             alt={booking.carName}
+            width={80}
+            height={64}
             className="w-20 h-16 object-cover rounded-lg"
           />
           <div className="flex-1">

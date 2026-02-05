@@ -5,7 +5,7 @@
 
 "use client";
 
-import { Building, CircleUserRound, Eye, X } from "lucide-react";
+import { Building, CircleUserRound, Eye, X, Navigation } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useInitConfig } from "..";
 import { useMapboxRoute } from "../bl/hooks";
@@ -64,6 +64,14 @@ export function MapBoxService({
   const [isMapReady, setIsMapReady] = useState(false);
   const { config } = useInitConfig();
 
+  // Function to open Google Maps with route
+  const openGoogleMaps = () => {
+    const origin = `${pointA.lat},${pointA.lng}`;
+    const destination = `${pointB.lat},${pointB.lng}`;
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+    window.open(url, '_blank');
+  };
+
   console.log("test:ui - MapBoxService config", config);
   console.log("test:ui - Config token exists:", !!config.token);
   console.log("test:ui - Config style exists:", !!config.style);
@@ -84,9 +92,6 @@ export function MapBoxService({
 
   // Initialize map and route data when component mounts and config is ready
   useEffect(() => {
-    console.log("test:ui - useEffect triggered");
-    console.log("test:ui - Has config:", hasConfig);
-    console.log("test:ui - Config token:", config.token);
 
     if (!hasConfig) {
       console.log("test:ui - Skipping initialization, no config yet");
@@ -94,30 +99,53 @@ export function MapBoxService({
       return;
     }
 
-    console.log("test:ui - Initializing MapBox service with config");
+    console.log("debug-location: Initializing MapBox service with config");
+    console.log("debug-location: PointA (start):", pointA);
+    console.log("debug-location: PointB (end):", pointB);
 
     // Initialize map with dynamic points
     initializeMap(pointA, pointB);
+    
+    // SIMPLE APPROACH: Check if pointA is north of pointB and rotate accordingly
+    console.log("debug-location: Starting SIMPLE rotation approach");
+    setTimeout(() => {
+      if (mapRef.current) {
+        console.log("debug-location: Checking relative positions");
+        console.log("debug-location: PointA lat:", pointA.lat, "PointB lat:", pointB.lat);
+        
+        // Simple check: if pointA is north (higher latitude) than pointB
+        if (pointA.lat > pointB.lat) {
+          console.log("debug-location: PointA is NORTH of PointB - rotating 180°");
+          mapRef.current.setBearing(180); // Flip map upside down
+        } else {
+          console.log("debug-location: PointA is SOUTH of PointB - no rotation needed");
+          mapRef.current.setBearing(0); // Keep normal orientation
+        }
+        
+        mapRef.current.setPitch(45);
+        
+        // Set zoom level manually instead of fitBounds to avoid rotation conflicts
+        console.log("debug-location: Setting manual zoom level");
+        mapRef.current.setZoom(10); // Fixed zoom level
+        
+        console.log("debug-location: Simple rotation and zoom applied");
+        
+        // Now show the map after rotation is complete
+        setIsMapReady(true);
+      }
+    }, 4000); // Increase delay to ensure route is fully loaded first
 
     // Initialize route data after a short delay to ensure map is ready
     const timer = setTimeout(() => {
       initializeRouteData(pointA, pointB);
-      setIsMapReady(true);
+      // Don't set isMapReady here - wait for rotation to complete
     }, 500);
 
     return () => {
       clearTimeout(timer);
       cleanup();
     };
-  }, [
-    hasConfig,
-    config.token,
-    initializeMap,
-    initializeRouteData,
-    cleanup,
-    pointA,
-    pointB,
-  ]);
+  }, [hasConfig, config.token, initializeMap, initializeRouteData, cleanup, pointA, pointB, mapRef]);
 
   if (ui === "distance") {
     return (
@@ -225,9 +253,20 @@ export function MapBoxService({
                       ETA
                     </span>
                     <span className="text-xs md:text-sm font-semibold text-white">
-                      {formatDuration(routeDetails.duration)}
+                      {routeDetails && routeDetails.duration
+                        ? formatDuration(routeDetails.duration)
+                        : "Calculating..."}
                     </span>
                   </div>
+
+                  {/* Go Now Button */}
+                  <button
+                    onClick={openGoogleMaps}
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <Navigation className="h-4 w-4" />
+                    Go Now
+                  </button>
                 </div>
               </div>
             </div>

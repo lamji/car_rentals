@@ -20,11 +20,11 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-      
+
       {/* Modal */}
       <div className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] sm:max-h-[80vh] overflow-hidden">
         {/* Header */}
@@ -86,7 +86,7 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
                                   Available
                                 </span>
                               </div>
-                              
+
                               <div className="flex gap-3 text-xs text-gray-600 mb-2">
                                 <div className="flex items-center gap-1">
                                   <Users className="h-3 w-3" />
@@ -103,14 +103,19 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
                               </div>
                             </div>
                           </div>
-                          
-                          <div className="space-y-1 text-xs text-gray-600 pl-0">
+
+                          <div className="space-y-1 text-sm text-gray-600">
                             <div className="flex items-center gap-2">
-                              <MapPin className="h-3 w-3 flex-shrink-0" />
-                              <span className="truncate">{car.garageAddress} - {car.distance} km away</span>
+
+                              <Car className="h-4 w-4" />
+                              <span className="truncate">{car.distance} km away</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Phone className="h-3 w-3 flex-shrink-0" />
+                              <MapPin className="h-4 w-4" />
+                              <span className="truncate">{car.garageAddress}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4" />
                               <span>{car.ownerContact}</span>
                             </div>
                           </div>
@@ -137,7 +142,7 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
                                   Available
                                 </span>
                               </div>
-                              
+
                               <div className="flex items-center gap-3 text-sm text-gray-600 mb-2">
                                 <div className="flex items-center gap-1">
                                   <Users className="h-4 w-4" />
@@ -152,11 +157,15 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
                                   <span>{car.selfDrive ? 'Self-drive' : 'With driver'}</span>
                                 </div>
                               </div>
-                              
+
                               <div className="space-y-1 text-sm text-gray-600">
                                 <div className="flex items-center gap-2">
                                   <MapPin className="h-4 w-4" />
-                                  <span className="truncate">{car.garageAddress} - {car.distance} km away</span>
+                                  <span className="truncate">{car.distance} km away</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Car className="h-4 w-4" />
+                                  <span className="truncate">{car.garageAddress}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Phone className="h-4 w-4" />
@@ -203,7 +212,7 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
                                   Unavailable
                                 </span>
                               </div>
-                              
+
                               <div className="flex gap-3 text-xs text-gray-500 mb-2">
                                 <div className="flex items-center gap-1">
                                   <Users className="h-3 w-3" />
@@ -220,7 +229,7 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
                               </div>
                             </div>
                           </div>
-                          
+
                           <div className="space-y-1 text-xs text-gray-500 pl-0">
                             <div className="flex items-center gap-2">
                               <MapPin className="h-3 w-3 flex-shrink-0" />
@@ -254,7 +263,7 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
                                   Unavailable
                                 </span>
                               </div>
-                              
+
                               <div className="flex items-center gap-3 text-sm text-gray-500 mb-2">
                                 <div className="flex items-center gap-1">
                                   <Users className="h-4 w-4" />
@@ -269,7 +278,7 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
                                   <span>{car.selfDrive ? 'Self-drive' : 'With driver'}</span>
                                 </div>
                               </div>
-                              
+
                               <div className="space-y-1 text-sm text-gray-500">
                                 <div className="flex items-center gap-2">
                                   <MapPin className="h-4 w-4" />

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Simplified PayMongo Service Types
  * Types for the simplified component interface

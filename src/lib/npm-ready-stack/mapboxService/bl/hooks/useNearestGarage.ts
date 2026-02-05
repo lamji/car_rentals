@@ -45,17 +45,17 @@ export default function useNearestGarage() {
     setError(null);
     
     try {
-      console.log("debug-location: Searching for nearest garages using Mapbox", { 
-        userPosition: position, 
-        radius, 
-        totalCars: data.length 
-      });
+      
       
       // Calculate distances for all cars and filter by radius
       const garagesWithDistance = data
         .map(car => {
           const garagePos = car.garageLocation.coordinates;
           const distance = calculateDistance(position, garagePos);
+          
+          // Check if today is in unavailable dates
+          const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+          const isUnavailableToday = car.availability.unavailableDates.includes(today);
           
           return {
             id: car.id,
@@ -65,7 +65,7 @@ export default function useNearestGarage() {
             distanceText: `${Math.round(distance * 10) / 10} km away`, // Human readable distance text
             lat: garagePos.lat,
             lng: garagePos.lng,
-            available: car.availability.isAvailableToday,
+            available: !isUnavailableToday, // Available if today is NOT in unavailable dates
             carData: car
           } as NearestGarageResult;
         })
@@ -77,16 +77,6 @@ export default function useNearestGarage() {
 
       setNearestGarageResults(garagesWithDistance);
       setLoading(false);
-      
-      console.log("debug-location: Found garages within radius", { 
-        totalFound: garagesWithDistance.length,
-        radius: `${radius}km`,
-        garages: garagesWithDistance.map(g => ({ 
-          name: g.name, 
-          distance: `${g.distance}km`, 
-          available: g.available 
-        }))
-      });
       
       return garagesWithDistance;
       

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useSearchState } from "@/hooks/useSearchState";
@@ -5,11 +6,18 @@ import {
   SearchNearestGarageResponse,
   useNearestGarage,
 } from "@/lib/api/useNearestGarage";
+import useNearestGarageHook from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useNearestGarage";
 import type { CarType } from "@/lib/types";
+import type { LocationData } from "@/lib/npm-ready-stack/locationPicker/types";
 import useGetCurrentLocation from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useGetCurrentLocation";
+import useReverseLocation from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useReveseLocation";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState, useRef, useEffect } from "react";
-import { useAppSelector } from "../lib/store";
+import { useAppSelector, useAppDispatch } from "../lib/store";
+import { CARS } from "@/lib/data/cars";
+import { setCurrentAddress, setPosition } from "@/lib/slices/mapBoxSlice";
+
+
 
 export function useHomeContent() {
   const { state, setState } = useSearchState();
@@ -23,11 +31,18 @@ export function useHomeContent() {
     null,
   );
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const stateMapBox = useAppSelector((state) => state.mapBox);
   const stateData = useAppSelector((state) => state.data);
   
   // Location hook for retry functionality (same as LocationModal)
   const { getCurrentLocation: getMapboxCurrentLocation, loading: mapBoxLoading } = useGetCurrentLocation();
+  
+  // Nearest garage hook for coordinate-based searching
+  const { getNearestGarage } = useNearestGarageHook();
+  
+  // Reverse geocoding hook for getting readable addresses
+  const { getLocationName } = useReverseLocation();
   
   // Custom loading state with delay
   const [delayedLoading, setDelayedLoading] = useState(false);
@@ -65,26 +80,97 @@ export function useHomeContent() {
   console.log("Hero - stateMapBox:", stateMapBox);
 
   const handleLocationSelect = useCallback(
-    async (locationString: string) => {
+    async (locationString: string, locationData?: LocationData) => {
+      console.log("Hero - locationData:", locationData);
       setState({ location: locationString }, { replace: true });
       setIsLocationModalOpen(false);
 
-      // Trigger nearest garage search when location is selected from modal
-      if (locationString.trim().length > 3) {
-        try {
-          const results = await searchNearestGarage({
-            address: locationString,
-            timeoutMs: 1500,
-            progressIntervalMs: 300,
-          });
-          setNearestGarageResults(results);
-          setIsNearestGarageModalOpen(true);
-        } catch (error) {
-          console.error("Error searching nearest garage:", error);
+      // Use the coordinates directly for nearest garage search
+      try {
+        // We need to get coordinates from the location string
+        // But since LocationModal already geocoded it, we should get those coordinates
+        // For now, let's geocode again (we can optimize this later)
+        const geocodingUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(locationString)}.json`;
+        const params = new URLSearchParams({
+          access_token: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '',
+          limit: '1',
+          country: 'PH'
+        });
+        
+        const response = await fetch(`${geocodingUrl}?${params}`);
+        if (!response.ok) {
+          throw new Error(`Geocoding failed: ${response.statusText}`);
         }
+        
+        const data = await response.json();
+        if (data.features && data.features.length > 0) {
+          const [lng, lat] = data.features[0].center;
+          const coordinates = { lat, lng };
+          
+          console.log("debug-location: Using coordinates from LocationModal for nearest garage search", { locationString, coordinates });
+          
+          // Debug: Check car data and coordinates
+          const carDataToUse = (stateData.cars && stateData.cars.length > 0) ? stateData.cars : CARS;
+          console.log("debug-location: Car data being used", { 
+            stateDataCars: stateData.cars?.length || 0, 
+            fallbackCars: CARS.length,
+            totalCars: carDataToUse.length,
+            coordinates,
+            radius: 25
+          });
+              
+          // Use the hook to find nearest garages by coordinates
+          const garageResults = await getNearestGarage(carDataToUse, coordinates, 25);
+
+          // Convert hook results to API NearestGarageResult format
+          const convertedResults = await Promise.all(garageResults.map(async (garage) => {
+            // Check if today is in unavailable dates (same logic as hook)
+            const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+            const isUnavailableToday = garage.carData.availability.unavailableDates.includes(today);
+            
+            // Use reverse geocoding to get readable address for garage location
+            const readableAddress = await getLocationName(garage.lat, garage.lng);
+            
+            return {
+              id: garage.id,
+              carId: garage.carData.id,
+              carName: garage.carData.name,
+              carYear: garage.carData.year,
+              carImage: garage.carData.imageUrls[0],
+              carType: garage.carData.type,
+              seats: garage.carData.seats,
+              transmission: garage.carData.transmission,
+              selfDrive: garage.carData.selfDrive || false,
+              distance: garage.distance,
+              garageAddress: readableAddress, // Use reverse geocoded address
+              available: !isUnavailableToday, // Use proper availability logic
+              ownerName: garage.carData.owner.name,
+              ownerContact: garage.carData.owner.contactNumber
+            };
+          }));
+          
+          // Convert to match SearchNearestGarageResponse format
+          const response: SearchNearestGarageResponse = {
+            success: true,
+            garages: convertedResults,
+            searchAddress: locationString,
+            timestamp: new Date().toISOString()
+          };
+          
+          setNearestGarageResults(response);
+          setIsNearestGarageModalOpen(true);
+
+          // Update the Redux address and location
+          dispatch(setCurrentAddress(locationString));
+          dispatch(setPosition(coordinates));
+        } else {
+          console.warn("debug-location: Could not geocode location string", { locationString });
+        }
+      } catch (error) {
+        console.error("Error searching nearest garage:", error);
       }
     },
-    [setState, searchNearestGarage],
+    [setState, stateData.cars, getNearestGarage, dispatch, getLocationName],
   );
 
   const handleClearLocation = useCallback(() => {

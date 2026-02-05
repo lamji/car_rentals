@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { Crosshair, Loader2, MapPin, RefreshCw } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { setCurrentAddress, setLoading } from "../../../slices/mapBoxSlice";
+import { setCurrentAddress } from "../../../slices/mapBoxSlice";
 import { useAppDispatch, useAppSelector } from "../../../store";
 import type { BrowserInfo } from "../../../utils/browserDetection";
 import {
@@ -28,6 +29,11 @@ import type {
   PSGCLocation,
   PSGCRegion,
 } from "../types";
+
+interface Position {
+  lat: number;
+  lng: number;
+}
 
 /**
  * LocationModal component for selecting Philippine locations
@@ -333,11 +339,53 @@ export function LocationModal({
   };
 
   /**
-   * Handle form submission
-   * Builds location string and calls onLocationSelect callback
-   * @returns {void}
+   * Convert location string to coordinates using Mapbox Geocoding
+   * @param locationString - The location address string
+   * @returns Promise<Position | null> - Coordinates or null if not found
    */
-  const handleLocationSubmit = () => {
+  const locationStringToCoordinates = useCallback(async (
+    locationString: string
+  ): Promise<Position | null> => {
+    try {
+      console.log("debug-location: Geocoding location string to coordinates", { locationString });
+
+      // Use Mapbox Geocoding API to convert address to coordinates
+      const geocodingUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(locationString)}.json`;
+      const params = new URLSearchParams({
+        access_token: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '',
+        limit: '1',
+        country: 'PH' // Restrict to Philippines
+      });
+
+      const response = await fetch(`${geocodingUrl}?${params}`);
+
+      if (!response.ok) {
+        throw new Error(`Geocoding failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (data.features && data.features.length > 0) {
+        const [lng, lat] = data.features[0].center;
+        console.log("debug-location: Successfully geocoded location string", { lat, lng, locationString });
+        return { lat, lng };
+      } else {
+        console.warn("debug-location: No coordinates found for location string", { locationString });
+        return null;
+      }
+
+    } catch (err) {
+      console.error("debug-location: Error geocoding location string:", err);
+      return null;
+    }
+  }, []);
+
+  /**
+   * Handle form submission
+   * Builds location string, converts to coordinates, and calls onLocationSelect callback
+   * @returns {Promise<void>}
+   */
+  const handleLocationSubmit = async () => {
     // If using current location with address data
     if (useCurrentLocation && address) {
       const locationData: LocationData = {
@@ -349,9 +397,18 @@ export function LocationModal({
       };
 
       const locationString = address.formattedAddress;
-      onLocationSelect(locationString, locationData);
-      onClose();
-      return;
+
+      // Convert location string to coordinates
+      const coordinates = await locationStringToCoordinates(locationString);
+      if (coordinates) {
+        console.log("debug-location: Current location coordinates", { locationString, coordinates });
+        // You can use coordinates here if needed for future functionality
+        onLocationSelect(locationString, locationData);
+        onClose();
+        return;
+      }
+
+
     }
 
     // Validate required fields for manual entry
@@ -383,6 +440,13 @@ export function LocationModal({
       barangay: cascadingState.selectedBarangay?.name,
       landmark: landmark.trim() || undefined,
     };
+
+    // Convert location string to coordinates
+    const coordinates = await locationStringToCoordinates(locationString);
+    if (coordinates) {
+      console.log("debug-location: Manual location coordinates", { locationString, coordinates });
+      // You can use coordinates here if needed for future functionality
+    }
 
     onLocationSelect(locationString, locationData);
     onClose();
@@ -633,9 +697,8 @@ export function LocationModal({
                           <button
                             key={region.psgc_id}
                             type="button"
-                            className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${
-                              index === selectedIndex ? "bg-accent" : ""
-                            }`}
+                            className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${index === selectedIndex ? "bg-accent" : ""
+                              }`}
                             onClick={() => handleRegionSelect(region)}
                           >
                             <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
@@ -688,9 +751,8 @@ export function LocationModal({
                           <button
                             key={province.psgc_id}
                             type="button"
-                            className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${
-                              index === selectedIndex ? "bg-accent" : ""
-                            }`}
+                            className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${index === selectedIndex ? "bg-accent" : ""
+                              }`}
                             onClick={() => handleProvinceSelect(province)}
                           >
                             <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
@@ -745,9 +807,8 @@ export function LocationModal({
                           <button
                             key={city.psgc_id}
                             type="button"
-                            className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${
-                              index === selectedIndex ? "bg-accent" : ""
-                            }`}
+                            className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${index === selectedIndex ? "bg-accent" : ""
+                              }`}
                             onClick={() => handleCitySelect(city)}
                           >
                             <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
@@ -802,9 +863,8 @@ export function LocationModal({
                           <button
                             key={barangay.psgc_id}
                             type="button"
-                            className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${
-                              index === selectedIndex ? "bg-accent" : ""
-                            }`}
+                            className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${index === selectedIndex ? "bg-accent" : ""
+                              }`}
                             onClick={() => handleBarangaySelect(barangay)}
                           >
                             <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />

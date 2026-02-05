@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * PayMongo Payment Test Page
  * Simplified test page with only the PayMongo component
@@ -15,10 +16,10 @@ const mockBooking = {
 };
 
 export default function PaymentTestPage() {
-  const [paymentStatus, setPaymentStatus] = useState<
+  const [, setPaymentStatus] = useState<
     "idle" | "success" | "error"
   >("idle");
-  const [message, setMessage] = useState("");
+  const [, setMessage] = useState("");
 
   // Calculate amounts
   const baseAmount = mockBooking.dailyRate * mockBooking.rentalDays;

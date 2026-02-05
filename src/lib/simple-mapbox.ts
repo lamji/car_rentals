@@ -4,6 +4,7 @@
  */
 
 export interface SimpleRoute {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   geometry: any;
   distance: number;
   duration: number;
