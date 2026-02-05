@@ -4,7 +4,9 @@ import { CarGrid } from "@/components/home/CarGrid";
 import { CategorySidebar } from "@/components/home/CategorySidebar";
 import { Hero } from "@/components/home/Hero";
 import { MobileHero } from "@/components/home/MobileHero";
+import { Button } from "@/components/ui/button";
 import { useHomeContent } from "@/hooks/useHomeContent";
+import { RefreshCw } from "lucide-react";
 import { Suspense } from "react";
 
 function HomeContent() {
@@ -16,9 +18,11 @@ function HomeContent() {
     setSelectedCategory,
     handleClearLocation,
     handleLocationChange,
+    handleRetryLocation,
     detailsHrefFor,
     currentAddress,
-    radiusList
+    radiusList,
+    mapBoxLoading
   } = useHomeContent();
 
   return (
@@ -70,11 +74,20 @@ function HomeContent() {
                 </span>
               </div>
               <span className="text-white text-xs w-[60%] ml-7">
-                {currentAddress
+                {mapBoxLoading ? "Loading..." : currentAddress
                   ? currentAddress
                   : "Search location in search box"}
               </span>
             </div>
+            <Button
+              type="button"
+              onClick={handleRetryLocation}
+              variant="default"
+              size="sm"
+              className="h-9 text-xs bg-primary hover:bg-primary/80 text-white"
+            >
+              <RefreshCw className="h-3 w-3 mr-1" />
+            </Button>
           </div>
 
           {/* Right: User avatar */}

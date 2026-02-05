@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { setCurrentAddress, setLoading } from "../../../slices/mapBoxSlice";
-import { useAppDispatch } from "../../../store";
+import { useAppDispatch, useAppSelector } from "../../../store";
 import type { BrowserInfo } from "../../../utils/browserDetection";
 import {
   detectBrowser,
@@ -56,10 +56,12 @@ export function LocationModal({
   },
 }: LocationModalProps) {
   const dispatch = useAppDispatch();
+  const currentAddress = useAppSelector((state: any) => state.mapBox.current.address);
   // Mapbox current location hook
   const {
     address: mapBoxAddress,
     getCurrentLocation: getMapboxCurrentLocation,
+    loading: mapBoxLoading,
   } = useGetCurrentLocation();
   // Local input states
   const [localProvinceQuery, setLocalProvinceQuery] = useState(
@@ -574,13 +576,7 @@ export function LocationModal({
                 )}
 
                 <span className="text-xs text-muted-foreground mt-1 leading-tight block">
-                  {(() => {
-                    if (finalAddress) {
-                      dispatch(setCurrentAddress(finalAddress));
-                      dispatch(setLoading(false));
-                    }
-                    return finalAddress;
-                  })()}
+                  {mapBoxLoading ? "Getting location..." : currentAddress || finalAddress}
                 </span>
               </button>
 

@@ -4,9 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import type { Car } from "@/lib/types";
-import { MapPin, Car as CarIcon, Users, Settings, Fuel } from "lucide-react";
+import { MapPin, Car as CarIcon, Users, Settings, Fuel, ArrowRight } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 
 type Props = {
@@ -16,6 +16,7 @@ type Props = {
 };
 
 export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
+  const router = useRouter();
 
   return (
     <Card className="transition-shadow hover:shadow-lg h-full flex flex-col gap-2 border shadow-sm bg-gray-50 sm:bg-background">
@@ -93,10 +94,13 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
         </div>
       </CardContent>
       <CardFooter className="p-2 pt-0 sm:p-4 sm:pt-0">
-        <Button asChild className="w-full" disabled={!isAvailable}>
-          <Link href={href}>
-            {isAvailable ? "View Details" : "Check Other Dates"}
-          </Link>
+        <Button 
+          className="w-full text-xs sm:text-sm" 
+          disabled={!isAvailable}
+          onClick={() => router.push(href)}
+        >
+          {isAvailable ? "View Details" : "Check Other Dates"}
+          <ArrowRight className="h-3 w-3 ml-2" />
         </Button>
       </CardFooter>
     </Card>

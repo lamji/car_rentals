@@ -6,8 +6,9 @@ import {
   useNearestGarage,
 } from "@/lib/api/useNearestGarage";
 import type { CarType } from "@/lib/types";
+import useGetCurrentLocation from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useGetCurrentLocation";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { useAppSelector } from "../lib/store";
 
 export function useHomeContent() {
@@ -24,6 +25,42 @@ export function useHomeContent() {
   const router = useRouter();
   const stateMapBox = useAppSelector((state) => state.mapBox);
   const stateData = useAppSelector((state) => state.data);
+  
+  // Location hook for retry functionality (same as LocationModal)
+  const { getCurrentLocation: getMapboxCurrentLocation, loading: mapBoxLoading } = useGetCurrentLocation();
+  
+  // Custom loading state with delay
+  const [delayedLoading, setDelayedLoading] = useState(false);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Effect to handle delayed loading
+  useEffect(() => {
+    if (mapBoxLoading) {
+      // Clear any existing timeout
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+      
+      // Set delayed loading to true immediately
+      setDelayedLoading(true);
+    } else {
+      // When mapBoxLoading becomes false, wait 2 seconds before clearing delayedLoading
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+      
+      loadingTimeoutRef.current = setTimeout(() => {
+        setDelayedLoading(false);
+      }, 2000);
+    }
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+    };
+  }, [mapBoxLoading]);
 
   console.log("Hero - stateMapBox:", stateMapBox);
 
@@ -92,6 +129,16 @@ export function useHomeContent() {
     },
     [setState, searchNearestGarage, searchTimeout],
   );
+
+  const handleRetryLocation = useCallback(() => {
+    // Check if permission was denied and request it again
+    if (stateMapBox.permissionDenied) {
+      // For now, just try getting location - the permission request will happen in the hook
+      getMapboxCurrentLocation();
+      return;
+    }
+    getMapboxCurrentLocation();
+  }, [getMapboxCurrentLocation, stateMapBox.permissionDenied]);
 
   const handleSelectGarage = useCallback(
     (carId: string) => {
@@ -163,8 +210,10 @@ export function useHomeContent() {
     handleLocationSelect,
     handleClearLocation,
     handleLocationChange,
+    handleRetryLocation,
     handleSelectGarage,
     detailsHrefFor,
     currentAddress: stateMapBox.current.address,
+    mapBoxLoading: delayedLoading
   };
 }
