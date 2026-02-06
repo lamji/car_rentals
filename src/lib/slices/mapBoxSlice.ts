@@ -27,7 +27,6 @@ interface MapBoxState {
   savedAddresses: MapboxAddress[];
   isLoading: boolean;
   error: string | null;
-  shouldClearInputs: boolean;
 }
 
 const initialState: MapBoxState = {
@@ -40,7 +39,6 @@ const initialState: MapBoxState = {
   savedAddresses: [],
   isLoading: false,
   error: null,
-  shouldClearInputs: false,
 };
 
 export const mapBoxSlice = createSlice({
@@ -182,22 +180,6 @@ export const mapBoxSlice = createSlice({
     },
 
     /**
-     * Trigger clearing of location inputs in modal
-     * @param state - Redux state
-     */
-    clearLocationInputs: (state) => {
-      state.shouldClearInputs = true;
-    },
-
-    /**
-     * Reset shouldClearInputs flag
-     * @param state - Redux state
-     */
-    resetClearInputs: (state) => {
-      state.shouldClearInputs = false;
-    },
-
-    /**
      * Reset mapbox state to initial state
      * @param state - Redux state
      */
@@ -220,8 +202,6 @@ export const {
   setLoading,
   setError,
   clearCurrentAddress,
-  clearLocationInputs,
-  resetClearInputs,
   resetMapBox,
 } = mapBoxSlice.actions;
 

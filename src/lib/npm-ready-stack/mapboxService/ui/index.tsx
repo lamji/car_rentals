@@ -5,7 +5,7 @@
 
 "use client";
 
-import { Building, CircleUserRound, Eye, X, Navigation } from "lucide-react";
+import { Building, CircleUserRound, Eye, Navigation, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useInitConfig } from "..";
 import { useMapboxRoute } from "../bl/hooks";
@@ -72,9 +72,7 @@ export function MapBoxService({
     window.open(url, '_blank');
   };
 
-  console.log("test:ui - MapBoxService config", config);
-  console.log("test:ui - Config token exists:", !!config.token);
-  console.log("test:ui - Config style exists:", !!config.style);
+
 
   // Don't initialize map until we have config
   const hasConfig = config.token && config.style;
@@ -94,25 +92,22 @@ export function MapBoxService({
   useEffect(() => {
 
     if (!hasConfig) {
-      console.log("test:ui - Skipping initialization, no config yet");
+
       setIsMapReady(false);
       return;
     }
 
-    console.log("debug-location: Initializing MapBox service with config");
-    console.log("debug-location: PointA (start):", pointA);
-    console.log("debug-location: PointB (end):", pointB);
 
     // Initialize map with dynamic points
     initializeMap(pointA, pointB);
-    
+
     // SIMPLE APPROACH: Check if pointA is north of pointB and rotate accordingly
     console.log("debug-location: Starting SIMPLE rotation approach");
     setTimeout(() => {
       if (mapRef.current) {
         console.log("debug-location: Checking relative positions");
         console.log("debug-location: PointA lat:", pointA.lat, "PointB lat:", pointB.lat);
-        
+
         // Simple check: if pointA is north (higher latitude) than pointB
         if (pointA.lat > pointB.lat) {
           console.log("debug-location: PointA is NORTH of PointB - rotating 180°");
@@ -121,15 +116,15 @@ export function MapBoxService({
           console.log("debug-location: PointA is SOUTH of PointB - no rotation needed");
           mapRef.current.setBearing(0); // Keep normal orientation
         }
-        
+
         mapRef.current.setPitch(45);
-        
+
         // Set zoom level manually instead of fitBounds to avoid rotation conflicts
         console.log("debug-location: Setting manual zoom level");
         mapRef.current.setZoom(10); // Fixed zoom level
-        
+
         console.log("debug-location: Simple rotation and zoom applied");
-        
+
         // Now show the map after rotation is complete
         setIsMapReady(true);
       }
@@ -187,7 +182,7 @@ export function MapBoxService({
           </div>
         </div>
       )}
-      
+
       {/* Map Container */}
       <div ref={mapContainerRef} className="w-full h-full" />
 

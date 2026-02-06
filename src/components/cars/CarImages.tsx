@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
+import { useState } from "react";
 
 interface CarImagesProps {
   imageUrls: string[];
@@ -14,11 +14,11 @@ export function CarImages({ imageUrls, carName }: CarImagesProps) {
   return (
     <div data-testid="car-images-section" className="space-y-6">
       <div data-testid="main-car-image" className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gray-50">
-        <Image 
-          src={imageUrls[selectedImageIndex]} 
-          alt={carName} 
-          fill 
-          className="object-cover" 
+        <Image
+          src={imageUrls[selectedImageIndex]}
+          alt={carName}
+          fill
+          className="object-cover"
           priority
         />
       </div>
@@ -30,11 +30,10 @@ export function CarImages({ imageUrls, carName }: CarImagesProps) {
               key={index}
               data-testid={`car-thumbnail-${index}`}
               onClick={() => setSelectedImageIndex(index)}
-              className={`relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all hover:scale-105 ${
-                selectedImageIndex === index
-                  ? "border-blue-600 shadow-lg"
-                  : "border-gray-200 opacity-70 hover:opacity-100"
-              }`}
+              className={`relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all hover:scale-105 ${selectedImageIndex === index
+                ? "border-blue-600 shadow-lg"
+                : "border-gray-200 opacity-70 hover:opacity-100"
+                }`}
             >
               <Image
                 src={imageUrl}
