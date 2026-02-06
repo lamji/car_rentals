@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { useBooking } from "@/hooks/useBooking";
 import { useCar } from "@/hooks/useCar";
 import { setSelectedCar } from "@/lib/slices/bookingSlice";
-import { useAppDispatch } from "@/lib/store";
+import { useAppDispatch, useAppSelector } from "@/lib/store";
 import { calculateDistanceToCar, formatDistance } from "@/utils/distance";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -18,6 +19,7 @@ import useCalculateRotes from "../lib/npm-ready-stack/mapboxService/bl/hooks/use
 export function useCarDetailsPage() {
   const router = useRouter();
   const params = useParams();
+  const {cars} = useAppSelector((state:any) => state.data);
   const [showMapModal, setShowMapModal] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [address, setAddress] = useState("Unknown location");
@@ -33,6 +35,8 @@ export function useCarDetailsPage() {
         ? params.id[0]
         : "";
   const car = useCar(id);
+      // Store entire car data in Redux
+  console.log("test:cardData:", {car,cars});
 
   // Calculate distance from user's location to car's garage
   const distance =
@@ -43,12 +47,9 @@ export function useCarDetailsPage() {
 
   const goToBooking = useCallback(() => {
     if (!car) return;
-
-    // Store entire car data in Redux
-    console.log("test:cardData:", car);
     dispatch(setSelectedCar(car));
 
-    patchDraft({ carId: car.id });
+    patchDraft({ carId: cars.id });
     router.push(`/cars/${encodeURIComponent(car.id)}/booking`);
   }, [car, dispatch, patchDraft, router]);
 
@@ -128,7 +129,7 @@ export function useCarDetailsPage() {
   return {
     // State
     showMapModal,
-    car,
+    car:cars,
     distance,
     distanceText,
     loading,

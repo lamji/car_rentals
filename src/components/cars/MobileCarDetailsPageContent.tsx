@@ -11,9 +11,9 @@ import { Toast } from "@/components/ui/toast";
 import { useCarDetailsPage } from "@/hooks/useCarDetailsPage";
 import { formatCurrency } from "@/lib/currency";
 import { MapBoxService } from "@/lib/npm-ready-stack/mapboxService/ui";
+import { useAppSelector } from "@/lib/store";
 import { getFutureUnavailableDates } from "@/utils/dateHelpers";
 import { Calendar, Copy, MoveLeft, Phone, User } from "lucide-react";
-import { useAppSelector } from "@/lib/store";
 
 
 export function MobileCarDetailsPageContent() {
@@ -38,7 +38,7 @@ export function MobileCarDetailsPageContent() {
   // Memoize map points to prevent unnecessary re-renders
   const memoPointA = useMemo(() => pointA, [pointA]);
   const memoPointB = useMemo(() => pointB, [pointB]);
-  const mapBoxState = useAppSelector((state:any) => state.mapBox);
+  const mapBoxState = useAppSelector((state: any) => state.mapBox);
 
   if (!car) {
     return (
@@ -64,7 +64,7 @@ export function MobileCarDetailsPageContent() {
       <div className="h-[60vh] bg-gray-200 relative">
         {/* Map as background */}
         <MapBoxService
-          pointA={mapBoxState.current.position || memoPointA} 
+          pointA={mapBoxState.current.position || memoPointA}
           pointB={memoPointB}
           className="w-full h-full"
           distanceText={mapBoxDistanceText}
@@ -79,7 +79,7 @@ export function MobileCarDetailsPageContent() {
               className="h-8 w-8 p-0 text-white hover:text-white hover:bg-white/20 rounded-full"
               onClick={() => router.push("/")}
             >
-              <MoveLeft className="h-5 w-5" />  
+              <MoveLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-lg font-semibold text-white drop-shadow-lg">
               View Details
@@ -114,15 +114,14 @@ export function MobileCarDetailsPageContent() {
             <div className="flex gap-3">
               {/* Left Section - Small Thumbnails */}
               <div className="flex flex-col gap-2 w-12">
-                {car.imageUrls.slice(0, 3).map((imageUrl, index) => (
+                {car.imageUrls.slice(0, 3).map((imageUrl: string, index: number) => (
                   <button
                     key={index}
                     onClick={() => selectImage(index)}
-                    className={`relative w-12 h-12 rounded-lg border-2 transition-all hover:scale-105 ${
-                      selectedImageIndex === index
-                        ? "border-blue-600 shadow-lg"
-                        : "border-gray-200 opacity-70 hover:opacity-100"
-                    }`}
+                    className={`relative w-12 h-12 rounded-lg border-2 transition-all hover:scale-105 ${selectedImageIndex === index
+                      ? "border-blue-600 shadow-lg"
+                      : "border-gray-200 opacity-70 hover:opacity-100"
+                      }`}
                   >
                     <Image
                       src={imageUrl}
@@ -147,18 +146,16 @@ export function MobileCarDetailsPageContent() {
                 {/* Availability Badge - Floating on top */}
                 <div className="absolute top-2 right-2">
                   <div
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${
-                      car?.availability?.isAvailableToday
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : "bg-red-50 text-red-700 border border-red-200"
-                    }`}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${car?.availability?.isAvailableToday
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-red-50 text-red-700 border border-red-200"
+                      }`}
                   >
                     <div
-                      className={`h-1.5 w-1.5 rounded-full ${
-                        car?.availability?.isAvailableToday
-                          ? "bg-emerald-500"
-                          : "bg-red-500"
-                      }`}
+                      className={`h-1.5 w-1.5 rounded-full ${car?.availability?.isAvailableToday
+                        ? "bg-emerald-500"
+                        : "bg-red-500"
+                        }`}
                     ></div>
                     {car?.availability?.isAvailableToday
                       ? "Available"
@@ -257,21 +254,19 @@ export function MobileCarDetailsPageContent() {
         </div>
 
         {/* Self Drive Option - Full Width Box */}
-        <div className="w-full bg-gray-800 rounded-lg p-4 flex items-center gap-3 relative mt-5">
+        <div className="w-full bg-gray-800 rounded-lg p-4 flex items-start gap-3 relative mt-5">
           {/* Status Badge */}
           <div className="absolute top-2 right-2">
             <div
-              className={`h-2 w-2 rounded-full ${
-                car?.selfDrive ? "bg-green-500" : "bg-red-500"
-              }`}
+              className={`h-2 w-2 rounded-full ${car?.selfDrive ? "bg-green-500" : "bg-red-500"
+                }`}
             ></div>
           </div>
 
           <div className="flex-shrink-0">
             <svg
-              className={`h-8 w-8 ${
-                car?.selfDrive ? "text-green-600" : "text-red-600"
-              }`}
+              className={`h-8 w-8 ${car?.selfDrive ? "text-green-600" : "text-red-600"
+                }`}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -299,6 +294,15 @@ export function MobileCarDetailsPageContent() {
                 ? "Drive the car yourself"
                 : "Professional driver included"}
             </div>
+            {car?.selfDrive && (
+              <div className="bg-blue-900/30 border border-blue-700/50 rounded-md p-2 mt-2">
+                <div className="text-blue-300 text-xs">
+                  <div className="font-semibold text-blue-200 mb-1">Requirements:</div>
+                  • Valid driver&apos;s license ID required<br />
+                  • Screenshot of LTO portal verification needed
+                </div>
+              </div>
+            )}
             {!car?.selfDrive && (
               <div className="text-amber-400 text-xs font-medium mt-1">
                 +{formatCurrency(50)} driver fee

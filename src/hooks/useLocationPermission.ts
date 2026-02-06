@@ -1,12 +1,12 @@
-import { useCallback, useRef, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import useGetCurrentLocation from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useGetCurrentLocation";
-import useReverseLocation from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useReveseLocation";
-import { setCurrentAddress, setPosition } from "@/lib/slices/mapBoxSlice";
-import { setLoadingState, setNearestGarage } from "@/lib/slices/data";
-import useNearestGarage from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useNearestGarage";
 import { CARS } from "@/lib/data/cars";
+import useGetCurrentLocation from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useGetCurrentLocation";
+import useNearestGarage from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useNearestGarage";
+import useReverseLocation from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useReveseLocation";
+import { setLoadingState, setNearestGarage } from "@/lib/slices/data";
+import { setCurrentAddress, setPosition } from "@/lib/slices/mapBoxSlice";
 import { RootState } from "@/lib/store";
+import { useCallback, useEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 export function useLocationPermission() {
   const dispatch = useDispatch();
@@ -52,6 +52,10 @@ export function useLocationPermission() {
               ...garage.carData,
               garageAddress: readableAddress, // Update garageAddress with readable address
               distanceText: garage.distanceText,
+              garageLocation:{
+                ...garage.carData.garageLocation,
+                address:readableAddress,
+              }
             }
           };
         }));

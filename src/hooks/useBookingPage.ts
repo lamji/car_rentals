@@ -62,8 +62,9 @@ export function useBookingPage() {
    * Updates booking details in Redux store
    */
   const handleRentalDetailsChange = useCallback((data: Partial<BookingDetails>) => {
+    console.log('Rental details updated:', {data});
     dispatch(setBookingDetails(data));
-    console.log('Rental details updated:', data);
+    // console.log('Rental details updated:', data);
   }, [dispatch]);
 
   /**

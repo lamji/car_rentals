@@ -18,39 +18,37 @@ export function RentalDetailsForm({ onDataChange }: RentalDetailsFormProps) {
 
   // Centralized data change handler
   const handleDataChange = React.useCallback((data: Partial<BookingDetails>) => {
-    dispatch(setBookingDetails(data))
     onDataChange?.(data)
-    console.log('RentalDetailsForm data changed:', data)
-  }, [dispatch, onDataChange])
+  }, [onDataChange])
 
   // Helper function to convert 24-hour time to 12-hour format
   const formatTime12Hour = (time24: string) => {
     if (!time24) return '';
-    
+
     const [hours] = time24.split(':').map(Number)
     const hour = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours
     const period = hours < 12 ? 'AM' : 'PM'
-    
+
     return `${hour}:00 ${period}`
   }
 
   // Helper function to check if a time is in the past for today's booking
   const isTimeInPast = (time: string) => {
     if (!bookingDetails.startDate) return false;
-    
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const selectedDate = new Date(bookingDetails.startDate);
     selectedDate.setHours(0, 0, 0, 0);
-    
+
     // Only check for today's bookings
     if (today.getTime() !== selectedDate.getTime()) return false;
-    
+
     const now = new Date();
     const [hours] = time.split(':').map(Number);
     const selectedTime = new Date();
     selectedTime.setHours(hours, 0, 0, 0);
-    
+
     return selectedTime.getTime() <= now.getTime();
   }
 
@@ -62,10 +60,10 @@ export function RentalDetailsForm({ onDataChange }: RentalDetailsFormProps) {
 
     const startDateTime = new Date(`${bookingDetails.startDate}T${bookingDetails.startTime}`);
     const endDateTime = new Date(`${bookingDetails.endDate}T${bookingDetails.endTime}`);
-    
+
     const durationMs = endDateTime.getTime() - startDateTime.getTime();
     const durationHours = durationMs / (1000 * 60 * 60);
-    
+
     return durationHours;
   }
 
@@ -94,7 +92,7 @@ export function RentalDetailsForm({ onDataChange }: RentalDetailsFormProps) {
     dispatch(setBookingDetails({ location: locationString }))
     setIsLocationModalOpen(false)
   }
-    console.log("test:selected car", selectedCar)
+  console.log("test:selected car", { bookingDetails })
 
   return (
     <div className="space-y-6">
@@ -113,7 +111,7 @@ export function RentalDetailsForm({ onDataChange }: RentalDetailsFormProps) {
             min={new Date().toISOString().split('T')[0]}
           />
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <Calendar className="h-4 w-4 inline mr-1" />
@@ -148,7 +146,7 @@ export function RentalDetailsForm({ onDataChange }: RentalDetailsFormProps) {
               const displayTime = `${hour}:00 ${period}`;
               const value = `${i.toString().padStart(2, '0')}:00`;
               const isPast = isTimeInPast(value);
-              
+
               return (
                 <option key={i} value={value} disabled={isPast}>
                   {displayTime} {isPast && '(Past)'}
@@ -162,7 +160,7 @@ export function RentalDetailsForm({ onDataChange }: RentalDetailsFormProps) {
             </div>
           )}
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <Clock className="h-4 w-4 inline mr-1" />
@@ -179,7 +177,7 @@ export function RentalDetailsForm({ onDataChange }: RentalDetailsFormProps) {
               const period = i < 12 ? 'AM' : 'PM';
               const displayTime = `${hour}:00 ${period}`;
               const value = `${i.toString().padStart(2, '0')}:00`;
-              
+
               return (
                 <option key={i} value={value}>
                   {displayTime}
@@ -197,16 +195,19 @@ export function RentalDetailsForm({ onDataChange }: RentalDetailsFormProps) {
           Pickup Option
         </label>
         <div className="space-y-3">
-          <label className="flex items-center space-x-3 cursor-pointer bg-white p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+          <div className="flex items-center space-x-3 cursor-pointer bg-white p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
             <input
+              id="pickup-option"
               type="radio"
-              name="pickupType"
+              name="pickupType-desktop"
               value="pickup"
               checked={bookingDetails.pickupType === 'pickup' || !bookingDetails.pickupType}
-              onChange={(e) => handleDataChange({ pickupType: e.target.value as 'pickup' | 'delivery' })}
+              onChange={(e) => {
+                handleDataChange({ pickupType: e.target.value as 'pickup' | 'delivery' })
+              }}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
             />
-            <div className="flex-1">
+            <label htmlFor="pickup-option" className="flex-1 cursor-pointer">
               <div className="font-medium text-gray-900">Pickup from Garage</div>
               <div className="text-sm text-gray-500">Come to our garage to pick up the car</div>
               {selectedCar && selectedCar.garageAddress && (
@@ -214,29 +215,33 @@ export function RentalDetailsForm({ onDataChange }: RentalDetailsFormProps) {
                   📍 {selectedCar.garageAddress}
                 </div>
               )}
-            </div>
+            </label>
             <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
-          </label>
-          
-          <label className="flex items-center space-x-3 cursor-pointer bg-white p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+          </div>
+
+          <div className="flex items-center space-x-3 cursor-pointer bg-white p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
             <input
+              id="delivery-option"
               type="radio"
-              name="pickupType"
+              name="pickupType-desktop"
               value="delivery"
               checked={bookingDetails.pickupType === 'delivery'}
-              onChange={(e) => handleDataChange({ pickupType: e.target.value as 'pickup' | 'delivery' })}
+              onChange={(e) => {
+                console.log('debug:radios - delivery radio clicked, value:', e.target.value)
+                handleDataChange({ pickupType: e.target.value as 'pickup' | 'delivery' })
+              }}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
             />
-            <div className="flex-1">
+            <label htmlFor="delivery-option" className="flex-1 cursor-pointer">
               <div className="font-medium text-gray-900">Home Delivery</div>
               <div className="text-sm text-gray-500">We deliver the car to your location</div>
-            </div>
+            </label>
             <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
-          </label>
+          </div>
         </div>
       </div>
 
@@ -260,7 +265,7 @@ export function RentalDetailsForm({ onDataChange }: RentalDetailsFormProps) {
       {(bookingDetails.startDate || bookingDetails.endDate) && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <h4 className="font-medium text-gray-900 mb-3">Rental Summary</h4>
-          
+
           {/* Car Info */}
           {selectedCar && (
             <div className="mb-3 pb-3 border-b border-gray-200">
@@ -286,7 +291,7 @@ export function RentalDetailsForm({ onDataChange }: RentalDetailsFormProps) {
               </div>
             </div>
           )}
-          
+
           <div className="space-y-1 text-sm text-gray-600">
             {bookingDetails.startDate && (
               <div className="flex items-center gap-2">
@@ -309,7 +314,7 @@ export function RentalDetailsForm({ onDataChange }: RentalDetailsFormProps) {
                 <span>{bookingDetails.location}</span>
               </div>
             )}
-            
+
             {/* Duration and Validation */}
             {calculateRentalDuration() !== null && (
               <div className="pt-2 border-t border-gray-300">
@@ -342,7 +347,7 @@ export function RentalDetailsForm({ onDataChange }: RentalDetailsFormProps) {
                         const extraPrice = extraHours * (selectedCar.pricePerHour || 0);
                         const totalHourlyPrice = basePrice + extraPrice;
                         const dayRatePrice = selectedCar.pricePer24Hours || 0;
-                        
+
                         if (dayRatePrice < totalHourlyPrice) {
                           return `You selected ${duration.toFixed(1)} hours. First 12 hours: ${formatCurrency(basePrice)} + extra ${(extraHours).toFixed(1)} hour(s) at ${formatCurrency(selectedCar.pricePerHour || 0)}/hour = ${formatCurrency(totalHourlyPrice)}. 💡 Better option: Get the 24-hour plan for just ${formatCurrency(dayRatePrice)} and save ${formatCurrency(totalHourlyPrice - dayRatePrice)}!`;
                         } else {
@@ -364,14 +369,14 @@ export function RentalDetailsForm({ onDataChange }: RentalDetailsFormProps) {
                         const duration = calculateRentalDuration()!;
                         const fullDays = Math.floor(duration / 24);
                         const remainingHours = duration % 24;
-                        
+
                         if (remainingHours > 0) {
                           const price12HourBlock = (fullDays * (selectedCar.pricePerDay || 0)) + (selectedCar.pricePer12Hours || 0);
                           const price24HourBlock = (fullDays + 1) * (selectedCar.pricePerDay || 0);
                           const currentHourlyPrice = (fullDays * (selectedCar.pricePerDay || 0)) + (remainingHours * (selectedCar.pricePerHour || 0));
                           const savings12Hour = currentHourlyPrice - price12HourBlock;
                           const savings24Hour = currentHourlyPrice - price24HourBlock;
-                          
+
                           return `You selected ${duration.toFixed(1)} hours (${fullDays} day(s) + ${remainingHours.toFixed(1)} hour(s)).
 The extra ${remainingHours.toFixed(1)} hour(s) will be charged hourly at ${formatCurrency(selectedCar.pricePerHour || 0)}/hour each.
 

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import type { Car } from '@/lib/types';
 
 export interface NearestGarageResult {
   id: string;
@@ -13,14 +12,14 @@ export interface NearestGarageResult {
 }
 
 interface DataState {
-  cars: Car[];
+  cars: any;
   nearestGarages:any;
   radius: number;
   loading: boolean;
 }
 
 const initialState: DataState = {
-  cars: [],
+  cars: {},
   nearestGarages: [],
   radius: 25,
   loading: false,
@@ -30,7 +29,7 @@ const dataSlice = createSlice({
   name: 'data',
   initialState,
   reducers: {
-    setCars: (state, action: PayloadAction<Car[]>) => {
+    setCars: (state, action: PayloadAction< any>) => {
       state.cars = action.payload;
     },
     setNearestGarage: (state, action: PayloadAction<any>) => {

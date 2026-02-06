@@ -7,7 +7,8 @@ import type { Car } from "@/lib/types";
 import { ArrowRight, Car as CarIcon, Fuel, MapPin, Settings, Users } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-
+import { useDispatch } from "react-redux";
+import { setCars } from "../../lib/slices/data";
 
 type Props = {
   car: Car;
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
+  const dispatch = useDispatch();
   const router = useRouter();
 
   return (
@@ -95,7 +97,10 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
         <Button
           className="w-full text-xs sm:text-sm"
           disabled={!isAvailable}
-          onClick={() => router.push(href)}
+          onClick={() => {
+            dispatch(setCars(car))
+            router.push(href)
+          }}
         >
           {isAvailable ? "View Details" : "Check Other Dates"}
           <ArrowRight className="h-3 w-3 ml-2" />
