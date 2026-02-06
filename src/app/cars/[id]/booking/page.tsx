@@ -81,7 +81,7 @@ export default function BookingPage() {
               </div>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
+              <div
                 className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${(currentStep / steps.length) * 100}%` }}
               />
@@ -95,11 +95,10 @@ export default function BookingPage() {
                 <React.Fragment key={step.id}>
                   <div className="flex flex-col items-center relative z-10">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                        step.id <= currentStep
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-200 text-gray-500'
-                      }`}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${step.id <= currentStep
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-500'
+                        }`}
                     >
                       {step.id}
                     </div>
@@ -113,9 +112,8 @@ export default function BookingPage() {
                   {index < steps.length - 1 && (
                     <div className="flex-1 flex items-center justify-center px-2">
                       <div
-                        className={`w-full h-1 transition-colors ${
-                          step.id < currentStep ? 'bg-blue-600' : 'bg-gray-200'
-                        }`}
+                        className={`w-full h-1 transition-colors ${step.id < currentStep ? 'bg-blue-600' : 'bg-gray-200'
+                          }`}
                       />
                     </div>
                   )}
@@ -126,19 +124,19 @@ export default function BookingPage() {
         </div>
 
         {/* Content Area */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className=" rounded-lg shadow-none p-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">
             Step {currentStep}: {steps[currentStep - 1]?.title || 'Loading...'}
           </h1>
           <p className="text-gray-600 mb-6">
             {steps[currentStep - 1]?.description || 'Please wait...'}
           </p>
-          
+
           {/* Step Content */}
           <div className="mb-8">
-            {renderStepContent()}        
+            {renderStepContent()}
           </div>
-          
+
           {/* Navigation Buttons */}
           <div className="flex justify-between mt-8">
             <Button
@@ -159,7 +157,7 @@ export default function BookingPage() {
           </div>
         </div>
       </div>
-      
+
       {/* Payment Modal */}
       {paymentSummary && (
         <PaymentModal

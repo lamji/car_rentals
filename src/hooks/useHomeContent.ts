@@ -278,7 +278,7 @@ export function useHomeContent() {
     // Extract car data from nearest garages or use empty array as fallback
     const cars = stateData.nearestGarages.length > 0 
       ? stateData.nearestGarages.map((garage: any) => garage.carData)
-      : stateData.cars;
+      : (Array.isArray(stateData.cars) ? stateData.cars : (stateData.cars && stateData.cars.id ? [stateData.cars] : []));
     
     if (selectedCategory === "all") return cars;
     return cars.filter((car: any) => car.type === selectedCategory);

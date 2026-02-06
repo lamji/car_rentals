@@ -1,97 +1,42 @@
 "use client";
 
 import { DatePickerModal } from '@/components/ui/DatePickerModal';
-import { LocationData, LocationModal } from '@/lib/npm-ready-stack/locationPicker';
-import { BookingDetails, setBookingDetails } from '@/lib/slices/bookingSlice';
-import { useAppDispatch, useAppSelector } from '@/lib/store';
-import { formatDateToYYYYMMDD } from '@/utils/dateHelpers';
+import * as DropdownMenu from "@/components/ui/dropdown-menu";
+import { LocationModal } from '@/lib/npm-ready-stack/locationPicker';
+import { BookingDetails } from '@/lib/slices/bookingSlice';
 import { format } from 'date-fns';
 import { Calendar, Clock, MapPin, Truck } from 'lucide-react';
-import React, { useState } from 'react';
+import { useBookingDetails } from '../../hooks/useBookingDetails';
+import { formatDateToYYYYMMDD } from '../../utils/dateHelpers';
 
 interface MobileRentalDetailsFormProps {
   onDataChange?: (data: Partial<BookingDetails>) => void
 }
 
 export function MobileRentalDetailsForm({ onDataChange }: MobileRentalDetailsFormProps) {
-  const dispatch = useAppDispatch()
-  const bookingDetails = useAppSelector(state => state.booking.bookingDetails)
-  const selectedCar = useAppSelector(state => state.booking.selectedCar)
-  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false)
-  const [isStartDatePickerOpen, setIsStartDatePickerOpen] = useState(false)
-  const [isEndDatePickerOpen, setIsEndDatePickerOpen] = useState(false)
-
-  // Centralized data change handler
-  const handleDataChange = React.useCallback((data: Partial<BookingDetails>) => {
-    dispatch(setBookingDetails(data))
-    onDataChange?.(data)
-    console.log('MobileRentalDetailsForm data changed:', data)
-  }, [dispatch, onDataChange])
-
-  // Helper function to check if a time is in the past for today's booking
-  const isTimeInPast = (time: string) => {
-    if (!bookingDetails.startDate) return false;
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const selectedDate = new Date(bookingDetails.startDate);
-    selectedDate.setHours(0, 0, 0, 0);
-    
-    // Only check for today's bookings
-    if (today.getTime() !== selectedDate.getTime()) return false;
-    
-    const now = new Date();
-    const [hours] = time.split(':').map(Number);
-    const selectedTime = new Date();
-    selectedTime.setHours(hours, 0, 0, 0);
-    
-    return selectedTime.getTime() <= now.getTime();
-  }
-
-  // Helper function to calculate rental duration in hours
-  const calculateRentalDuration = () => {
-    if (!bookingDetails.startDate || !bookingDetails.endDate || !bookingDetails.startTime || !bookingDetails.endTime) {
-      return null;
-    }
-
-    const startDateTime = new Date(`${bookingDetails.startDate}T${bookingDetails.startTime}`);
-    const endDateTime = new Date(`${bookingDetails.endDate}T${bookingDetails.endTime}`);
-    
-    const durationMs = endDateTime.getTime() - startDateTime.getTime();
-    const durationHours = durationMs / (1000 * 60 * 60);
-    
-    return durationHours;
-  }
-
-  // Check if booking meets minimum duration requirement
-  const isMinimumDurationMet = () => {
-    const duration = calculateRentalDuration();
-    return duration !== null && duration >= 12;
-  }
-
-  const handleLocationSelect = (location: string, locationData?: LocationData) => {
-    const locationString = locationData ? 
-      `${locationData.region || ''}, ${locationData.province || ''}, ${locationData.city || ''}, ${locationData.barangay || ''}`.replace(/, ,/g, ',').replace(/^, |, $/g, '') :
-      location;
-    dispatch(setBookingDetails({ location: locationString }))
-    setIsLocationModalOpen(false)
-  }
-
-
-
-  const handleEndDateSelect = (date: Date) => {
-    const dateString = formatDateToYYYYMMDD(date);
-    handleDataChange({ endDate: dateString });
-  };
-
-  const getDisplayDate = (dateString: string | undefined) => {
-    if (!dateString) return 'Select date';
-    try {
-      return format(new Date(dateString), 'MMM dd, yyyy');
-    } catch {
-      return 'Select date';
-    }
-  };
+  // Use custom hook for all booking logic and state
+  const {
+    bookingDetails,
+    selectedCar,
+    isLocationModalOpen,
+    setIsLocationModalOpen,
+    isStartDatePickerOpen,
+    setIsStartDatePickerOpen,
+    isEndDatePickerOpen,
+    setIsEndDatePickerOpen,
+    handleDataChange,
+    isTimeInPast,
+    calculateRentalDuration,
+    isMinimumDurationMet,
+    handleLocationSelect,
+    handleEndDateSelect,
+    getDisplayDate,
+    formatTimeDisplay,
+    generateTimeOptions,
+    getEndDateMinDate,
+    isEndTimeDisabled,
+    isStartTimeDisabled,
+  } = useBookingDetails(onDataChange)
 
   return (
     <div className="space-y-6">
@@ -112,7 +57,7 @@ export function MobileRentalDetailsForm({ onDataChange }: MobileRentalDetailsFor
             <Calendar className="h-4 w-4 text-gray-400" />
           </button>
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <Calendar className="h-4 w-4 inline mr-1" />
@@ -138,57 +83,84 @@ export function MobileRentalDetailsForm({ onDataChange }: MobileRentalDetailsFor
             <Clock className="h-4 w-4 inline mr-1" />
             Start Time
           </label>
-          <select
-            value={bookingDetails.startTime || ''}
-            onChange={(e) => handleDataChange({ startTime: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select time</option>
-            {Array.from({ length: 24 }, (_, i) => {
-              const hour = i === 0 ? 12 : i > 12 ? i - 12 : i;
-              const period = i < 12 ? 'AM' : 'PM';
-              const displayTime = `${hour}:00 ${period}`;
-              const value = `${i.toString().padStart(2, '0')}:00`;
-              const isPast = isTimeInPast(value);
-              
-              return (
-                <option key={i} value={value} disabled={isPast}>
-                  {displayTime} {isPast && '(Past)'}
-                </option>
-              );
-            })}
-          </select>
+          <DropdownMenu.DropdownMenu>
+            <DropdownMenu.DropdownMenuTrigger asChild>
+              <button
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-left flex items-center justify-between hover:border-blue-300 transition-colors"
+              >
+                <span className={bookingDetails.startTime ? 'text-gray-900' : 'text-gray-500'}>
+                  {bookingDetails.startTime ? formatTimeDisplay(bookingDetails.startTime) : 'Select time'}
+                </span>
+                <Clock className="h-4 w-4 text-gray-400" />
+              </button>
+            </DropdownMenu.DropdownMenuTrigger>
+            <DropdownMenu.DropdownMenuContent className="min-w-[var(--radix-dropdown-menu-trigger-width)] max-h-40 overflow-y-auto" align="start">
+              {generateTimeOptions().map(({ displayTime, value }) => {
+                const isPast = isTimeInPast(value);
+
+                return (
+                  <DropdownMenu.DropdownMenuItem
+                    key={value}
+                    disabled={isPast}
+                    className={isPast ? "text-red-600 text-xs" : "text-xs"}
+                    onClick={() => handleDataChange({ startTime: value })}
+                  >
+                    {displayTime}
+                  </DropdownMenu.DropdownMenuItem>
+                );
+              })}
+            </DropdownMenu.DropdownMenuContent>
+          </DropdownMenu.DropdownMenu>
           {bookingDetails.startDate && bookingDetails.startTime && isTimeInPast(bookingDetails.startTime) && (
             <div className="text-red-600 text-xs mt-1 bg-red-50 p-2 rounded border border-red-200">
-              ⚠️ Start time cannot be in the past for today&apos;s booking. Please select a future time.
+              ⚠️ Invalid time selection: You selected started date <strong>{format(new Date(bookingDetails.startDate), 'MMM dd, yyyy')}</strong> at <strong>{formatTimeDisplay(bookingDetails.startTime)}</strong>, but this time is in the past. Please select a future time for today&apos;s booking.
+            </div>
+          )}
+          {bookingDetails.startDate && bookingDetails.startTime && bookingDetails.endDate && bookingDetails.startDate === bookingDetails.endDate && isStartTimeDisabled(bookingDetails.startTime, bookingDetails.startDate, bookingDetails.endDate) && (
+            <div className="text-red-600 text-xs mt-1 bg-red-50 p-2 rounded border border-red-200">
+              ⚠️ Invalid start time: You selected <strong>{formatTimeDisplay(bookingDetails.startTime)}</strong> for <strong>{format(new Date(bookingDetails.startDate), 'MMM dd, yyyy')}</strong> for end date. You only have <strong>{24 - parseInt(bookingDetails.startTime.split(':')[0])} hours</strong> remaining before the day ends, which doesn&apos;t meet the 12-hour minimum rental duration. Please select an earlier time or adjust your end date.
             </div>
           )}
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <Clock className="h-4 w-4 inline mr-1" />
             End Time
           </label>
-          <select
-            value={bookingDetails.endTime || ''}
-            onChange={(e) => handleDataChange({ endTime: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select time</option>
-            {Array.from({ length: 24 }, (_, i) => {
-              const hour = i === 0 ? 12 : i > 12 ? i - 12 : i;
-              const period = i < 12 ? 'AM' : 'PM';
-              const displayTime = `${hour}:00 ${period}`;
-              const value = `${i.toString().padStart(2, '0')}:00`;
-              
-              return (
-                <option key={i} value={value}>
-                  {displayTime}
-                </option>
-              );
-            })}
-          </select>
+          <DropdownMenu.DropdownMenu>
+            <DropdownMenu.DropdownMenuTrigger asChild>
+              <button
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-left flex items-center justify-between hover:border-blue-300 transition-colors"
+              >
+                <span className={bookingDetails.endTime ? 'text-gray-900' : 'text-gray-500'}>
+                  {bookingDetails.endTime ? formatTimeDisplay(bookingDetails.endTime) : 'Select time'}
+                </span>
+                <Clock className="h-4 w-4 text-gray-400" />
+              </button>
+            </DropdownMenu.DropdownMenuTrigger>
+            <DropdownMenu.DropdownMenuContent className="min-w-[var(--radix-dropdown-menu-trigger-width)] max-h-40 overflow-y-auto" align="start">
+              {generateTimeOptions().map(({ displayTime, value }) => {
+                const isDisabled = isEndTimeDisabled(
+                  value,
+                  bookingDetails.startTime,
+                  bookingDetails.startDate,
+                  bookingDetails.endDate
+                );
+
+                return (
+                  <DropdownMenu.DropdownMenuItem
+                    key={value}
+                    className={isDisabled ? "text-red-600 text-xs" : "text-xs"}
+                    disabled={isDisabled}
+                    onClick={() => !isDisabled && handleDataChange({ endTime: value })}
+                  >
+                    {displayTime}
+                  </DropdownMenu.DropdownMenuItem>
+                );
+              })}
+            </DropdownMenu.DropdownMenuContent>
+          </DropdownMenu.DropdownMenu>
         </div>
       </div>
 
@@ -237,7 +209,7 @@ export function MobileRentalDetailsForm({ onDataChange }: MobileRentalDetailsFor
               )}
             </div>
           </label>
-          
+
           <label className="flex items-center space-x-3 cursor-pointer bg-white p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
             <input
               type="radio"
@@ -296,7 +268,7 @@ export function MobileRentalDetailsForm({ onDataChange }: MobileRentalDetailsFor
         selectedDate={bookingDetails.endDate ? new Date(bookingDetails.endDate) : undefined}
         onDateSelect={handleEndDateSelect}
         title="Select End Date"
-        minDate={bookingDetails.startDate ? new Date(bookingDetails.startDate) : undefined}
+        minDate={getEndDateMinDate(bookingDetails.startDate)}
       />
     </div>
   )

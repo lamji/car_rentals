@@ -1,14 +1,12 @@
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { useAppSelector } from '@/lib/store'
 import { CalendarX, Car, Fuel, Settings, Tag, Users } from 'lucide-react'
 
 export function SelectedCarCard() {
-  const selectedCar = useAppSelector(state => state.booking.selectedCar)
+  const selectedCar = useAppSelector(state => state.data.cars)
 
-  console.log("test:selectedCar", selectedCar)
 
   if (!selectedCar) {
     return (
@@ -38,17 +36,7 @@ export function SelectedCarCard() {
             <h3 className="font-semibold text-gray-900 text-sm">Selected Vehicle</h3>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="default" className="bg-blue-500 text-white hover:bg-blue-600">
-              This car is onhold now
-            </Badge>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs text-red-500 hover:text-destructive hover:border-destructive hover:bg-destructive/10"
-              onClick={() => console.log("Cancel selection")}
-            >
-              Cancel
-            </Button>
+
           </div>
         </div>
 
