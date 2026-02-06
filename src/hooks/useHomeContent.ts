@@ -6,16 +6,16 @@ import {
   SearchNearestGarageResponse,
   useNearestGarage,
 } from "@/lib/api/useNearestGarage";
-import useNearestGarageHook from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useNearestGarage";
-import type { CarType } from "@/lib/types";
+import { CARS } from "@/lib/data/cars";
 import type { LocationData } from "@/lib/npm-ready-stack/locationPicker/types";
 import useGetCurrentLocation from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useGetCurrentLocation";
+import useNearestGarageHook from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useNearestGarage";
 import useReverseLocation from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useReveseLocation";
+import { clearLocationInputs, setCurrentAddress, setPosition } from "@/lib/slices/mapBoxSlice";
+import type { CarType } from "@/lib/types";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState, useRef, useEffect } from "react";
-import { useAppSelector, useAppDispatch } from "../lib/store";
-import { CARS } from "@/lib/data/cars";
-import { setCurrentAddress, setPosition } from "@/lib/slices/mapBoxSlice";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useAppDispatch, useAppSelector } from "../lib/store";
 
 
 
@@ -175,6 +175,7 @@ export function useHomeContent() {
 
   const handleClearLocation = useCallback(() => {
     // console.log("handleClearLocation called",{storeState});
+    dispatch(clearLocationInputs())
     dispatch(setCurrentAddress(''))
     dispatch(setPosition({ lat: 0, lng: 0 }))
     setState({ location: "" });
@@ -185,6 +186,8 @@ export function useHomeContent() {
     setNearestGarageResults(null);
     setIsNearestGarageModalOpen(false);
   }, [dispatch, setState, searchTimeout]);
+
+  
 
   const handleLocationChange = useCallback(
     (value: string) => {

@@ -29,7 +29,7 @@ function HomeContent() {
     <div data-testid="home-page">
       {/* Hero */}
       <Hero
-        state={state}
+        state={currentAddress}
         handleLocationChange={handleLocationChange}
         handleClearLocation={handleClearLocation}
         className="hidden sm:block"
@@ -90,7 +90,7 @@ function HomeContent() {
             </Button>
           </div>
 
-       
+
         </div>
 
         {/* Center content */}

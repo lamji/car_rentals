@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { Crosshair, Loader2, MapPin, RefreshCw, Info } from "lucide-react";
+import { Crosshair, Info, Loader2, MapPin, RefreshCw } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -122,6 +122,19 @@ export function LocationModal({
     fetchRegions,
   } = usePSGCLocations();
 
+  console.log('debug:input', {
+    filteredRegions,
+    regionsLoading,
+    regionQuery,
+    filteredProvinces,
+    provincesLoading,
+    filteredCities,
+    citiesLoading,
+    filteredBarangays,
+    barangaysLoading,
+    cascadingState,
+  });
+
   // Geolocation hook
   const {
     address,
@@ -131,29 +144,10 @@ export function LocationModal({
     permissionDenied,
   } = useGeolocation();
 
-  // Fetch regions when modal opens
+  // Clear all fields when modal opens
   useEffect(() => {
     if (isOpen) {
-      fetchRegions();
-    }
-  }, [isOpen, fetchRegions]);
-
-  // Initialize with initial data
-  useEffect(() => {
-    if (initialData && isOpen) {
-      setRegionQuery(initialData.region || "");
-      setLocalProvinceQuery(initialData.province || "");
-      setLocalCityQuery(initialData.city || "");
-      setLocalBarangayQuery(initialData.barangay || "");
-      setLandmark(initialData.landmark || "");
-    }
-  }, [initialData, isOpen, setRegionQuery]);
-
-  // Clear all fields when currentAddress is cleared in Redux
-  const isClearingRef = useRef(false);
-  useEffect(() => {
-    if (isOpen && !currentAddress && !isClearingRef.current) {
-      isClearingRef.current = true;
+      console.log('debug:input: Clearing all fields on modal open');
       setRegionQuery("");
       setLocalProvinceQuery("");
       setLocalCityQuery("");
@@ -167,16 +161,9 @@ export function LocationModal({
       setCityQuery("");
       setBarangayQuery("");
       setFinalAddress("");
-      setUseCurrentLocation(false);
-      
-      // Reset the ref after a short delay
-      setTimeout(() => {
-        isClearingRef.current = false;
-      }, 100);
-    } else if (currentAddress) {
-      isClearingRef.current = false;
+      fetchRegions();
     }
-  }, [currentAddress, isOpen, setRegionQuery, setSelectedRegion, setSelectedProvince, setSelectedCity, setSelectedBarangay, setProvinceQuery, setCityQuery, setBarangayQuery]);
+  }, [isOpen, fetchRegions]);
 
   /**
    * Handle geolocation toggle switch
@@ -240,10 +227,22 @@ export function LocationModal({
    * @returns {void}
    */
   const handleRegionQueryChange = (newQuery: string) => {
+    console.log('debug:input: handleRegionQueryChange Starting', {
+      newQuery,
+      currentRegionQuery: regionQuery,
+      showRegionDropdown: showRegionDropdown
+    });
+
     setRegionQuery(newQuery);
     setSelectedIndex(-1);
     setShowRegionDropdown(newQuery.length >= 1);
     setActiveDropdown("region");
+
+    console.log('debug:input: handleRegionQueryChange After setRegionQuery', {
+      newQuery,
+      showRegionDropdown: showRegionDropdown,
+      dropdownShouldShow: newQuery.length >= 1
+    });
 
     if (!newQuery.trim()) {
       setSelectedRegion(null);
@@ -253,6 +252,8 @@ export function LocationModal({
       setProvinceQuery("");
       setCityQuery("");
       setBarangayQuery("");
+
+      console.log('debug:input: handleRegionQueryChange Cleared all downstream selections');
     }
   };
 
@@ -301,16 +302,28 @@ export function LocationModal({
    * @returns {void}
    */
   const handleRegionSelect = (region: PSGCRegion) => {
+    console.log('debug:input: handleRegionSelect Starting', {
+      selectedRegion: region.name,
+      currentRegionQuery: regionQuery,
+      showRegionDropdown: showRegionDropdown
+    });
+
     setRegionQuery(region.name);
     setSelectedRegion(region);
     setShowRegionDropdown(false);
     setActiveDropdown(null);
+
+    console.log('debug:input: handleRegionSelect After setting region', {
+      selectedRegion: region.name,
+      showRegionDropdown: showRegionDropdown
+    });
 
     // Clear downstream
     setLocalProvinceQuery("");
     setLocalCityQuery("");
     setLocalBarangayQuery("");
 
+    console.log('debug:input: handleRegionSelect About to focus province input');
     setTimeout(() => provinceInputRef.current?.focus(), 100);
   };
 
@@ -419,7 +432,7 @@ export function LocationModal({
     // If using current location
     if (useCurrentLocation) {
       console.log("debug-location: Current location enabled, using Redux currentAddress", { useCurrentLocation, currentAddress });
-      
+
       if (currentAddress && currentAddress !== 'Location unavailable') {
         console.log("debug-location: Using currentAddress from Redux", { currentAddress });
         onLocationSelect(currentAddress);
@@ -705,8 +718,31 @@ export function LocationModal({
                   ref={regionInputRef}
                   placeholder="Region *"
                   value={regionQuery}
-                  onChange={(e) => handleRegionQueryChange(e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(e, "region")}
+                  onChange={(e) => {
+                    console.log('debug:input: Region input changed', {
+                      inputValue: e.target.value,
+                      regionQuery: regionQuery,
+                      showRegionDropdown: showRegionDropdown
+                    });
+                    handleRegionQueryChange(e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    console.log('debug:input: Region keydown', {
+                      key: e.key,
+                      inputValue: e.currentTarget.value,
+                      regionQuery: regionQuery,
+                      showRegionDropdown: showRegionDropdown,
+                      selectedIndex: selectedIndex
+                    });
+                    handleKeyDown(e, "region");
+                  }}
+                  onFocus={(e) => {
+                    console.log('debug:input: Region input focused', {
+                      inputValue: e.currentTarget.value,
+                      regionQuery: regionQuery,
+                      showRegionDropdown: showRegionDropdown
+                    });
+                  }}
                   className="pr-10 border-black"
                 />
                 {regionsLoading && (
@@ -728,7 +764,7 @@ export function LocationModal({
                             type="button"
                             className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${index === selectedIndex ? "bg-accent" : ""
                               }`}
-                            onClick={() => handleRegionSelect(region)}
+                            onMouseDown={(e) => { e.preventDefault(); handleRegionSelect(region); }}
                           >
                             <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
                             <div className="min-w-0 flex-1">
@@ -782,7 +818,7 @@ export function LocationModal({
                             type="button"
                             className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${index === selectedIndex ? "bg-accent" : ""
                               }`}
-                            onClick={() => handleProvinceSelect(province)}
+                            onMouseDown={(e) => { e.preventDefault(); handleProvinceSelect(province); }}
                           >
                             <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
                             <div className="min-w-0 flex-1">
@@ -838,7 +874,7 @@ export function LocationModal({
                             type="button"
                             className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${index === selectedIndex ? "bg-accent" : ""
                               }`}
-                            onClick={() => handleCitySelect(city)}
+                            onMouseDown={(e) => { e.preventDefault(); handleCitySelect(city); }}
                           >
                             <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
                             <div className="min-w-0 flex-1">
@@ -894,7 +930,7 @@ export function LocationModal({
                             type="button"
                             className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-start gap-3 ${index === selectedIndex ? "bg-accent" : ""
                               }`}
-                            onClick={() => handleBarangaySelect(barangay)}
+                            onMouseDown={(e) => { e.preventDefault(); handleBarangaySelect(barangay); }}
                           >
                             <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
                             <div className="min-w-0 flex-1">
