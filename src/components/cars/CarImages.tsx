@@ -31,7 +31,7 @@ export function CarImages({ imageUrls, carName }: CarImagesProps) {
               data-testid={`car-thumbnail-${index}`}
               onClick={() => setSelectedImageIndex(index)}
               className={`relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all hover:scale-105 ${selectedImageIndex === index
-                ? "border-blue-600 shadow-lg"
+                ? "border-primary shadow-lg"
                 : "border-gray-200 opacity-70 hover:opacity-100"
                 }`}
             >

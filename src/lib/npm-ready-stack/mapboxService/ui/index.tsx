@@ -102,28 +102,21 @@ export function MapBoxService({
     initializeMap(pointA, pointB);
 
     // SIMPLE APPROACH: Check if pointA is north of pointB and rotate accordingly
-    console.log("debug-location: Starting SIMPLE rotation approach");
     setTimeout(() => {
       if (mapRef.current) {
-        console.log("debug-location: Checking relative positions");
-        console.log("debug-location: PointA lat:", pointA.lat, "PointB lat:", pointB.lat);
+
 
         // Simple check: if pointA is north (higher latitude) than pointB
         if (pointA.lat > pointB.lat) {
-          console.log("debug-location: PointA is NORTH of PointB - rotating 180°");
           mapRef.current.setBearing(180); // Flip map upside down
         } else {
-          console.log("debug-location: PointA is SOUTH of PointB - no rotation needed");
           mapRef.current.setBearing(0); // Keep normal orientation
         }
 
         mapRef.current.setPitch(45);
 
         // Set zoom level to focus on Point A
-        console.log("debug-location: Setting manual zoom level");
         mapRef.current.setZoom(14); // Focus on Point A
-
-        console.log("debug-location: Simple rotation and zoom applied");
 
         // Now show the map after rotation is complete
         setIsMapReady(true);
@@ -184,7 +177,7 @@ export function MapBoxService({
       )}
 
       {/* Map Container */}
-      <div ref={mapContainerRef} className="w-full h-full" />
+      <div ref={mapContainerRef} className="w-full h-full p-10" />
 
       {/* Route Details Overlay - Right Corner */}
       {routeDetails && isMapReady && (
@@ -257,7 +250,7 @@ export function MapBoxService({
                   {/* Go Now Button */}
                   <button
                     onClick={openGoogleMaps}
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                    className="w-full bg-primary text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
                   >
                     <Navigation className="h-4 w-4" />
                     Go Now

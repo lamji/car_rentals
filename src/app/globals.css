@@ -160,4 +160,11 @@
       transform: translateY(0);
     }
   }
+
+  /* Mapbox canvas border radius override - desktop only */
+  @media (min-width: 768px) {
+    [data-testid="car-details-page"] .mapboxgl-canvas {
+      border-radius: 0.5rem !important;
+    }
+  }
 }

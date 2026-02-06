@@ -13,6 +13,3 @@ export { default as useReverseLocation } from "./bl/hooks/useReveseLocation";
 
 // Current location hook
 export { default as useGetCurrentLocation } from "./bl/hooks/useGetCurrentLocation";
-
-// Main map component
-export { MapBoxService } from "./bl/components";

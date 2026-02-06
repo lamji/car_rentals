@@ -48,8 +48,7 @@ export function CarDetailsPageContent() {
   return (
     <div data-testid="car-details-page" className="min-h-screen bg-white">
       <div className="flex p-5 gap-10">
-        <div className="h-[100vh] bg-gray-200 relative w-1/2 rounded-lg">
-
+        <div className="h-[80vh] bg-gray-200 relative w-1/2 rounded-lg p-2 overflow-hidden">
           <MapBoxService
             pointA={mapBoxState.current.position || memoPointA}
             pointB={memoPointB}
