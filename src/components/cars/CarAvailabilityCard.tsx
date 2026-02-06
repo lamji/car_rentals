@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import type { Car } from "@/lib/types";
-import { MapPin, Car as CarIcon, Users, Settings, Fuel, ArrowRight } from "lucide-react";
+import { ArrowRight, Car as CarIcon, Fuel, MapPin, Settings, Users } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -49,29 +49,27 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
             <div className="truncate text-sm font-semibold sm:text-base">
               {car.name} {car.year}
             </div>
-            <div className={`mt-1 flex items-center gap-1 text-[10px] text-muted-foreground sm:text-sm border px-2 py-1 ${
-                car.fuel.toLowerCase() === 'gasoline' 
-                  ? 'bg-green-50 bg-opacity-50 border-green-200' 
-                  : car.fuel.toLowerCase() === 'diesel'
-                  ? 'bg-primary/20 border-primary'
-                  : 'bg-gray-50 border-gray-200'
+            <div className={`mt-1 flex items-center gap-1 text-[10px] text-muted-foreground sm:text-sm border px-2 py-1 rounded-lg ${car.fuel.toLowerCase() === 'gasoline'
+              ? 'bg-green-50 bg-opacity-50 border-green-300'
+              : car.fuel.toLowerCase() === 'diesel'
+                ? 'bg-primary/20 border-primary/50'
+                : 'bg-gray-50 border-gray-300'
               }`}>
-              <Fuel className={`h-3 w-3 ${
-                car.fuel.toLowerCase() === 'gasoline' 
-                  ? 'text-primary' 
-                  : 'text-white'
-              }`} />
-              <span className={`${
-                car.fuel.toLowerCase() === 'gasoline' 
-                  ? 'text-green-700' 
-                  : 'text-primary/80'
-              }`}>{car.fuel}</span>
+              <Fuel className={`h-3 w-3 ${car.fuel.toLowerCase() === 'gasoline'
+                ? 'text-primary'
+                : 'text-white'
+                }`} />
+              <span className={`${car.fuel.toLowerCase() === 'gasoline'
+                ? 'text-green-700'
+                : 'text-primary/80'
+                }`}>{car.fuel}</span>
             </div>
             <div className="mt-1 text-[10px] text-muted-foreground sm:text-sm flex justify-between gap-2 border-t pt-2">
               <div className="flex items-center gap-1">
                 <Users className="h-3 w-3 text-primary" />
                 <span>{car.seats} seats</span>
               </div>
+              <div>|</div>
               <div className="flex items-center gap-1">
                 <Settings className="h-3 w-3 text-primary" />
                 <span>{car.transmission}</span>
@@ -94,8 +92,8 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
         </div>
       </CardContent>
       <CardFooter className="p-2 pt-0 sm:p-4 sm:pt-0">
-        <Button 
-          className="w-full text-xs sm:text-sm" 
+        <Button
+          className="w-full text-xs sm:text-sm"
           disabled={!isAvailable}
           onClick={() => router.push(href)}
         >

@@ -47,7 +47,7 @@ export function CarDetailsPageContent() {
 
   return (
     <div data-testid="car-details-page" className="min-h-screen bg-white">
-      <div className="flex p-5 gap-5">
+      <div className="flex p-5 gap-10">
         <div className="h-[100vh] bg-gray-200 relative w-1/2 rounded-lg">
 
           <MapBoxService
@@ -70,7 +70,7 @@ export function CarDetailsPageContent() {
             </h1>
 
           </div>
-          <div className={`p-3 mt-4 text-sm font-medium px-3 py-1 rounded-lg text-center w-1/3 border border-green-600 mb-2 ${car.availability.isAvailableToday
+          <div className={`p-3 mt-4 text-sm font-medium px-3 py-1 rounded-lg text-center w-1/3 border border-green-300 mb-2 ${car.availability.isAvailableToday
             ? 'bg-green-100/50 text-green-600'
             : 'bg-red-100/50 text-red-600'}`}>
             {car.availability.isAvailableToday ? 'Available Now' : 'Currently Unavailable'}
@@ -110,15 +110,15 @@ export function CarDetailsPageContent() {
           <h3 className="text-lg font-bold text-gray-900 mt-3"></h3>
           <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
             <div className="flex flex-row items-center mb-5 justify-between gap-2">
-              <div className="text-lg font-bold text-gray-900 flex items-center gap-2 bg-green-100/50 rounded-lg px-3 py-2 flex-1 border border-green-600">
+              <div className="text-lg font-bold text-gray-900 flex items-center gap-2 bg-green-100/50 rounded-lg px-3 py-2 flex-1 border border-green-300">
                 <div className="bg-primary rounded p-1"><CreditCard className="h-5 w-5 text-white" /></div>
                 ₱{car.pricePerHour?.toLocaleString() || '0'}/hr
               </div>
-              <div className="text-lg font-bold text-gray-900 flex items-center gap-2 bg-green-100/50 rounded-lg px-3 py-2 flex-1 border border-green-600">
+              <div className="text-lg font-bold text-gray-900 flex items-center gap-2 bg-green-100/50 rounded-lg px-3 py-2 flex-1 border border-green-300">
                 <div className="bg-primary rounded p-1"><CreditCard className="h-5 w-5 text-white" /></div>
                 ₱{car.pricePer12Hours?.toLocaleString() || '0'}/12hr
               </div>
-              <div className="text-lg font-bold text-gray-900 flex items-center gap-2 bg-green-100/50 rounded-lg px-3 py-2 flex-1 border border-green-600">
+              <div className="text-lg font-bold text-gray-900 flex items-center gap-2 bg-green-100/50 rounded-lg px-3 py-2 flex-1 border border-green-300">
                 <div className="bg-primary rounded p-1"><CreditCard className="h-5 w-5 text-white" /></div>
                 ₱{car.pricePer24Hours?.toLocaleString() || '0'}/24hr
               </div>

@@ -18,7 +18,7 @@ export function CarImages({ imageUrls, carName }: CarImagesProps) {
           src={imageUrls[selectedImageIndex]}
           alt={carName}
           fill
-          className="object-cover"
+          className="object-contain"
           priority
         />
       </div>
@@ -39,7 +39,7 @@ export function CarImages({ imageUrls, carName }: CarImagesProps) {
                 src={imageUrl}
                 alt={`${carName} thumbnail ${index + 1}`}
                 fill
-                className="object-cover"
+                className="object-contain"
               />
             </button>
           ))}
