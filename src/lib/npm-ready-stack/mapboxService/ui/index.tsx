@@ -119,9 +119,9 @@ export function MapBoxService({
 
         mapRef.current.setPitch(45);
 
-        // Set zoom level manually instead of fitBounds to avoid rotation conflicts
+        // Set zoom level to focus on Point A
         console.log("debug-location: Setting manual zoom level");
-        mapRef.current.setZoom(10); // Fixed zoom level
+        mapRef.current.setZoom(14); // Focus on Point A
 
         console.log("debug-location: Simple rotation and zoom applied");
 

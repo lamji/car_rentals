@@ -38,33 +38,12 @@ export function useMapboxInit({ key, mapboxStyle }: UseMapboxInitProps) {
     mapboxgl.accessToken = key;
     console.log("test:hooks - Access token set");
 
-    // Create map centered between Point A and Point B
-    const centerLng = (pointA.lng + pointB.lng) / 2;
-    const centerLat = (pointA.lat + pointB.lat) / 2;
-
+    // Create map centered on Point A (primary focus)
     mapRef.current = new mapboxgl.Map({
       container: mapContainerRef.current!,
       style: mapboxStyle,
-      center: [centerLng, centerLat],
-      zoom: 13,
-    });
-
-    // Fit map to show both points with 2km radius padding after map loads
-    mapRef.current.on("load", () => {
-      const bounds = new mapboxgl.LngLatBounds();
-
-      // Add 2km (approximately 0.018 degrees) buffer around each point
-      const buffer = 0.018; // ~2km in degrees
-
-      bounds.extend([pointA.lng - buffer, pointA.lat - buffer]);
-      bounds.extend([pointA.lng + buffer, pointA.lat + buffer]);
-      bounds.extend([pointB.lng - buffer, pointB.lat - buffer]);
-      bounds.extend([pointB.lng + buffer, pointB.lat + buffer]);
-
-      mapRef.current!.fitBounds(bounds, {
-        padding: 20, // Small UI padding
-        maxZoom: 13, // Allow slightly wider view
-      });
+      center: [pointA.lng, pointA.lat],
+      zoom: 14,
     });
 
     console.log("test:hooks - Map created");

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -176,7 +177,7 @@ export function LocationModal({
     } else if (currentAddress) {
       isClearingRef.current = false;
     }
-  }, [currentAddress, isOpen, setRegionQuery, setSelectedRegion, setSelectedProvince, setSelectedCity, setSelectedBarangay, setProvinceQuery, setCityQuery, setBarangayQuery]);
+  }, [currentAddress, isOpen]);
 
   /**
    * Handle geolocation toggle switch
