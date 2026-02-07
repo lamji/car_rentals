@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import type { PersonalInfoData } from "@/components/booking/PersonalInfoForm";
+
 import { useBookingPersistence } from "@/hooks/useBookingPersistence";
 import { useCar } from "@/hooks/useCar";
 import { calculatePaymentSummary } from "@/lib/paymentSummaryHelper";
@@ -10,6 +10,7 @@ import { closePaymentModal, nextStep, openPaymentModal, previousStep, setBooking
 import { useAppDispatch, useAppSelector } from "@/lib/store";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { PersonalInfoData } from "./usePersonalInfoForm";
 
 export function useBookingPage() {
   const router = useRouter();

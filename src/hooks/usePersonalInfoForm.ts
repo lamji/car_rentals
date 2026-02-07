@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { setBookingDetails } from '@/lib/slices/bookingSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/store'
 import React from 'react'
@@ -51,6 +52,16 @@ export function usePersonalInfoForm({ onValidationChange }: UsePersonalInfoFormP
   const [hasScrolledToBottom, setHasScrolledToBottom] = React.useState(false)
 
   /**
+   * Handle field blur event - saves to Redux when user finishes typing
+   * More practical than debouncing by keystrokes
+   */
+  const handleFieldBlur = React.useCallback((fieldName: keyof PersonalInfoData, value: any) => {
+    dispatch(setBookingDetails({
+      [fieldName]: value
+    }))
+  }, [dispatch])
+
+  /**
    * Handle checkbox change for data consent
    * Opens modal when user tries to check, resets when unchecking
    */
@@ -87,8 +98,8 @@ export function usePersonalInfoForm({ onValidationChange }: UsePersonalInfoFormP
       contactNumber: bookingDetails.contactNumber ?? '',
       email: bookingDetails.email ?? '',
       licenseNumber: bookingDetails.licenseNumber ?? '',
-      licenseImage: undefined,
-      ltoPortalScreenshot: undefined,
+      licenseImage: bookingDetails.licenseImage ?? undefined,
+      ltoPortalScreenshot: bookingDetails.ltoPortalScreenshot ?? undefined,
       idType: bookingDetails.idType ?? '',
       dataConsent: bookingDetails.dataConsent ?? false
     }
@@ -99,6 +110,8 @@ export function usePersonalInfoForm({ onValidationChange }: UsePersonalInfoFormP
     bookingDetails.contactNumber,
     bookingDetails.email,
     bookingDetails.licenseNumber,
+    bookingDetails.licenseImage,
+    bookingDetails.ltoPortalScreenshot,
     bookingDetails.idType,
     bookingDetails.dataConsent
   ])
@@ -147,23 +160,19 @@ export function usePersonalInfoForm({ onValidationChange }: UsePersonalInfoFormP
   const formValues = useWatch({ control })
 
   /**
-   * Dispatch form changes to Redux in real-time
+   * Dispatch non-input field changes (checkbox, image uploads) immediately
+   * Input fields are handled via onBlur events for better performance
    */
   React.useEffect(() => {
-    if (formValues.firstName || formValues.lastName || formValues.contactNumber ||
-      formValues.email || formValues.licenseNumber || formValues.idType || formValues.dataConsent || formValues.ltoPortalScreenshot) {
+    // Only dispatch checkbox and image upload changes immediately
+    if (formValues.dataConsent !== undefined || formValues.licenseImage || formValues.ltoPortalScreenshot) {
       dispatch(setBookingDetails({
-        firstName: formValues.firstName,
-        middleName: formValues.middleName,
-        lastName: formValues.lastName,
-        contactNumber: formValues.contactNumber,
-        email: formValues.email,
-        licenseNumber: formValues.licenseNumber,
-        idType: formValues.idType,
-        dataConsent: formValues.dataConsent
+        dataConsent: formValues.dataConsent,
+        licenseImage: formValues.licenseImage,
+        ltoPortalScreenshot: formValues.ltoPortalScreenshot
       }))
     }
-  }, [formValues, dispatch])
+  }, [formValues.dataConsent, formValues.licenseImage, formValues.ltoPortalScreenshot, dispatch])
 
   /**
    * Notify parent component of validation changes
@@ -245,6 +254,7 @@ export function usePersonalInfoForm({ onValidationChange }: UsePersonalInfoFormP
     hasScrolledToBottom,
     handleCheckboxChange,
     handleScroll,
+    handleFieldBlur,
     
     // Constants
     VALID_ID_TYPES,

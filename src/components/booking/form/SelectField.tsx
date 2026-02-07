@@ -38,6 +38,8 @@ interface SelectFieldProps {
   optionTestIdPrefix?: string
   /** Additional CSS classes for the field container */
   className?: string
+  /** onBlur handler for Redux persistence */
+  onBlur?: (fieldName: keyof PersonalInfoData, value: string) => void
 }
 
 /**
@@ -58,7 +60,8 @@ export function SelectField({
   selectTestId,
   errorTestId,
   optionTestIdPrefix,
-  className
+  className,
+  onBlur
 }: SelectFieldProps) {
   // Generate default test IDs if not provided
   const fieldTestId = testId || `${name}-field`
@@ -76,6 +79,10 @@ export function SelectField({
         onValueChange={(selectedValue) => {
           setValue(name, selectedValue);
           trigger(name);
+          // Call onBlur handler for Redux persistence
+          if (onBlur) {
+            onBlur(name, selectedValue);
+          }
         }}
       >
         <SelectTrigger

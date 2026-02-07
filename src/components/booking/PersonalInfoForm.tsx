@@ -32,6 +32,7 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
     hasScrolledToBottom,
     handleCheckboxChange,
     handleScroll,
+    handleFieldBlur,
     VALID_ID_TYPES,
   } = usePersonalInfoForm({ onValidationChange })
 
@@ -59,6 +60,7 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                 errors={errors}
                 required
                 placeholder="Enter your first name"
+                onBlur={handleFieldBlur}
                 validation={{
                   minLength: { value: 2, message: 'First name must be at least 2 characters' },
                   pattern: { value: /^[a-zA-Z\s]+$/, message: 'First name can only contain letters' }
@@ -71,8 +73,8 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                 label="Middle Name"
                 register={register}
                 errors={errors}
-                required
-                placeholder="Enter your middle name"
+                placeholder="Enter your middle name (optional)"
+                onBlur={handleFieldBlur}
                 validation={{
                   pattern: { value: /^[a-zA-Z\s]+$/, message: 'Middle name can only contain letters' }
                 }}
@@ -86,6 +88,7 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                 errors={errors}
                 required
                 placeholder="Enter your last name"
+                onBlur={handleFieldBlur}
                 validation={{
                   minLength: { value: 2, message: 'Last name must be at least 2 characters' },
                   pattern: { value: /^[a-zA-Z\s]+$/, message: 'Last name can only contain letters' }
@@ -96,15 +99,17 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
               <FormField
                 name="contactNumber"
                 label="Contact Number"
+                type="tel"
                 register={register}
                 errors={errors}
                 required
-                placeholder="Enter your contact number (e.g., +63-912-345-6789)"
+                placeholder="Enter your contact number"
+                className="mb-0"
+                onBlur={handleFieldBlur}
                 validation={{
                   pattern: { value: /^[0-9+\-\s()]+$/, message: 'Please enter a valid contact number' },
                   minLength: { value: 10, message: 'Contact number must be at least 10 digits' }
                 }}
-                className='mb-0'
               />
               <p className="text-xs text-gray-500" data-testid="contact-help-text">
                 Include country code for international numbers
@@ -120,6 +125,7 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                 required
                 placeholder="Enter your email address (e.g., juan.dela.cruz@email.com)"
                 className="custom-email-field mb-0"
+                onBlur={handleFieldBlur}
                 validation={{
                   pattern: { value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, message: 'Please enter a valid email address' }
                 }}
@@ -144,9 +150,10 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                     placeholder="Select your ID type"
                     optionTestIdPrefix="id-type-option"
                     className="mb-0"
+                    onBlur={handleFieldBlur}
                   />
                   <p className="text-xs text-gray-500" data-testid="id-type-help-text">
-                    Select the type of valid ID you will present
+                    Select the type of valid ID you will present. The original ID will be surrendered at the garage for verification during vehicle pickup.
                   </p>
 
                   {/* License Number Input */}
@@ -158,6 +165,7 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                     required
                     placeholder="Enter your ID number"
                     className="mb-0"
+                    onBlur={handleFieldBlur}
                     validation={{
                       minLength: { value: 8, message: 'ID number must be at least 8 characters' }
                     }}

@@ -2,8 +2,8 @@
 
 import { useMemo } from "react";
 
-import { Card, CardContent } from "@/components/ui/card";
 import { DateRangePicker } from "@/components/search/DateRangePicker";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useSearchState } from "@/hooks/useSearchState";
 
@@ -16,7 +16,7 @@ export function SearchHeader() {
   }, [state.endDate, state.startDate]);
 
   return (
-    <Card className="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <Card className="sticky top-0 z-40 backdrop-blur supports-backdrop-filter:bg-background/60">
       <CardContent className="grid gap-3 p-4 md:grid-cols-3">
         <div className="space-y-1">
           <div className="text-xs text-muted-foreground">Location</div>

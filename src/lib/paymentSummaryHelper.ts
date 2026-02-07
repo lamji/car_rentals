@@ -1,5 +1,5 @@
-import { Car } from '@/lib/types'
 import { BookingDetails } from '@/lib/slices/bookingSlice'
+import { Car } from '@/lib/types'
 
 export interface PricingBreakdown {
   label: string
@@ -110,26 +110,14 @@ export function calculatePaymentSummary(
     }
   }
 
-  const totalAmount = rentalCost + deliveryFee
+  const totalAmount = bookingDetails.totalPrice || 0
   const downPaymentRequired = totalAmount * 0.2
   const remainingBalance = totalAmount - downPaymentRequired
 
-  // Debug logging
-  console.log('Payment Summary Calculation:', {
-    carName: selectedCar.name,
-    durationHours: durationHours.toFixed(2),
-    pricingType,
-    rentalCost,
-    deliveryFee,
-    totalAmount,
-    downPaymentRequired,
-    remainingBalance,
-    pricingBreakdown
-  })
 
   return {
     rentalCost,
-    deliveryFee,
+    deliveryFee:bookingDetails.deliveryFee || 0,
     totalAmount,
     downPaymentRequired,
     remainingBalance,

@@ -2,14 +2,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PersonalInfoData } from '@/hooks/usePersonalInfoForm'
 import { AlertCircle } from 'lucide-react'
-import { FieldErrors, FieldPath, UseFormRegister } from 'react-hook-form'
+import { FieldErrors, FieldPath, RegisterOptions, UseFormRegister } from 'react-hook-form'
 
 interface FormFieldProps<T extends FieldPath<PersonalInfoData>> {
   /** Field name (key from PersonalInfoData) */
   name: T
   /** Field label */
   label: string
-  /** Register function from react-hook-form */
+  /** React Hook Form register function */
   register: UseFormRegister<PersonalInfoData>
   /** Form errors object */
   errors: FieldErrors<PersonalInfoData>
@@ -18,16 +18,9 @@ interface FormFieldProps<T extends FieldPath<PersonalInfoData>> {
   /** Whether the field is required */
   required?: boolean
   /** Input type */
-  type?: string
+  type?: 'text' | 'email' | 'tel' | 'number'
   /** Additional validation rules */
-  validation?: {
-    minLength?: { value: number; message: string }
-    maxLength?: { value: number; message: string }
-    pattern?: { value: RegExp; message: string }
-    min?: { value: number; message: string }
-    max?: { value: number; message: string }
-    [key: string]: unknown
-  }
+  validation?: RegisterOptions<PersonalInfoData, T>
   /** Test ID for the field container */
   testId?: string
   /** Test ID for the input element */
@@ -36,6 +29,8 @@ interface FormFieldProps<T extends FieldPath<PersonalInfoData>> {
   errorTestId?: string
   /** Additional CSS classes for the field container */
   className?: string
+  /** onBlur handler for Redux persistence */
+  onBlur?: (fieldName: T, value: string) => void
 }
 
 /**
@@ -54,7 +49,8 @@ export function FormField<T extends FieldPath<PersonalInfoData>>({
   testId,
   inputTestId,
   errorTestId,
-  className
+  className,
+  onBlur
 }: FormFieldProps<T>) {
   // Generate default test IDs if not provided
   const fieldTestId = testId || `${name}-field`
@@ -72,7 +68,15 @@ export function FormField<T extends FieldPath<PersonalInfoData>>({
         data-testid={fieldInputTestId}
         {...register(name, {
           required: required ? `${label} is required` : false,
-          ...validation
+          ...validation,
+          onBlur: (e) => {
+            // Call the custom onBlur handler if provided
+            if (onBlur) {
+              onBlur(name, e.target.value)
+            }
+            // Call the original onBlur from register
+            validation?.onBlur?.(e)
+          }
         })}
         placeholder={placeholder}
         className={`border-primary ${errors[name] ? 'border-red-300' : ''}`}

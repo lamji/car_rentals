@@ -1,12 +1,11 @@
-import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatCurrency } from '@/lib/paymentSummaryHelper'
-import { PaymentSummary } from '@/lib/paymentSummaryHelper'
-import { CreditCard, Smartphone, Shield } from 'lucide-react'
- import { useAppDispatch } from '@/lib/store'
- import { showLoader, hideLoader } from '@/lib/slices/globalLoaderSlice'
- import { useProceedPaymet } from '@/lib/api/useProceedPaymet'
+import { useProceedPaymet } from '@/lib/api/useProceedPaymet'
+import { formatCurrency, PaymentSummary } from '@/lib/paymentSummaryHelper'
+import { hideLoader, showLoader } from '@/lib/slices/globalLoaderSlice'
+import { useAppDispatch } from '@/lib/store'
+import { CreditCard, Shield, Smartphone } from 'lucide-react'
+import React from 'react'
 
 interface PaymentModalProps {
   isOpen: boolean
@@ -87,7 +86,7 @@ export function PaymentModal({ isOpen, onClose, paymentSummary, onPaymentComplet
               </div>
 
               {/* PayMongo Integration Info */}
-              <div className="bg-blue-50 p-4 rounded-lg md:p-4 p-0" data-testid="paymongo-info-section">
+              <div className="bg-blue-50 p-4 rounded-lg md:p-4" data-testid="paymongo-info-section">
                 <div className="flex items-center gap-2 mb-3" data-testid="secure-payment-header">
                   <Shield className="h-5 w-5 text-blue-600" />
                   <h5 className="font-medium text-blue-900">Secure Payment</h5>
@@ -118,15 +117,15 @@ export function PaymentModal({ isOpen, onClose, paymentSummary, onPaymentComplet
             </div>
           </CardContent>
         </Card>
-        
+
         {/* Sticky Action Buttons */}
         <div className="p-4 border-t bg-white" data-testid="action-buttons-section">
           <div className="flex gap-3" data-testid="buttons-container">
             <Button variant="outline" onClick={onClose} className="flex-1" data-testid="cancel-payment-button" disabled={isProcessing}>
               Cancel
             </Button>
-            <Button 
-              onClick={handleGcashPayment} 
+            <Button
+              onClick={handleGcashPayment}
               className="flex-1 bg-blue-600 hover:bg-blue-700"
               data-testid="complete-payment-button"
               disabled={isProcessing}

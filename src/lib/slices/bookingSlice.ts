@@ -14,6 +14,8 @@ export interface BookingDetails {
   contactNumber?: string
   email?: string
   licenseNumber?: string
+  licenseImage?: string // Driver's license image URL
+  ltoPortalScreenshot?: string // LTO portal screenshot URL
   idType?: string
   dataConsent?: boolean
   // Pricing calculations from Step 2

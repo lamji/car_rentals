@@ -1,14 +1,14 @@
 "use client";
 
-import * as React from "react";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
+import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 import { parseIsoDate, toIsoDateString } from "@/lib/date";
+import { cn } from "@/lib/utils";
 
 // Simple tooltip component to avoid import issues
 const SimpleTooltip = ({ children, content }: { children: React.ReactNode; content: string }) => {
@@ -56,10 +56,10 @@ export function DateRangePicker(props: {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 640);
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    
+
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
@@ -96,7 +96,7 @@ export function DateRangePicker(props: {
         <DialogTrigger asChild>
           <Button
             variant="outline"
-            className={cn("w-full justify-start text-left font-normal border-input", !start && "text-muted-foreground", props.className)}
+            className={cn("w-full justify-start text-left font-normal border-input", start! && "text-muted-foreground", props.className)}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
             {start && end ? (
@@ -114,7 +114,7 @@ export function DateRangePicker(props: {
             <div className="text-center">
               <p className="text-sm text-muted-foreground">Choose your pickup and return dates</p>
             </div>
-            
+
             <div className="flex justify-center overflow-x-auto">
               <Calendar
                 mode="range"
@@ -125,16 +125,16 @@ export function DateRangePicker(props: {
                 className="rounded-md border min-w-[300px] sm:min-w-[500px]"
                 disabled={(date: Date) => {
                   if (!date) return false;
-                  
+
                   // Format the date to match the unavailable dates format (YYYY-MM-DD)
                   const dateStr = date.toISOString().split('T')[0];
-                  
+
                   // Check if date is unavailable due to car availability
                   const isUnavailable = props.unavailableDates?.includes(dateStr) || false;
-                  
+
                   // Check if date is disabled by external function (e.g., past dates)
                   const isExternallyDisabled = props.disabled ? props.disabled(date) : false;
-                  
+
                   // Debug logging to verify unavailable dates matching
                   console.log('Date validation:', {
                     checking: dateStr,
@@ -143,7 +143,7 @@ export function DateRangePicker(props: {
                     isExternallyDisabled,
                     willDisable: isUnavailable || isExternallyDisabled
                   });
-                  
+
                   return isUnavailable || isExternallyDisabled;
                 }}
                 modifiers={{
@@ -163,13 +163,13 @@ export function DateRangePicker(props: {
                   Day: (dayProps: { date?: Date; modifiers?: Record<string, boolean>; disabled?: boolean; className?: string }) => {
                     const { date, modifiers, disabled } = dayProps;
                     if (!date) return <td {...dayProps} />;
-                    
+
                     // Format the date to match the unavailable dates format (YYYY-MM-DD)
                     const dateStr = date.toISOString().split('T')[0];
-                    
+
                     // Check if date is unavailable due to car availability
                     const isUnavailable = props.unavailableDates?.includes(dateStr) || false;
-                    
+
                     // Debug logging for Day component
                     if (date.getDate() === 18 && date.getMonth() === 0) { // January 18th
                       console.log("Day component debug - Jan 18, 2026:", {
@@ -181,12 +181,12 @@ export function DateRangePicker(props: {
                         allProps: dayProps
                       });
                     }
-                    
+
                     const dayContent = (
                       <td
                         {...dayProps}
                         className={cn(
-                          isUnavailable && "!bg-red-100 !text-red-800 line-through cursor-not-allowed",
+                          isUnavailable && "bg-red-100! text-red-800! line-through cursor-not-allowed",
                           !isUnavailable && "cursor-pointer hover:bg-accent hover:text-accent-foreground",
                           dayProps.className
                         )}
@@ -194,7 +194,7 @@ export function DateRangePicker(props: {
                         {date.getDate()}
                       </td>
                     );
-                    
+
                     if (isUnavailable) {
                       return (
                         <SimpleTooltip content="Not available">
@@ -202,13 +202,13 @@ export function DateRangePicker(props: {
                         </SimpleTooltip>
                       );
                     }
-                    
+
                     return dayContent;
                   }
                 }}
               />
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 pt-4 sticky bottom-0 bg-background pb-2">
               <Button variant="outline" onClick={handleClear} className="w-full sm:w-auto">
                 Clear
