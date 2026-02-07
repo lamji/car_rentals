@@ -3,6 +3,7 @@
 import { CarGrid } from "@/components/home/CarGrid";
 import { CategorySidebar } from "@/components/home/CategorySidebar";
 import { Hero } from "@/components/home/Hero";
+import { HowBookingWorksDialog } from "@/components/home/HowBookingWorksDialog";
 import { MobileHero } from "@/components/home/MobileHero";
 import { Button } from "@/components/ui/button";
 import { useHomeContent } from "@/hooks/useHomeContent";
@@ -135,6 +136,9 @@ function HomeContent() {
           </div>
         </div>
       </div>
+
+      {/* Floating How Booking Works button */}
+      <HowBookingWorksDialog />
     </div>
   );
 }
