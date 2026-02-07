@@ -30,7 +30,7 @@ export function Hero({
   };
   return (
     <div className={className}>
-      <div className="relative h-[100vh] sm:h-[60vh] md:h-[60vh] lg:h-[60vh] w-full overflow-hidden">
+      <div className="relative h-screen sm:h-[60vh] md:h-[60vh] lg:h-[60vh] w-full overflow-hidden">
         {/* Hero background image */}
         <div className="absolute inset-0 -z-10">
           <Image

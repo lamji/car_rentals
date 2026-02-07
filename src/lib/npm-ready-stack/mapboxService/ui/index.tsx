@@ -207,7 +207,7 @@ export function MapBoxService({
                       <div className="text-[10px] md:text-xs text-gray-400 mb-0.5 md:mb-1">
                         From (Person)
                       </div>
-                      <div className="text-xs md:text-sm font-medium text-white break-words">
+                      <div className="text-xs md:text-sm font-medium text-white wrap-break-word">
                         {locationNames.pointA}
                       </div>
                     </div>
@@ -219,7 +219,7 @@ export function MapBoxService({
                       <div className="text-[10px] md:text-xs text-gray-400 mb-0.5 md:mb-1">
                         To (Garage)
                       </div>
-                      <div className="text-xs md:text-sm font-medium text-white break-words">
+                      <div className="text-xs md:text-sm font-medium text-white wrap-break-word">
                         {locationNames.pointB}
                       </div>
                     </div>

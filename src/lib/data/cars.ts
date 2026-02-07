@@ -24,7 +24,6 @@ export const CARS: Car[] = [
       name: 'Juan Santos',
       contactNumber: '+639123456789'
     },
-    unavailableDates: [],
     garageAddress: "Cebu City, Philippines",
     garageLocation: {
       address: "Cebu City, Philippines",
@@ -66,7 +65,6 @@ export const CARS: Car[] = [
       name: "Maria Reyes",
       contactNumber: "+63-918-234-5678"
     },
-    unavailableDates: [],
     garageAddress: "Cebu City, Philippines",
     garageLocation: {
       address: "Cebu City, Philippines",
@@ -80,6 +78,7 @@ export const CARS: Car[] = [
     rentedCount: 89,
     rating: 4.6,
     selfDrive: false,
+    driverCharge: 500,
     availability: {
       isAvailableToday: false,
       unavailableDates: ["2026-01-22", "2026-01-23", "2026-01-24", "2026-01-25", "2026-01-26"]
@@ -118,7 +117,6 @@ export const CARS: Car[] = [
       name: "Carlos Mendoza",
       contactNumber: "+63-919-345-6789"
     },
-    unavailableDates: [],
     rentedCount: 94,
     rating: 4.5,
     selfDrive: true,
@@ -150,7 +148,6 @@ export const CARS: Car[] = [
       name: "Ana Lopez",
       contactNumber: "+63-920-456-7890"
     },
-    unavailableDates: [],
     garageAddress: "Cebu City, Philippines",
     garageLocation: {
       address: "Cebu City, Philippines",
@@ -164,6 +161,7 @@ export const CARS: Car[] = [
     rentedCount: 67,
     rating: 4.9,
     selfDrive: false,
+    driverCharge: 600,
     availability: {
       isAvailableToday: true,
       unavailableDates: ["2026-01-17", "2026-01-21", "2026-01-26", "2026-01-27", "2026-01-28"]
@@ -192,7 +190,6 @@ export const CARS: Car[] = [
       name: "Roberto Chen",
       contactNumber: "+63-917-890-1234"
     },
-    unavailableDates: [],
     garageAddress: "Cebu City, Philippines",
     garageLocation: {
       address: "Cebu City, Philippines",
@@ -206,6 +203,7 @@ export const CARS: Car[] = [
     rentedCount: 45,
     rating: 4.9,
     selfDrive: false,
+    driverCharge: 700,
     availability: {
       isAvailableToday: false,
       unavailableDates: ["2026-01-10", "2026-01-11", "2026-01-12", "2026-01-13", "2026-01-14", "2026-01-15", "2026-01-16", "2026-01-17"]
@@ -234,7 +232,6 @@ export const CARS: Car[] = [
       name: "David Cruz",
       contactNumber: "+63-918-567-8901"
     },
-    unavailableDates: [],
     garageAddress: "Cebu City, Philippines",
     garageLocation: {
       address: "Cebu City, Philippines",

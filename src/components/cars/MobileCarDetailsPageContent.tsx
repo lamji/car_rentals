@@ -263,7 +263,7 @@ export function MobileCarDetailsPageContent() {
             ></div>
           </div>
 
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <svg
               className={`h-8 w-8 ${car?.selfDrive ? "text-green-600" : "text-red-600"
                 }`}
@@ -305,7 +305,7 @@ export function MobileCarDetailsPageContent() {
             )}
             {!car?.selfDrive && (
               <div className="text-amber-400 text-xs font-medium mt-1">
-                +{formatCurrency(50)} driver fee
+                +{formatCurrency(Number(process.env.NEXT_PUBLIC_DRIVER_FEE) || 50)} driver fee per day
               </div>
             )}
           </div>
@@ -350,13 +350,13 @@ export function MobileCarDetailsPageContent() {
           })()}
 
         {/* Owner Information */}
-        <div className="flex-grow my-4 w-full">
+        <div className="grow my-4 w-full">
           <h3 className="text-gray-900 font-semibold text-sm mb-3">
             Owner Information
           </h3>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
                 <User className="h-5 w-5 text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
@@ -364,13 +364,13 @@ export function MobileCarDetailsPageContent() {
                   {car?.owner?.name}
                 </div>
                 <div className="text-xs text-gray-600 flex items-center gap-1 truncate">
-                  <Phone className="h-3 w-3 flex-shrink-0" />
+                  <Phone className="h-3 w-3 shrink-0" />
                   <span className="truncate">{car?.owner?.contactNumber}</span>
                 </div>
               </div>
               <Button
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3 flex-shrink-0"
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3 shrink-0"
                 onClick={() => {
                   if (car?.owner?.contactNumber) {
                     navigator.clipboard.writeText(car.owner.contactNumber);
@@ -389,7 +389,7 @@ export function MobileCarDetailsPageContent() {
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
             <div className="flex items-start gap-2">
               <svg
-                className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0"
+                className="h-4 w-4 text-amber-600 mt-0.5 shrink-0"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"

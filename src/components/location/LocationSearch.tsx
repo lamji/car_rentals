@@ -29,8 +29,8 @@ export function LocationSearch({
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center">
-                <MapPin className="h-5 w-5 text-yellow-400 mr-1 flex-shrink-0" />
-                <p className="text-xs text-black font-medium text-left my-3 text-white"> Current location</p>
+                <MapPin className="h-5 w-5 text-yellow-400 mr-1 shrink-0" />
+                <p className="text-xs text-white font-medium text-left my-3"> Current location</p>
               </div>
 
               {state ? (

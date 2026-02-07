@@ -13,8 +13,11 @@ import { formatTimeDisplay, generateTimeOptions, getEndDateMinDate, isEndTimeDis
 export function useBookingDetails(onDataChange?: (data: Partial<BookingDetails>) => void) {
   // Redux state
   const bookingDetails = useAppSelector(state => state.booking.bookingDetails);
-  const selectedCar = useAppSelector(state => state.booking.selectedCar);
-  
+  const selectedCar = useAppSelector(state => state.data.cars);
+  const mapBoxState = useAppSelector(state => state.mapBox);
+
+  console.log("test:mapBoxState", mapBoxState)
+
   // Modal states
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [isStartDatePickerOpen, setIsStartDatePickerOpen] = useState(false);
@@ -103,6 +106,7 @@ export function useBookingDetails(onDataChange?: (data: Partial<BookingDetails>)
     setIsStartDatePickerOpen,
     isEndDatePickerOpen,
     setIsEndDatePickerOpen,
+    mapBoxState,
     
     // Functions
     handleDataChange,
@@ -119,5 +123,6 @@ export function useBookingDetails(onDataChange?: (data: Partial<BookingDetails>)
     getEndDateMinDate: getEndDateMinDate,
     isEndTimeDisabled: isEndTimeDisabled,
     isStartTimeDisabled: isStartTimeDisabled,
+    charge: Number(process.env.CHARGE_PER_KM)  // Default to 30 if not set
   };
 }

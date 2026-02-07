@@ -1,5 +1,5 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { Car } from '@/lib/types'
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 export interface BookingDetails {
   startDate?: string
@@ -22,6 +22,8 @@ export interface BookingDetails {
   totalPrice?: number
   pricingType?: 'hourly' | '12-hours' | '24-hours' | 'daily'
   durationHours?: number
+  excessHours?: number
+  excessHoursPrice?: number
 }
 
 interface BookingState {

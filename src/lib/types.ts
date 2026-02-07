@@ -34,11 +34,11 @@ export type Car = {
   pricePer24Hours: number
   pricePerHour: number
   deliveryFee: number
+  driverCharge?: number; // Optional driver charge for cars with driver
   owner: {
     name: string
     contactNumber: string
   }
-  unavailableDates: string[];
   garageAddress: string;
   garageLocation: GarageLocation;
   rentedCount: number;

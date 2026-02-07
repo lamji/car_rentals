@@ -1,7 +1,6 @@
-import React from 'react'
-import { MapPin, X, Car, Users, Settings, Phone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { SearchNearestGarageResponse, NearestGarageResult } from '@/lib/api/useNearestGarage'
+import { NearestGarageResult, SearchNearestGarageResponse } from '@/lib/api/useNearestGarage'
+import { Car, MapPin, Phone, Settings, Users, X } from 'lucide-react'
 import Image from 'next/image'
 
 type Props = {
@@ -39,7 +38,7 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 flex-shrink-0"
+            className="p-2 hover:bg-gray-100 shrink-0"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -68,7 +67,7 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
                         {/* Mobile: Vertical layout */}
                         <div className="sm:hidden space-y-3">
                           <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0">
+                            <div className="shrink-0">
                               <div className="relative w-20 h-16 rounded-lg overflow-hidden">
                                 <Image
                                   src={car.carImage}
@@ -124,7 +123,7 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
                         {/* Desktop: Horizontal layout */}
                         <div className="hidden sm:block">
                           <div className="flex items-start justify-between">
-                            <div className="flex-shrink-0 mr-4">
+                            <div className="shrink-0 mr-4">
                               <div className="relative w-32 h-24 rounded-lg border-2 border-gray-200 overflow-hidden">
                                 <Image
                                   src={car.carImage}
@@ -194,7 +193,7 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
                         {/* Mobile: Vertical layout */}
                         <div className="sm:hidden space-y-3">
                           <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0">
+                            <div className="shrink-0">
                               <div className="relative w-20 h-16 rounded-lg overflow-hidden opacity-50">
                                 <Image
                                   src={car.carImage}
@@ -232,11 +231,11 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
 
                           <div className="space-y-1 text-xs text-gray-500 pl-0">
                             <div className="flex items-center gap-2">
-                              <MapPin className="h-3 w-3 flex-shrink-0" />
+                              <MapPin className="h-3 w-3 shrink-0" />
                               <span className="truncate">{car.garageAddress} - {car.distance} km away</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Phone className="h-3 w-3 flex-shrink-0" />
+                              <Phone className="h-3 w-3 shrink-0" />
                               <span>{car.ownerContact}</span>
                             </div>
                           </div>
@@ -245,7 +244,7 @@ export function NearestGarageModal({ isOpen, onClose, searchResults, onSelectGar
                         {/* Desktop: Horizontal layout */}
                         <div className="hidden sm:block">
                           <div className="flex items-start justify-between">
-                            <div className="flex-shrink-0 mr-4">
+                            <div className="shrink-0 mr-4">
                               <div className="relative w-32 h-24 rounded-lg border-2 border-gray-200 overflow-hidden opacity-50">
                                 <Image
                                   src={car.carImage}

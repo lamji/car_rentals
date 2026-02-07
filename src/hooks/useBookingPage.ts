@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import type { PersonalInfoData } from "@/components/booking/PersonalInfoForm";
@@ -6,7 +7,7 @@ import { useCar } from "@/hooks/useCar";
 import { calculatePaymentSummary } from "@/lib/paymentSummaryHelper";
 import type { BookingDetails } from "@/lib/slices/bookingSlice";
 import { closePaymentModal, nextStep, openPaymentModal, previousStep, setBookingDetails, setSelectedCar } from "@/lib/slices/bookingSlice";
-import { useAppDispatch } from "@/lib/store";
+import { useAppDispatch, useAppSelector } from "@/lib/store";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -16,6 +17,10 @@ export function useBookingPage() {
   const dispatch = useAppDispatch();
   const [isLoaded, setIsLoaded] = useState(false);
   const { currentStep, selectedCar, bookingDetails, isPaymentModalOpen } = useBookingPersistence();
+  const carState= useAppSelector((state) => state.data.cars);
+  const mapBoxState = useAppSelector((state) => state.mapBox);
+
+  console.log('carState', carState);
   
   // State for PersonalInfoForm validation
   const [isPersonalInfoValid, setIsPersonalInfoValid] = useState(false);
@@ -108,11 +113,13 @@ export function useBookingPage() {
         const hasRequiredFields = !!(
           bookingDetails.startDate && 
           bookingDetails.endDate && 
-          bookingDetails.location && 
           bookingDetails.startTime && 
-          bookingDetails.endTime
+          bookingDetails.endTime 
+          // (selectedCar?.selfDrive ? bookingDetails.location : true) // Location only required for self-drive cars
         );
         const meetsDuration = isMinimumDurationMet();
+        console.log('test:canProceed', {hasRequiredFields, meetsDuration});
+   
         canProceed = hasRequiredFields && meetsDuration;
         break;
       case 3:
@@ -126,7 +133,7 @@ export function useBookingPage() {
     }
     
     return canProceed;
-  }, [currentStep, selectedCar, bookingDetails, isPersonalInfoValid, isMinimumDurationMet]);
+  }, [currentStep, selectedCar, bookingDetails, isPersonalInfoValid, isMinimumDurationMet, selectedCar?.selfDrive]);
 
   /**
    * Handle complete booking action
@@ -157,10 +164,9 @@ export function useBookingPage() {
   }, [dispatch]);
 
   /**
-   * Calculate pricing details for Step 2 when moving to Step 3
-   * Determines rental price based on duration and applies delivery fees
+   * Calculate pricing for step 2 based on rental duration and car details
    */
-  const calculateStep2Pricing = useCallback(() => {
+  const calculateStep2Pricing = useCallback((mapBoxDeliveryFee: number = 0) => {
     if (!selectedCar || !bookingDetails.startDate || !bookingDetails.endDate || !bookingDetails.startTime || !bookingDetails.endTime) {
       return null;
     }
@@ -171,28 +177,93 @@ export function useBookingPage() {
     
     let rentalPrice = 0;
     let pricingType: 'hourly' | '12-hours' | '24-hours' | 'daily' = 'hourly';
+    let driverFee = 0;
+    let excessHours = 0;
+    let excessHoursPrice = 0;
     
+    // Calculate base rental price
     if (durationHours <= 12) {
       rentalPrice = selectedCar.pricePer12Hours || 0;
       pricingType = '12-hours';
     } else if (durationHours <= 24) {
-      rentalPrice = selectedCar.pricePer24Hours || 0;
-      pricingType = '24-hours';
+      if (durationHours === 24) {
+        // Exactly 24 hours = 24-hour pricing
+        rentalPrice = selectedCar.pricePer24Hours || 0;
+        pricingType = '24-hours';
+      } else {
+        // 13-23 hours = 12-hour base + excess hours
+        rentalPrice = selectedCar.pricePer12Hours || 0;
+        pricingType = '12-hours';
+        excessHours = durationHours - 12;
+        excessHoursPrice = (selectedCar.pricePerHour || 0) * excessHours;
+      }
     } else {
-      const days = Math.ceil(durationHours / 24);
-      rentalPrice = (selectedCar.pricePerDay || 0) * days;
-      pricingType = 'daily';
+      // For durations > 24 hours, calculate multi-day pricing
+      const fullDays = Math.floor(durationHours / 24);
+      const remainingHours = durationHours % 24;
+      
+      if (remainingHours === 0) {
+        // Exact multiple of 24 hours (e.g., 48, 72 hours)
+        rentalPrice = (selectedCar.pricePer24Hours || 0) * fullDays;
+        pricingType = '24-hours';
+        excessHours = 0;
+        excessHoursPrice = 0;
+      } else {
+        // Multiple days plus excess hours (e.g., 49 hours = 2 days + 1 hour)
+        rentalPrice = (selectedCar.pricePer24Hours || 0) * fullDays;
+        pricingType = '24-hours';
+        excessHours = remainingHours;
+        excessHoursPrice = (selectedCar.pricePerHour || 0) * remainingHours;
+      }
     }
     
-    const deliveryFee = bookingDetails.pickupType === 'delivery' ? (selectedCar.deliveryFee || 0) : 0;
-    const totalPrice = rentalPrice + deliveryFee;
+    // Calculate driver fee for cars with drivers
+    if (!selectedCar.selfDrive && selectedCar.driverCharge) {
+      // Driver fee is per day (12-24 hours = 1 day, >24 hours = multiple days)
+      if (durationHours <= 24) {
+        driverFee = selectedCar.driverCharge;
+      } else {
+        // Calculate full days and remaining hours
+        const fullDays = Math.floor(durationHours / 24);
+        const remainingHours = durationHours % 24;
+        
+        // Only charge for an extra day if remaining hours >= 12
+        const extraDay = remainingHours >= 12 ? 1 : 0;
+        const totalDays = fullDays + extraDay;
+        
+        driverFee = selectedCar.driverCharge * totalDays;
+      }
+    }
+    
+    // Use mapBox delivery fee instead of fixed car delivery fee
+    const deliveryFee = Math.round(mapBoxDeliveryFee * 100) / 100;
+    
+    // Excess hours are already calculated in the main pricing logic above
+    
+    const totalPrice = Math.round((rentalPrice + deliveryFee + driverFee + excessHoursPrice) * 100) / 100;
+    
+    // Debug logging
+    console.log('Pricing Calculation Debug:', {
+      durationHours,
+      pricingType,
+      baseRentalPrice: pricingType === '24-hours' ? selectedCar.pricePer24Hours : selectedCar.pricePer12Hours,
+      excessHours,
+      excessHoursPrice,
+      finalRentalPrice: rentalPrice,
+      deliveryFee,
+      driverFee,
+      totalPrice
+    });
     
     return {
       rentalPrice,
       deliveryFee,
+      driverFee,
       totalPrice,
       pricingType,
-      durationHours: Math.round(durationHours * 100) / 100
+      durationHours: Math.round(durationHours * 100) / 100,
+      excessHours: Math.round(excessHours * 100) / 100,
+      excessHoursPrice: Math.round(excessHoursPrice * 100) / 100
     };
   }, [selectedCar, bookingDetails]);
 
@@ -201,7 +272,6 @@ export function useBookingPage() {
    * Goes back to car listing if on first step, otherwise goes to previous booking step
    */
   const handlePrevious = useCallback(() => {
-    console.log('Previous clicked, current step:', currentStep);
     if (currentStep === 1) {
       // Navigate back to car listing page
       router.push('/cars');
@@ -214,19 +284,20 @@ export function useBookingPage() {
    * Handle navigation to next step
    * Validates current step and processes data before moving to next step
    */
-  const handleNext = useCallback(() => {
-    console.log('Next clicked, can proceed:', canProceedToNext());
-    console.log('Current Step:', currentStep);
-    console.log('Current bookingDetails from Redux:', bookingDetails);
-    
+  const handleNext = useCallback(() => {  
     // Process Step 2 specific data when moving from Step 2 to Step 3
     if (currentStep === 2) {
       const { startDate, endDate, startTime, endTime, location, pickupType } = bookingDetails;
       
-      const pricingDetails = calculateStep2Pricing();
+      // Get delivery fee from mapBoxState if pickup type is delivery and car is self-drive
+      const mapBoxDeliveryFee = (pickupType === 'delivery' && selectedCar?.selfDrive) 
+        ? mapBoxState?.current?.distanceCharge?.price || 0 
+        : 0;
+      
+      const pricingDetails = calculateStep2Pricing(mapBoxDeliveryFee);
       
       if (pricingDetails) {
-        // Dispatch Step 2 data to Redux
+        // Dispatch Step 2 data to Redux (deliveryFee is already included in pricingDetails)
         dispatch(setBookingDetails({
           startDate,
           endDate,
@@ -234,13 +305,21 @@ export function useBookingPage() {
           endTime,
           location,
           pickupType,
-          ...pricingDetails // Store calculated pricing for reference
+          ...pricingDetails // Store calculated pricing including deliveryFee
         }));
-        
-        console.log('Step 2 data dispatched to Redux');
       }
+
+      console.log('Step 2 data dispatched to Redux',{
+          startDate,
+          endDate,
+          startTime,
+          endTime,
+          location,
+          pickupType,
+        
+      ...pricingDetails // Store calculated pricing including deliveryFee, excessHours, excessHoursPrice
+        });
       
-      console.log('========================');
     }
     
     if (canProceedToNext()) {
@@ -288,6 +367,23 @@ export function useBookingPage() {
     car,
     paymentSummary,
     steps,
+    selectedData:{
+      // Basic booking details
+      startDate: bookingDetails.startDate,
+      endDate: bookingDetails.endDate,
+      startTime: bookingDetails.startTime,
+      endTime: bookingDetails.endTime,
+      location: bookingDetails.location,
+      pickupType: bookingDetails.pickupType,
+      // Complete pricing details (only calculate if we have basic booking data)
+      pricingDetails: (bookingDetails.startDate && bookingDetails.endDate && bookingDetails.startTime && bookingDetails.endTime)
+        ? calculateStep2Pricing(
+            (bookingDetails.pickupType === 'delivery' && selectedCar?.selfDrive) 
+              ? mapBoxState?.current?.distanceCharge?.price || 0 
+              : 0
+          )
+        : null
+    },
     
     // Actions
     handlePersonalInfoValidationChange,

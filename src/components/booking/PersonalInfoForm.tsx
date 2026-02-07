@@ -1,17 +1,17 @@
-import React from 'react'
-import { useForm, useWatch } from 'react-hook-form'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
-import { useAppSelector, useAppDispatch } from '@/lib/store'
 import { setBookingDetails } from '@/lib/slices/bookingSlice'
-import { User, FileText, AlertCircle, Shield, Eye, Lock, Database } from 'lucide-react'
+import { useAppDispatch, useAppSelector } from '@/lib/store'
+import { AlertCircle, Database, Eye, FileText, Lock, Shield, User } from 'lucide-react'
+import React from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 
 // Array of valid ID types
 const VALID_ID_TYPES = [
@@ -95,7 +95,7 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
     bookingDetails.idType,
     bookingDetails.dataConsent
   ])
-  
+
   const {
     register,
     handleSubmit,
@@ -130,11 +130,11 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
 
   // Watch form values and notify parent of validation changes
   const formValues = useWatch({ control })
-  
+
   // Dispatch form changes to Redux in real-time
   React.useEffect(() => {
-    if (formValues.firstName || formValues.lastName || formValues.contactNumber || 
-        formValues.email || formValues.licenseNumber || formValues.idType || formValues.dataConsent) {
+    if (formValues.firstName || formValues.lastName || formValues.contactNumber ||
+      formValues.email || formValues.licenseNumber || formValues.idType || formValues.dataConsent) {
       dispatch(setBookingDetails({
         firstName: formValues.firstName,
         middleName: formValues.middleName,
@@ -147,27 +147,27 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
       }))
     }
   }, [formValues, dispatch])
-  
+
   React.useEffect(() => {
     // Only pass form data if all required fields have values
     const requiresId = selectedCar?.selfDrive
-    
-    const completeData = formValues.firstName && 
-      formValues.lastName && 
+
+    const completeData = formValues.firstName &&
+      formValues.lastName &&
       formValues.contactNumber &&
       formValues.email &&
       formValues.dataConsent &&
       (!requiresId || (formValues.licenseNumber && formValues.idType)) ? {
-        firstName: formValues.firstName,
-        middleName: formValues.middleName || '',
-        lastName: formValues.lastName,
-        contactNumber: formValues.contactNumber,
-        email: formValues.email,
-        licenseNumber: formValues.licenseNumber || '',
-        idType: formValues.idType || '',
-        dataConsent: formValues.dataConsent
-      } : undefined
-    
+      firstName: formValues.firstName,
+      middleName: formValues.middleName || '',
+      lastName: formValues.lastName,
+      contactNumber: formValues.contactNumber,
+      email: formValues.email,
+      licenseNumber: formValues.licenseNumber || '',
+      idType: formValues.idType || '',
+      dataConsent: formValues.dataConsent
+    } : undefined
+
     onValidationChange?.(isValid, completeData)
   }, [isValid, formValues, onValidationChange, requiresId, selectedCar?.selfDrive]) // Include formValues with useWatch for stability
 
@@ -176,7 +176,7 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
     // TODO: Save to Redux state
   }
 
-    // Reset scroll state when modal opens
+  // Reset scroll state when modal opens
   React.useEffect(() => {
     if (showConsentModal) {
       setHasScrolledToBottom(false)
@@ -491,7 +491,7 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
           {/* Data Privacy Consent Modal */}
           <Dialog open={showConsentModal} onOpenChange={setShowConsentModal}>
             <DialogContent className="w-screen h-screen max-w-none max-h-none flex flex-col m-0 rounded-none overflow-hidden">
-              <DialogHeader className="flex-shrink-0 px-6 py-4 border-b">
+              <DialogHeader className="shrink-0 px-6 py-4 border-b">
                 <DialogTitle className="flex items-center gap-2 text-xl">
                   <Shield className="h-6 w-6" />
                   Data Privacy Consent Agreement
@@ -500,14 +500,14 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                   Please read and review our comprehensive data privacy policy below.
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="flex-1 overflow-y-auto px-6 py-4" onScroll={handleScroll}>
                 <div className="max-w-4xl mx-auto space-y-6">
                   {/* Introduction */}
                   <div>
                     <h3 className="font-semibold text-xl mb-3">Data Privacy Act Compliance</h3>
                     <p className="text-base text-gray-600">
-                      In compliance with the Republic Act No. 10173 (Data Privacy Act of 2012) of the Philippines, 
+                      In compliance with the Republic Act No. 10173 (Data Privacy Act of 2012) of the Philippines,
                       we are committed to protecting your personal data and ensuring transparency in our data processing practices.
                     </p>
                   </div>
@@ -581,8 +581,8 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                   <div>
                     <h4 className="font-semibold mb-3 text-lg">Data Retention Period</h4>
                     <p className="text-base text-gray-600">
-                      Your personal data will be retained for a maximum period of five (5) years from the date of 
-                      your last transaction, unless required by law to be retained for a longer period. After the 
+                      Your personal data will be retained for a maximum period of five (5) years from the date of
+                      your last transaction, unless required by law to be retained for a longer period. After the
                       retention period, your data will be securely destroyed or anonymized.
                     </p>
                   </div>
@@ -612,16 +612,16 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                   <div>
                     <h4 className="font-semibold mb-3 text-lg">Data Privacy Contact</h4>
                     <p className="text-base text-gray-600">
-                      For any data privacy concerns or to exercise your rights, please contact our 
+                      For any data privacy concerns or to exercise your rights, please contact our
                       Data Protection Officer at privacy@carrentals.ph or call (02) 123-4567.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-4 px-6 py-4 border-t bg-white flex-shrink-0">
-                <Button 
-                  variant="outline" 
+              <div className="flex justify-end gap-4 px-6 py-4 border-t bg-white shrink-0">
+                <Button
+                  variant="outline"
                   size="lg"
                   onClick={() => {
                     setShowConsentModal(false)
@@ -632,7 +632,7 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                 >
                   Decline
                 </Button>
-                <Button 
+                <Button
                   size="lg"
                   disabled={!hasScrolledToBottom}
                   onClick={() => {
@@ -643,13 +643,13 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                 >
                   I Agree
                 </Button>
-              
+
               </div>
-                {!hasScrolledToBottom && (
-                  <p className="text-xs text-gray-500 self-center">
-                    Please scroll to the bottom to enable agreement
-                  </p>
-                )}
+              {!hasScrolledToBottom && (
+                <p className="text-xs text-gray-500 self-center">
+                  Please scroll to the bottom to enable agreement
+                </p>
+              )}
             </DialogContent>
           </Dialog>
         </CardContent>

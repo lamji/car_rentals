@@ -2,10 +2,15 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { useAppSelector } from '@/lib/store'
-import { CalendarX, Car, Fuel, Settings, Tag, Users } from 'lucide-react'
+import { getFutureUnavailableDates } from '@/utils/validateBlockedDates'
+import { CalendarX, Car, ChevronDown, ChevronUp, Fuel, Settings, Tag, Users } from 'lucide-react'
+import { useState } from 'react'
 
 export function SelectedCarCard() {
   const selectedCar = useAppSelector(state => state.data.cars)
+  const [showAllDates, setShowAllDates] = useState(false)
+
+  const futureUnavailableDates = getFutureUnavailableDates(selectedCar?.availability?.unavailableDates || [])
 
 
   if (!selectedCar) {
@@ -100,8 +105,8 @@ export function SelectedCarCard() {
               <span className="text-xs text-muted-foreground">Unavailable</span>
             </div>
             <span className="text-sm font-medium text-gray-900">
-              {selectedCar.unavailableDates.length > 0
-                ? `${selectedCar.unavailableDates.length} dates`
+              {futureUnavailableDates.length > 0
+                ? `${futureUnavailableDates.length} dates`
                 : 'None'
               }
             </span>
@@ -109,13 +114,13 @@ export function SelectedCarCard() {
         </div>
 
         {/* Unavailable Dates */}
-        {selectedCar.unavailableDates.length > 0 && (
+        {futureUnavailableDates.length > 0 && (
           <>
             <Separator />
             <div className="px-4 py-3">
               <span className="text-xs font-medium text-muted-foreground block mb-2">Blocked Dates</span>
               <div data-testid="unavailable-dates-container" className="flex flex-wrap gap-1.5">
-                {selectedCar.unavailableDates.slice(0, 5).map((date: string) => (
+                {(showAllDates ? futureUnavailableDates : futureUnavailableDates.slice(0, 5)).map((date: string) => (
                   <Badge
                     key={date}
                     data-testid={`unavailable-date-${date}`}
@@ -125,13 +130,24 @@ export function SelectedCarCard() {
                     {new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </Badge>
                 ))}
-                {selectedCar.unavailableDates.length > 5 && (
+                {futureUnavailableDates.length > 5 && (
                   <Badge
                     data-testid="unavailable-dates-more"
                     variant="outline"
-                    className="text-[10px] font-normal px-2 py-0.5 border-destructive/30 text-destructive"
+                    className="text-[10px] font-normal px-2 py-0.5 border-destructive/30 text-destructive cursor-pointer hover:bg-destructive/10 flex items-center gap-1"
+                    onClick={() => setShowAllDates(!showAllDates)}
                   >
-                    +{selectedCar.unavailableDates.length - 5} more
+                    {showAllDates ? (
+                      <>
+                        <ChevronUp className="h-3 w-3" />
+                        Show less
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="h-3 w-3" />
+                        +{futureUnavailableDates.length - 5} more
+                      </>
+                    )}
                   </Badge>
                 )}
               </div>

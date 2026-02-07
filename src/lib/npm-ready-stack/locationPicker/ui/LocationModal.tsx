@@ -620,7 +620,7 @@ export function LocationModal({
 
         {/* Info notice */}
         <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+          <Info className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
           <p className="text-xs text-blue-700 leading-relaxed">
             Results based on selected address, not current location (unless &quot;Use Current Location&quot; is enabled)
           </p>

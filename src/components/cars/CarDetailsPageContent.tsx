@@ -91,15 +91,15 @@ export function CarDetailsPageContent() {
                 </div>
               )}
             </div>
-            <div className="border-r w-1/4 text-center p-2 flex flex-row gap-0 items-center justify-center gap-2">
+            <div className="border-r w-1/4 text-center p-2 flex flex-row items-center justify-center gap-2">
               <Users className="h-5 w-5 mb-1 text-primary" />
               {car.seats} Seats
             </div>
-            <div className="border-r w-1/4 text-center p-2 flex flex-row gap-0 items-center justify-center gap-2">
+            <div className="border-r w-1/4 text-center p-2 flex flex-row items-center justify-center gap-2">
               <Settings className="h-5 w-5 mb-1 text-primary" />
               {car.transmission}
             </div>
-            <div className="border-r w-1/4 text-center p-2 flex flex-row gap-0 items-center justify-center gap-2">
+            <div className="border-r w-1/4 text-center p-2 flex flex-row items-center justify-center gap-2">
               <Navigation className="h-5 w-5 mb-1 text-primary" />
               {mapBoxDistanceText}
             </div>

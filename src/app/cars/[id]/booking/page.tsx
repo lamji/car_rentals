@@ -17,6 +17,7 @@ export default function BookingPage() {
     isPaymentModalOpen,
     paymentSummary,
     steps,
+    selectedData,
     handlePersonalInfoValidationChange,
     handleRentalDetailsChange,
     handleComplete,
@@ -48,7 +49,10 @@ export default function BookingPage() {
           <div>
             {/* Mobile Version */}
             <div className="sm:hidden">
-              <MobileRentalDetailsForm onDataChange={handleRentalDetailsChange} />
+              <MobileRentalDetailsForm
+                onDataChange={handleRentalDetailsChange}
+                pricingDetails={selectedData?.pricingDetails || undefined}
+              />
             </div>
             {/* Desktop Version */}
             <div className="hidden sm:block">
@@ -141,7 +145,7 @@ export default function BookingPage() {
           <div className="flex justify-between mt-8">
             <Button
               onClick={handlePrevious}
-              disabled={currentStep === 1}
+
               variant="secondary"
               className="px-6 py-2"
             >

@@ -17,6 +17,7 @@ interface RouteCalculationResult {
   distance: number;
   distanceText: string;
   chargePerKm: number;
+  baseCharge: number;
   totalCharge: number;
   formattedCharge: string;
 }
@@ -26,6 +27,7 @@ interface RouteCalculationResult {
  * @param props - Object containing pointA and pointB coordinates
  * @returns {Object} Route calculation results including distance, formatted distance, and charges
  */
+
 export default function useCalculateRotes({
   pointA,
   pointB,
@@ -34,7 +36,8 @@ export default function useCalculateRotes({
   pointB: Point;
 }) {
   const dispatch = useAppDispatch(); // Add this line
-  const CHARGE_PER_KM = 30; // 30 PHP per kilometer
+  const CHARGE_PER_KM = Number(process.env.NEXT_PUBLIC_CHARGE_PER_KM) || 30; // Charge per kilometer
+  const BASE_CHARGE = Number(process.env.NEXT_PUBLIC_BASED_CHARGE) || 100; // Base fare
 
   /**
    * Calculate the distance between pointA and pointB using Haversine formula
@@ -52,8 +55,8 @@ export default function useCalculateRotes({
    * @returns {number} Total charge in PHP
    */
   const calculateRouteCharge = useCallback((distanceInKm: number) => {
-    return distanceInKm * CHARGE_PER_KM;
-  }, []);
+    return (distanceInKm * CHARGE_PER_KM) + BASE_CHARGE;
+  }, [CHARGE_PER_KM, BASE_CHARGE]);
 
   // Memoize all calculations to prevent unnecessary re-renders
   const routeData = useMemo((): RouteCalculationResult => {
@@ -66,10 +69,11 @@ export default function useCalculateRotes({
       distance,
       distanceText,
       chargePerKm: CHARGE_PER_KM,
+      baseCharge: BASE_CHARGE,
       totalCharge,
       formattedCharge,
     };
-  }, [calculateRouteDistance, calculateRouteCharge]);
+  }, [calculateRouteDistance, calculateRouteCharge, CHARGE_PER_KM, BASE_CHARGE]);
 
   // Save distance charge to Redux when calculations are updated
   useEffect(() => {
