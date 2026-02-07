@@ -256,7 +256,7 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                   }
                 })}
                 placeholder="Enter your first name"
-                className={errors.firstName ? 'border-red-300' : ''}
+                className={`border-primary ${errors.firstName ? 'border-red-300' : ''}`}
               />
               {errors.firstName && (
                 <p className="text-xs text-red-500 flex items-center gap-1" data-testid="first-name-error">
@@ -282,7 +282,7 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                   }
                 })}
                 placeholder="Enter your middle name"
-                className={errors.middleName ? 'border-red-300' : ''}
+                className={`border-primary ${errors.middleName ? 'border-red-300' : ''}`}
               />
               {errors.middleName && (
                 <p className="text-xs text-red-500 flex items-center gap-1" data-testid="middle-name-error">
@@ -312,7 +312,7 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                   }
                 })}
                 placeholder="Enter your last name"
-                className={errors.lastName ? 'border-red-300' : ''}
+                className={`border-primary ${errors.lastName ? 'border-red-300' : ''}`}
               />
               {errors.lastName && (
                 <p className="text-xs text-red-500 flex items-center gap-1" data-testid="last-name-error">
@@ -342,7 +342,7 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                   }
                 })}
                 placeholder="Enter your contact number (e.g., +63-912-345-6789)"
-                className={errors.contactNumber ? 'border-red-300' : ''}
+                className={`border-primary ${errors.contactNumber ? 'border-red-300' : ''}`}
               />
               {errors.contactNumber && (
                 <p className="text-xs text-red-500 flex items-center gap-1" data-testid="contact-number-error">
@@ -372,7 +372,7 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                   }
                 })}
                 placeholder="Enter your email address (e.g., juan.dela.cruz@email.com)"
-                className={errors.email ? 'border-red-300' : ''}
+                className={`border-primary ${errors.email ? 'border-red-300' : ''}`}
               />
               {errors.email && (
                 <p className="text-xs text-red-500 flex items-center gap-1" data-testid="email-error">
@@ -401,7 +401,7 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                     }}
                   >
                     <SelectTrigger
-                      className={`w-full ${errors.idType ? 'border-red-300' : ''}`}
+                      className={`w-full border-primary ${errors.idType ? 'border-red-300' : ''}`}
                       data-testid="id-type-select"
                     >
                       <SelectValue placeholder="Select your ID type" />
@@ -445,7 +445,7 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                       }
                     })}
                     placeholder="Enter your ID number"
-                    className={errors.licenseNumber ? 'border-red-300' : ''}
+                    className={`border-primary ${errors.licenseNumber ? 'border-red-300' : ''}`}
                   />
                   {errors.licenseNumber && (
                     <p className="text-xs text-red-500 flex items-center gap-1" data-testid="license-number-error">
@@ -469,6 +469,7 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                 checked={formValues.dataConsent || false}
                 onCheckedChange={handleCheckboxChange}
                 data-testid="data-consent-checkbox"
+                className='border-primary text-primary'
               />
               <div className="flex-1">
                 <Label htmlFor="dataConsent" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">

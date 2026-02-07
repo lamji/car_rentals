@@ -32,13 +32,15 @@ export function Hero({
     <div className={className}>
       <div className="relative h-screen sm:h-[60vh] md:h-[60vh] lg:h-[60vh] w-full overflow-hidden">
         {/* Hero background image */}
-        <div className="absolute inset-0 -z-10">
+        <div className="absolute inset-0 -z-10 bg-[#f5f3fa]">
           <Image
-            src="https://res.cloudinary.com/dlax3esau/image/upload/v1770342697/car_rental_hero_jbt77r.png"
+            src="https://res.cloudinary.com/dlax3esau/image/upload/v1770448817/ChatGPT_Image_Feb_7_2026_03_17_57_PM_mo3tg5.png"
             alt="Car rental"
             fill
-            className="object-cover"
+            className="object-contain"
+            style={{ objectFit: 'contain', objectPosition: 'center' }}
             priority
+            sizes="100vw"
           />
           <div className="absolute inset-0 " />
         </div>

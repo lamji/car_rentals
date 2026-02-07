@@ -19,8 +19,8 @@ interface HeaderProps {
 
 export function Header({
   state = { location: "" },
-  setIsLocationModalOpen = () => {},
-  handleClearLocation = () => {},
+  setIsLocationModalOpen = () => { },
+  handleClearLocation = () => { },
 }: HeaderProps) {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();

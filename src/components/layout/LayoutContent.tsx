@@ -91,15 +91,11 @@ export function LayoutContent({ children }: LayoutContentProps) {
    */
   const handleCloseLocationModal = () => {
     dispatch(closeLocationModal());
-  };  
+  };
 
   return (
     <>
-      {!isProfilePage && !isBookingsPage && !isAdminRoute && (
-        <div className="hidden lg:block fixed top-0 left-0 right-0 z-40 bg-white">
-          <HeaderWithLocation />
-        </div>
-      )}
+
       <GlobalLoaderOverlay />
       <div
         className={cn(
@@ -108,7 +104,16 @@ export function LayoutContent({ children }: LayoutContentProps) {
           !isProfilePage && !isBookingsPage && "lg:pt-16",
         )}
       >
-        {children}
+        <div className="mx-auto max-w-[1366px]">
+          {!isProfilePage && !isBookingsPage && !isAdminRoute && (
+            <div className="hidden lg:block fixed top-0 left-0 right-0 z-40 bg-white">
+              <div className="mx-auto max-w-[1386px] px-4">
+                <HeaderWithLocation />
+              </div>
+            </div>
+          )}
+          {children}
+        </div>
       </div>
       {pathname === "/" && <BottomNavigation />}
 

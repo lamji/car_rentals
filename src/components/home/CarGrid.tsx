@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { CarAvailabilityCard } from "@/components/cars/CarAvailabilityCard";
+import { setRadius } from "@/lib/slices/data";
 import { Car } from "@/lib/types";
 import { useDispatch, useSelector } from "react-redux";
-import { setRadius } from "@/lib/slices/data";
 
 
 interface CarGridProps {
@@ -24,7 +24,7 @@ export function CarGrid({ filteredCars, detailsHrefFor, radiusList }: CarGridPro
           <h2 className="text-xl font-bold text-gray-900">Available Cars</h2>
           <p className="text-sm text-gray-600 mt-1">Find the perfect car for your journey</p>
         </div>
-        
+
         {/* Radius selector */}
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-gray-700">Search radius:</span>
@@ -32,11 +32,10 @@ export function CarGrid({ filteredCars, detailsHrefFor, radiusList }: CarGridPro
             {radiusList.map((radius) => (
               <button
                 key={radius}
-                className={`px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 ${
-                  currentRadius === radius
-                    ? "bg-primary text-white"
-                    : "text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-                }`}
+                className={`px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 ${currentRadius === radius
+                  ? "bg-primary text-white"
+                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                  }`}
                 onClick={() => {
                   dispatch(setRadius(radius));
                 }}
@@ -47,7 +46,7 @@ export function CarGrid({ filteredCars, detailsHrefFor, radiusList }: CarGridPro
           </div>
         </div>
       </div>
-      
+
       {/* Car grid with loading state */}
       {isLoading ? (
         <div className="flex justify-center items-center py-12 min-h-[200px]">
@@ -57,15 +56,15 @@ export function CarGrid({ filteredCars, detailsHrefFor, radiusList }: CarGridPro
           </div>
         </div>
       ) : (
-        <div className="grid gap-2 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-5">
+        <div className="grid gap-2 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
           {filteredCars.map((car) => {
             const today = new Date().toISOString().split('T')[0];
             const isTodayUnavailable = car.availability.unavailableDates.includes(today);
             const isAvailable = !isTodayUnavailable;
 
             console.log("test:car", car);
-            
-            return(
+
+            return (
               <CarAvailabilityCard
                 key={car.id}
                 car={car}
@@ -76,7 +75,7 @@ export function CarGrid({ filteredCars, detailsHrefFor, radiusList }: CarGridPro
           })}
         </div>
       )}
-      
+
       {/* No cars message (only show when not loading) */}
       {!isLoading && filteredCars.length === 0 && (
         <div className="rounded-lg border bg-card p-4 text-center sm:p-6">
