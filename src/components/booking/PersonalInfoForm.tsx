@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,8 +11,10 @@ import { Separator } from '@/components/ui/separator'
 import { setBookingDetails } from '@/lib/slices/bookingSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/store'
 import { AlertCircle, Database, Eye, FileText, Lock, Shield, User } from 'lucide-react'
+import Image from 'next/image'
 import React from 'react'
 import { useForm, useWatch } from 'react-hook-form'
+import { useUploadImage } from '../../lib/npm-ready-stack/cloudinary'
 
 // Array of valid ID types
 const VALID_ID_TYPES = [
@@ -36,6 +39,7 @@ export interface PersonalInfoData {
   contactNumber: string
   email: string
   licenseNumber?: string
+  licenseImage?: string // Changed from File to string (Cloudinary URL)
   idType?: string
   dataConsent: boolean
 }
@@ -48,9 +52,57 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
   const selectedCar = useAppSelector(state => state.booking.selectedCar)
   const bookingDetails = useAppSelector(state => state.booking.bookingDetails)
   const dispatch = useAppDispatch()
+  const { uploadImage, deleteImage, isLoading: isUploading, error: uploadError } = useUploadImage()
   const [showConsentModal, setShowConsentModal] = React.useState(false)
   const [modalAgreed, setModalAgreed] = React.useState(false)
   const [hasScrolledToBottom, setHasScrolledToBottom] = React.useState(false)
+  const [licenseImagePreview, setLicenseImagePreview] = React.useState<string | null>(null)
+
+  /**
+   * Handle image removal from Cloudinary and local state
+   */
+  const handleImageRemove = async () => {
+    if (licenseImagePreview && licenseImagePreview.startsWith('https://res.cloudinary.com')) {
+      try {
+        // Delete from Cloudinary if it's a Cloudinary URL
+        await deleteImage(licenseImagePreview);
+      } catch (error) {
+        console.error('Failed to delete image from Cloudinary:', error);
+        // Continue with local removal even if Cloudinary deletion fails
+      }
+    }
+
+    // Clear local state and form
+    setLicenseImagePreview(null);
+    setValue('licenseImage', undefined as any);
+    const input = document.getElementById('licenseImage') as HTMLInputElement;
+    if (input) input.value = '';
+  };
+  const handleImageUpload = async (file: File) => {
+    try {
+      // Show local preview immediately
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setLicenseImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+
+      // Upload to Cloudinary
+      const uploadedUrl = await uploadImage(file)
+
+      // Update preview with Cloudinary URL
+      setLicenseImagePreview(uploadedUrl)
+
+      // Update form value with the Cloudinary URL
+      setValue('licenseImage', uploadedUrl)
+
+      console.log('Image uploaded successfully:', uploadedUrl)
+    } catch (error) {
+      console.error('Upload failed:', error)
+      // Reset preview on error
+      setLicenseImagePreview(null)
+    }
+  }
 
 
 
@@ -82,6 +134,7 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
       contactNumber: bookingDetails.contactNumber ?? '',
       email: bookingDetails.email ?? '',
       licenseNumber: bookingDetails.licenseNumber ?? '',
+      licenseImage: undefined,
       idType: bookingDetails.idType ?? '',
       dataConsent: bookingDetails.dataConsent ?? false
     }
@@ -457,8 +510,105 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                     Please provide your valid License number for verification
                   </p>
                 </div>
+
+                {/* Driver's License Image Upload */}
+                <div className="space-y-2" data-testid="license-image-field">
+                  <Label htmlFor="licenseImage" className="font-medium">
+                    Upload DL Image <span className="text-red-500">*</span>
+                  </Label>
+
+                  {licenseImagePreview ? (
+                    // Image Preview
+                    <div className="relative border-2 border-primary rounded-lg p-2">
+                      <div className="relative w-full h-48 bg-gray-50 rounded-md overflow-hidden">
+                        <Image
+                          src={licenseImagePreview}
+                          alt="Driver's License Preview"
+                          fill
+                          className="object-contain"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        // Remove unoptimized for Cloudinary URLs to allow Next.js optimization
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleImageRemove}
+                        disabled={isUploading}
+                        className="mt-2 w-full"
+                      >
+                        Remove Image
+                      </Button>
+                    </div>
+                  ) : (
+                    // Upload Area
+                    <div className="border-2 border-dashed border-primary/30 rounded-lg p-4 text-center hover:border-primary/50 transition-colors">
+                      <input
+                        id="licenseImage"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        data-testid="license-image-input"
+                        {...register('licenseImage', {
+                          required: 'Driver\'s license image is required for self-drive rental',
+                          onChange: async (e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              await handleImageUpload(file)
+                            }
+                          }
+                        })}
+                      />
+                      <div className="flex flex-col items-center gap-2">
+                        {isUploading ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                            <p className="text-sm text-primary">Uploading...</p>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                              <FileText className="h-6 w-6 text-primary" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">Upload Driver&apos;s License Image</p>
+                              <p className="text-xs text-gray-500">PNG, JPG up to 10MB</p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => document.getElementById('licenseImage')?.click()}
+                              className="mt-2"
+                              disabled={isUploading}
+                            >
+                              Choose File
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                      {uploadError && (
+                        <p className="text-xs text-red-500 text-center mt-2">
+                          Upload failed: {uploadError}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {errors.licenseImage && (
+                    <p className="text-xs text-red-500 flex items-center gap-1" data-testid="license-image-error">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.licenseImage.message}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500" data-testid="license-image-help-text">
+                    Upload a clear photo of your driver&apos;s license for verification
+                  </p>
+                </div>
               </>
             )}
+
           </form>
 
           {/* Data Consent Checkbox */}

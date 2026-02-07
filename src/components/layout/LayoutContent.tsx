@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useInitCloudenary } from "../../lib/npm-ready-stack/cloudinary";
 import { closeLocationModal } from "../../lib/slices/uiSlice";
 import { HeaderWithLocation } from "./HeaderWithLocation";
 
@@ -26,6 +27,7 @@ interface LayoutContentProps {
 export function LayoutContent({ children }: LayoutContentProps) {
   const dispatch = useDispatch();
   const { setConfig } = useInitConfig();
+  const { init: initializedCloudinary } = useInitCloudenary()
   const { checkLocationOnce } = useLocationPermission();
   const {
     handleLocationSelect,
@@ -35,6 +37,27 @@ export function LayoutContent({ children }: LayoutContentProps) {
     handleSelectGarage,
   } = useHomeContent();
   const pathname = usePathname();
+
+  /**
+   * Initialize Cloudinary configuration
+   * Supports both signed and unsigned uploads
+   */
+  useEffect(() => {
+    if (
+      process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME &&
+      process.env.NEXT_PUBLIC_CLOUDINARY_PRESET
+    ) {
+      initializedCloudinary({
+        cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+        preset: process.env.NEXT_PUBLIC_CLOUDINARY_PRESET,
+        useSigned: true, // Use signed uploads with API route
+      })
+    } else {
+      console.warn('Cloudinary environment variables not set');
+      console.warn('Required: NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME, NEXT_PUBLIC_CLOUDINARY_PRESET');
+      console.warn('For signed uploads, also ensure: CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET (server-side)');
+    }
+  }, [initializedCloudinary]);
 
   // Set Mapbox configuration on component mount
   useEffect(() => {
@@ -95,7 +118,6 @@ export function LayoutContent({ children }: LayoutContentProps) {
 
   return (
     <>
-
       <GlobalLoaderOverlay />
       <div
         className={cn(
