@@ -13,6 +13,7 @@ interface DesktopTimeSelectionProps {
   };
   generateTimeOptions: () => { displayTime: string; value: string; hour: number }[];
   isTimeInPast: (time: string) => boolean;
+  isEndTimeInPast: (time: string) => boolean;
   isEndTimeDisabled: (
     endTime: string,
     startTime: string | undefined,
@@ -33,6 +34,7 @@ export function DesktopTimeSelection({
   bookingDetails,
   generateTimeOptions,
   isTimeInPast,
+  isEndTimeInPast,
   isEndTimeDisabled,
   isStartTimeDisabled,
   formatTimeDisplay,
@@ -71,6 +73,7 @@ export function DesktopTimeSelection({
           onTimeSelect={onEndTimeChange}
           timeOptions={generateTimeOptions()}
           isTimeInPast={isTimeInPast}
+          isEndTimeInPast={isEndTimeInPast}
           isEndTimeDisabled={isEndTimeDisabled}
           startTime={bookingDetails.startTime}
           startDate={bookingDetails.startDate}

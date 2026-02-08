@@ -8,8 +8,9 @@ import { setSelectedCar } from "@/lib/slices/bookingSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/store";
 import { calculateDistanceToCar, formatDistance } from "@/utils/distance";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useGeolocation } from "../lib/npm-ready-stack/locationPicker";
+import { useToast } from "@/components/providers/ToastProvider";
 import {
   useGetCurrentLocation,
   useReverseLocation,
@@ -26,6 +27,8 @@ export function useCarDetailsPage() {
   const { getLocationNameFromPoint } = useReverseLocation();
   const { position: currentData, getCurrentLocation } = useGetCurrentLocation();
   const dispatch = useAppDispatch();
+  const { showToast } = useToast();
+  const previousIsOnHold = useRef<boolean | undefined>(undefined);
 
   const { position, loading } = useGeolocation();
   const id =
@@ -63,6 +66,29 @@ export function useCarDetailsPage() {
 
   const notesText =
     "When you continue to booking, this unit will be placed on hold for 2 minutes to avoid double bookings. If you don't complete the booking within 2 minutes, the unit will become available again for other users.";
+
+  // Listen for hold status changes for this specific car
+  useEffect(() => {
+    if (!cars) return;
+    
+    // Only show toast when isOnHold actually changes
+    if (previousIsOnHold.current !== cars.isOnHold) {
+      if (cars.isOnHold) {
+        showToast(
+          `${cars.name} is currently on hold: ${cars.holdReason || 'Someone is processing a booking for this car'}`,
+          'info'
+        );
+      } else {
+        showToast(
+          `${cars.name} is now available for booking!`,
+          'success'
+        );
+      }
+      
+      // Update previous state
+      previousIsOnHold.current = cars.isOnHold;
+    }
+  }, [cars, cars?.isOnHold, cars?.name, cars?.holdReason, showToast]);
 
   // Fetch address when car data is available
   useEffect(() => {

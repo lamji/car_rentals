@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useProceedPaymet } from '@/lib/api/useProceedPaymet'
 import { formatCurrency, PaymentSummary } from '@/lib/paymentSummaryHelper'
-import { hideLoader, showLoader } from '@/lib/slices/globalLoaderSlice'
+// import { hideLoader, showLoader } from '@/lib/slices/globalLoaderSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/store'
 import { CreditCard, Shield, Smartphone } from 'lucide-react'
 import React from 'react'
@@ -37,31 +37,36 @@ export function PaymentModal({ isOpen, onClose, paymentSummary, onPaymentComplet
     //   dispatch(hideLoader())
     //   setIsProcessing(false)
     // }
-    const paylod = {
+    const payload = {
       bookingDetails: state.bookingDetails,
       selectedCar: activeCars,
       userId: uuidv4(),
-      bookingId: `BK-${Date.now().toString(36).toUpperCase()}`
+      bookingId: `BK-${Date.now().toString(36).toUpperCase()}`,
+      paymentStatus:"pending"
     }
-    const paymongoPaylod = {
-      // PayMongo Payment Intent required fields (from CreatePaymentIntentRequest)
-      amount: Math.round(state.bookingDetails.totalPrice * 100), // Amount in cents
-      currency: 'PHP',
-      payment_method_allowed: ['gcash'], // Changed from payment_method_types
-      description: `Car rental - ${activeCars.name} (${state.bookingDetails.startDate} to ${state.bookingDetails.endDate})`,
-      
-      // Optional fields
-      statement_descriptor: 'CAR RENTAL',
-      capture_type: 'automatic', // Capture payment immediately
-      
-      // Metadata for tracking and reconciliation
+    const paymongoPayload = {
+      "amount": 200,
+      "description": "Car Rental Payment",
+      "returnUrl": "https://car-rentals-seven-gamma.vercel.app/",
+      "billing": {
+        "name": "Jick test",
+        "email": "lampagojick5@gmail.com",
+        "phone": "09206502183",
+        "address": {
+          "line1": "line 1",
+          "city": "city",
+          "state": "state",
+          "postal_code": "6006",
+          "country": "PH"
+        }
+      },
       metadata: {
-       paylod
+       payload
       }
     }
     console.log("testDAtaState", {
-     paylod,
-     paymongoPaylod
+     payload,
+     paymongoPayload
     })
   }
 

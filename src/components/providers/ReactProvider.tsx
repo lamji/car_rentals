@@ -6,7 +6,7 @@ import React, { useEffect, useState } from "react";
 const queryClient = {
   queries: {
     // Default settings for react-query
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0, // Immediate refetching for real-time updates
     gcTime: 30 * 60 * 1000, // 30 minutes
     retry: 1, // Retry failed queries once
   },

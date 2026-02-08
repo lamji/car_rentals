@@ -39,6 +39,7 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
     setIsEndDatePickerOpen,
     handleDataChange,
     isTimeInPast,
+    isEndTimeInPast,
     calculateRentalDuration,
     isMinimumDurationMet,
     handleLocationSelect,
@@ -82,6 +83,7 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
           bookingDetails={bookingDetails}
           generateTimeOptions={generateTimeOptions}
           isTimeInPast={isTimeInPast}
+          isEndTimeInPast={isEndTimeInPast}
           isEndTimeDisabled={isEndTimeDisabled}
           isStartTimeDisabled={isStartTimeDisabled}
           formatTimeDisplay={formatTimeDisplay}
@@ -94,6 +96,7 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
           bookingDetails={bookingDetails}
           generateTimeOptions={generateTimeOptions}
           isTimeInPast={isTimeInPast}
+          isEndTimeInPast={isEndTimeInPast}
           isEndTimeDisabled={isEndTimeDisabled}
           isStartTimeDisabled={isStartTimeDisabled}
           formatTimeDisplay={formatTimeDisplay}

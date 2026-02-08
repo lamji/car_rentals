@@ -58,17 +58,20 @@ export function CarGrid({ filteredCars, detailsHrefFor, radiusList }: CarGridPro
         </div>
       ) : (
         <div className="grid gap-2 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
-          {filteredCars.map((car) => {
+          {filteredCars.map((car:any) => {
             const futureUnavailableDates = getFutureUnavailableDates(car.availability.unavailableDates);
             const today = new Date().toISOString().split('T')[0];
             const isTodayUnavailable = futureUnavailableDates.includes(today);
             const isAvailable = !isTodayUnavailable;
+            const isOnHold = car.isOnHold;
+            console.log('test:is available', {isAvailable, car, isOnHold});
 
             return (
               <CarAvailabilityCard
                 key={car.id}
                 car={car}
                 isAvailable={isAvailable}
+                isOnHold={isOnHold}
                 href={detailsHrefFor(car.id)}
               />
             );

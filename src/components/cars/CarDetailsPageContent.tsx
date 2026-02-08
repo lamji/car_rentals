@@ -6,6 +6,7 @@ import Link from "next/link";
 import { MapLinkModal } from "@/components/ui/MapLinkModal";
 import { Button } from "@/components/ui/button";
 import { useCarDetailsPage } from "@/hooks/useCarDetailsPage";
+import { formatCurrency } from "@/lib/currency";
 import { MapBoxService } from "@/lib/npm-ready-stack/mapboxService/ui";
 import { useAppSelector } from "@/lib/store";
 import { Car, Copy, CreditCard, MapPin, Navigation, Phone, Settings, Users } from "lucide-react";
@@ -19,12 +20,12 @@ export function CarDetailsPageContent() {
     car,
     goToBooking,
     setShowMapModal,
-    notesText,
     pointA,
     pointB,
     address,
     mapBoxDistanceText
   } = useCarDetailsPage();
+
 
   // Calculate availability using the validation utility
   const isAvailableToday = useMemo(() => {
@@ -78,10 +79,19 @@ export function CarDetailsPageContent() {
             </h1>
 
           </div>
-          <div className={`p-3 mt-4 text-sm font-medium px-3 py-1 rounded-lg text-center w-1/3 border border-green-300 mb-2 ${isAvailableToday
-            ? 'bg-green-100/50 text-green-600'
-            : 'bg-red-100/50 text-red-600'}`}>
-            {isAvailableToday ? 'Available Now' : 'Currently Unavailable'}
+          <div className={`p-3 mt-4 text-sm font-medium px-3 py-1 rounded-lg text-center w-1/3 border mb-2 ${
+            car.isOnHold 
+              ? 'bg-yellow-100/50 text-yellow-600 border-yellow-300'
+              : isAvailableToday
+                ? 'bg-green-100/50 text-green-600 border-green-300'
+                : 'bg-red-100/50 text-red-600 border-red-300'
+          }`}>
+            {car.isOnHold 
+              ? `On Hold: ${car.holdReason || 'No reason provided'}`
+              : isAvailableToday 
+                ? 'Available Now' 
+                : 'Currently Unavailable'
+            }
           </div>
           <div className="text-gray-600 text-sm flex flex-row gap-2 items-center">
             <MapPin className="h-4 w-4 text-primary" />
@@ -96,7 +106,7 @@ export function CarDetailsPageContent() {
               </div>
               {!car.selfDrive && (
                 <div className="text-[10px] text-gray-600 font-medium">
-                  + ₱500/day fees
+                  + {formatCurrency(car.driverCharge)}/day fees
                 </div>
               )}
             </div>
@@ -167,7 +177,6 @@ export function CarDetailsPageContent() {
               <div className="flex-1">
                 <h4 className="font-semibold text-amber-900 mb-2">Booking Information</h4>
                 <ul className="text-sm text-amber-800 space-y-1">
-                  <li>{notesText}</li>
                   {car.selfDrive && (
                     <>
                       <li>• Self-drive requires valid driver&apos;s license verification</li>
@@ -179,11 +188,12 @@ export function CarDetailsPageContent() {
             </div>
           </div>
           <Button
+            disabled={car.isOnHold}
             onClick={goToBooking}
             className="fixed bottom-8 right-8 bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 z-50"
           >
             <CreditCard className="h-5 w-5" />
-            Book Now
+           {car.isOnHold ? 'Car is on hold' : 'Book Now'}
           </Button>
         </div>
 
@@ -198,6 +208,8 @@ export function CarDetailsPageContent() {
           locationName={`${car.name} Garage`}
         />
       )}
+
+      {/* simple a*/}
     </div>
   );
 }

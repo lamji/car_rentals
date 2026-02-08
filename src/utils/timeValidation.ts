@@ -79,6 +79,31 @@ export function isStartTimeDisabled(
 }
 
 /**
+ * Check if a time is in the past for a specific date
+ * @param time - Time in "HH:00" format
+ * @param date - Date in "YYYY-MM-DD" format
+ * @returns boolean - true if time is in the past for the given date
+ */
+export function isTimeInPastForDate(time: string, date: string): boolean {
+  if (!date) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const selectedDate = new Date(date);
+  selectedDate.setHours(0, 0, 0, 0);
+
+  // Only check for today's date
+  if (today.getTime() !== selectedDate.getTime()) return false;
+
+  const now = new Date();
+  const [hours] = time.split(':').map(Number);
+  const selectedTime = new Date();
+  selectedTime.setHours(hours, 0, 0, 0);
+
+  return selectedTime.getTime() < now.getTime();
+}
+
+/**
  * Get minimum end date based on 12-hour minimum rental duration
  * @param startDate - The selected start date (format: "YYYY-MM-DD")
  * @returns Date | undefined - Minimum end date or undefined if no start date

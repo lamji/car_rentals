@@ -13,12 +13,15 @@ import { setCars } from "../../lib/slices/data";
 type Props = {
   car: Car;
   isAvailable: boolean;
+  isOnHold: boolean;
   href: string;
 };
 
-export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
+export function CarAvailabilityCard({ car, isAvailable, isOnHold, href }: Props) {
   const dispatch = useDispatch();
   const router = useRouter();
+
+  console.log("test:car", car);
 
   return (
     <Card className="transition-shadow hover:shadow-lg h-full flex flex-col gap-2 border shadow-sm bg-gray-50 sm:bg-background">
@@ -37,10 +40,10 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
           {/* Availability badge on top of image */}
           <div className="absolute top-2 right-2">
             <Badge
-              variant={isAvailable ? "default" : "secondary"}
-              className={isAvailable ? "bg-green-500 hover:bg-green-600" : ""}
+              variant={isOnHold ? "destructive" : isAvailable ? "default" : "secondary"}
+              className={isOnHold ? "bg-red-500 hover:bg-red-600" : isAvailable ? "bg-green-500 hover:bg-green-600" : ""}
             >
-              {isAvailable ? "Available" : "Unavailable"}
+              {isOnHold ? "ON HOLD" : isAvailable ? "Available" : "Unavailable"}
             </Badge>
           </div>
         </div>
@@ -96,7 +99,7 @@ export function CarAvailabilityCard({ car, isAvailable, href }: Props) {
       <CardFooter className="p-2 pt-0 sm:p-4 sm:pt-0">
         <Button
           className="w-full text-xs sm:text-sm"
-          disabled={!isAvailable}
+          disabled={!isAvailable || isOnHold}
           onClick={() => {
             dispatch(setCars(car))
             router.push(href)

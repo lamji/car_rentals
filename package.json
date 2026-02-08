@@ -47,6 +47,7 @@
     "react-hook-form": "^7.71.1",
     "react-redux": "^9.2.0",
     "redux-persist": "^6.0.0",
+    "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.4.0",
     "uuid": "^13.0.0",
     "webtonative": "^1.0.89"

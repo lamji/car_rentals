@@ -16,6 +16,8 @@ interface DataState {
   nearestGarages:any;
   radius: number;
   loading: boolean;
+  allCars:any,
+  recalCulate: boolean
 }
 
 const initialState: DataState = {
@@ -23,6 +25,8 @@ const initialState: DataState = {
   nearestGarages: [],
   radius: 25,
   loading: false,
+  allCars:[],
+  recalCulate: false
 };
 
 const dataSlice = createSlice({
@@ -44,9 +48,15 @@ const dataSlice = createSlice({
     setLoadingState: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
+    setAllCars:(state, action: PayloadAction<any>) => {
+      state.allCars = action.payload;
+    },
+    setRecalCulate:(state) => {
+      state.recalCulate = !state.recalCulate;
+    }
   },
 });
 
-export const { setCars, setNearestGarage, clearNearestGarage, setRadius, setLoadingState } = dataSlice.actions;
+export const { setCars, setNearestGarage, clearNearestGarage, setRadius, setLoadingState, setAllCars, setRecalCulate } = dataSlice.actions;
 
 export default dataSlice.reducer;

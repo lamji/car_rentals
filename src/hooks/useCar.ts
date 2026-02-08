@@ -1,11 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useMemo } from "react";
-import { CARS } from "@/lib/data/cars";
+import { useCarsFromRedux } from "@/lib/data/cars";
 
 export function useCar(id: string) {
+  const carsFromRedux = useCarsFromRedux();
+  
   return useMemo(() => {
-    const car = CARS.find((c) => c.id === id) ?? null;
+    const car = carsFromRedux.find((c:any) => c.id === id) ?? null;
     
     if (!car) return null;
     
@@ -22,5 +25,5 @@ export function useCar(id: string) {
         isAvailableToday: isActuallyAvailableToday
       }
     };
-  }, [id]);
+  }, [id, carsFromRedux]);
 }

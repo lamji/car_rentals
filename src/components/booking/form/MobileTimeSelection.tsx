@@ -13,6 +13,7 @@ interface MobileTimeSelectionProps {
   };
   generateTimeOptions: () => { displayTime: string; value: string }[];
   isTimeInPast: (time: string) => boolean;
+  isEndTimeInPast: (time: string) => boolean;
   isEndTimeDisabled: (
     endTime: string,
     startTime: string | undefined,
@@ -33,6 +34,7 @@ export function MobileTimeSelection({
   bookingDetails,
   generateTimeOptions,
   isTimeInPast,
+  isEndTimeInPast,
   isEndTimeDisabled,
   isStartTimeDisabled,
   formatTimeDisplay,
@@ -111,7 +113,7 @@ export function MobileTimeSelection({
                 bookingDetails.startTime,
                 bookingDetails.startDate,
                 bookingDetails.endDate
-              );
+              ) || isEndTimeInPast(value);
 
               return (
                 <DropdownMenu.DropdownMenuItem
@@ -126,6 +128,12 @@ export function MobileTimeSelection({
             })}
           </DropdownMenu.DropdownMenuContent>
         </DropdownMenu.DropdownMenu>
+        {bookingDetails.endDate && bookingDetails.endTime && isEndTimeInPast(bookingDetails.endTime) && (
+          <div className="text-red-600 text-xs mt-1 bg-red-50 p-2 rounded border border-red-200 flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+            <span>Invalid time selection: You selected end date <strong>{format(new Date(bookingDetails.endDate), 'MMM dd, yyyy')}</strong> at <strong>{formatTimeDisplay(bookingDetails.endTime)}</strong>, but this time is in the past. Please select a future time for today&apos;s booking.</span>
+          </div>
+        )}
       </div>
     </div>
   );

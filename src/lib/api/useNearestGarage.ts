@@ -1,7 +1,9 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react'
 import { useAppSelector, useAppDispatch } from '@/lib/store'
 import { showLoader, hideLoader } from '@/lib/slices/globalLoaderSlice'
-import { CARS } from '@/lib/data/cars'
+import { useCarsFromRedux } from '@/lib/data/cars'
 
 export type SearchNearestGarageArgs = {
   address: string
@@ -37,20 +39,11 @@ export function useNearestGarage() {
   const selectedCar = useAppSelector(state => state.booking.selectedCar)
   const bookingDetails = useAppSelector(state => state.booking.bookingDetails)
   const dispatch = useAppDispatch()
+  const carsFromRedux = useCarsFromRedux()
 
   const searchNearestGarage = React.useCallback(async (args: SearchNearestGarageArgs): Promise<SearchNearestGarageResponse> => {
     const { address, timeoutMs = 1500, progressIntervalMs = 300 } = args
 
-    console.log('=== SEARCH NEAREST GARAGE (SIMULATED) ===')
-    console.log('Search Address:', address)
-    console.log('Current Selected Car:', selectedCar?.name || 'No car selected')
-    console.log('User Location:', bookingDetails.location || 'No location set')
-    console.log('Search Parameters:', {
-      address,
-      timeoutMs,
-      progressIntervalMs,
-      timestamp: new Date().toISOString()
-    })
 
     // Show global loader
     dispatch(showLoader('Searching for nearest garages...'))
@@ -83,7 +76,7 @@ export function useNearestGarage() {
 
     // Create individual car listings with garage info
     const createCarListings = (): NearestGarageResult[] => {
-      return CARS.map((car, index) => {
+      return carsFromRedux.map((car: any, index: number) => {
         // Generate mock distance based on index (in real app, this would be calculated from user location to garage)
         const distance = 2.5 + (index * 1.2) + Math.random() * 2
         
@@ -123,7 +116,7 @@ export function useNearestGarage() {
 
     console.log('=== SEARCH NEAREST GARAGE COMPLETE ===')
     return response
-  }, [selectedCar, bookingDetails, dispatch])
+  }, [selectedCar, bookingDetails, dispatch, carsFromRedux])
 
   return { searchNearestGarage }
 }

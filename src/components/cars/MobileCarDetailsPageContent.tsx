@@ -15,7 +15,6 @@ import { useAppSelector } from "@/lib/store";
 import { getFutureUnavailableDates } from "@/utils/validateBlockedDates";
 import { Calendar, Copy, MoveLeft, Phone, User } from "lucide-react";
 
-
 export function MobileCarDetailsPageContent() {
   const router = useRouter();
   const [showToast, setShowToast] = useState(false);
@@ -28,18 +27,19 @@ export function MobileCarDetailsPageContent() {
     goToBooking,
     selectedImageIndex,
     selectImage,
-    notesText,
     pointA,
     pointB,
     address,
-    mapBoxDistanceText
+    mapBoxDistanceText,
   } = useCarDetailsPage();
 
   // Calculate availability using the validation utility
   const isAvailableToday = useMemo(() => {
     if (!car?.availability?.unavailableDates) return true;
-    const futureUnavailableDates = getFutureUnavailableDates(car.availability.unavailableDates);
-    const today = new Date().toISOString().split('T')[0];
+    const futureUnavailableDates = getFutureUnavailableDates(
+      car.availability.unavailableDates,
+    );
+    const today = new Date().toISOString().split("T")[0];
     return !futureUnavailableDates.includes(today);
   }, [car?.availability?.unavailableDates]);
 
@@ -122,24 +122,27 @@ export function MobileCarDetailsPageContent() {
             <div className="flex gap-3">
               {/* Left Section - Small Thumbnails */}
               <div className="flex flex-col gap-2 w-12">
-                {car.imageUrls.slice(0, 3).map((imageUrl: string, index: number) => (
-                  <button
-                    key={index}
-                    onClick={() => selectImage(index)}
-                    className={`relative w-12 h-12 rounded-lg border-2 transition-all hover:scale-105 ${selectedImageIndex === index
-                      ? "border-blue-600 shadow-lg"
-                      : "border-gray-200 opacity-70 hover:opacity-100"
+                {car.imageUrls
+                  .slice(0, 3)
+                  .map((imageUrl: string, index: number) => (
+                    <button
+                      key={index}
+                      onClick={() => selectImage(index)}
+                      className={`relative w-12 h-12 rounded-lg border-2 transition-all hover:scale-105 ${
+                        selectedImageIndex === index
+                          ? "border-blue-600 shadow-lg"
+                          : "border-gray-200 opacity-70 hover:opacity-100"
                       }`}
-                  >
-                    <Image
-                      src={imageUrl}
-                      alt={`${car.name} thumbnail ${index + 1}`}
-                      fill
-                      className="object-contain rounded-lg bg-gray-50"
-                      sizes="48px"
-                    />
-                  </button>
-                ))}
+                    >
+                      <Image
+                        src={imageUrl}
+                        alt={`${car.name} thumbnail ${index + 1}`}
+                        fill
+                        className="object-contain rounded-lg bg-gray-50"
+                        sizes="48px"
+                      />
+                    </button>
+                  ))}
               </div>
 
               {/* Right Section - Main Car Image */}
@@ -154,20 +157,33 @@ export function MobileCarDetailsPageContent() {
                 {/* Availability Badge - Floating on top */}
                 <div className="absolute top-2 right-2">
                   <div
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${isAvailableToday
-                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                      : "bg-red-50 text-red-700 border border-red-200"
-                      }`}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${
+                      car.isOnHold
+                        ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
+                        : isAvailableToday
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : "bg-red-50 text-red-700 border border-red-200"
+                    }`}
                   >
                     <div
-                      className={`h-1.5 w-1.5 rounded-full ${isAvailableToday
-                        ? "bg-emerald-500"
-                        : "bg-red-500"
-                        }`}
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        car.isOnHold
+                          ? "bg-yellow-500"
+                          : isAvailableToday
+                            ? "bg-emerald-500"
+                            : "bg-red-500"
+                      }`}
                     ></div>
-                    {isAvailableToday
-                      ? "Available"
-                      : "Unavailable"}
+                    {car.isOnHold
+                      ? `On Hold`
+                      : isAvailableToday
+                        ? "Available"
+                        : "Unavailable"}
+                    {car.isOnHold && (
+                      <div className="absolute top-full mt-1 right-0 text-xs text-gray-400 whitespace-nowrap">
+                        {car.holdReason || "Booking in progress"}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -266,15 +282,17 @@ export function MobileCarDetailsPageContent() {
           {/* Status Badge */}
           <div className="absolute top-2 right-2">
             <div
-              className={`h-2 w-2 rounded-full ${car?.selfDrive ? "bg-green-500" : "bg-red-500"
-                }`}
+              className={`h-2 w-2 rounded-full ${
+                car?.selfDrive ? "bg-green-500" : "bg-red-500"
+              }`}
             ></div>
           </div>
 
           <div className="shrink-0">
             <svg
-              className={`h-8 w-8 ${car?.selfDrive ? "text-green-600" : "text-red-600"
-                }`}
+              className={`h-8 w-8 ${
+                car?.selfDrive ? "text-green-600" : "text-red-600"
+              }`}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -305,15 +323,21 @@ export function MobileCarDetailsPageContent() {
             {car?.selfDrive && (
               <div className="bg-blue-900/30 border border-blue-700/50 rounded-md p-2 mt-2">
                 <div className="text-blue-300 text-xs">
-                  <div className="font-semibold text-blue-200 mb-1">Requirements:</div>
-                  • Valid driver&apos;s license ID required<br />
-                  • Screenshot of LTO portal verification needed
+                  <div className="font-semibold text-blue-200 mb-1">
+                    Requirements:
+                  </div>
+                  • Valid driver&apos;s license ID required
+                  <br />• Screenshot of LTO portal verification needed
                 </div>
               </div>
             )}
             {!car?.selfDrive && (
               <div className="text-amber-400 text-xs font-medium mt-1">
-                +{formatCurrency(Number(process.env.NEXT_PUBLIC_DRIVER_FEE) || 50)} driver fee per day
+                +
+                {formatCurrency(
+                  Number(process.env.NEXT_PUBLIC_DRIVER_FEE) || 50,
+                )}{" "}
+                driver fee per day
               </div>
             )}
           </div>
@@ -391,40 +415,17 @@ export function MobileCarDetailsPageContent() {
             </div>
           </div>
         </div>
-
-        {/* Booking Notes */}
-        <div className="mb-4">
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <div className="flex items-start gap-2">
-              <svg
-                className="h-4 w-4 text-amber-600 mt-0.5 shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <p className="text-xs text-amber-800 leading-relaxed">
-                {notesText}
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Floating Continue Booking Button */}
       <div className="fixed bottom-2 left-4 right-4 z-50">
         <Button
+          disabled={car?.isOnHold}
           onClick={goToBooking}
           size="lg"
           className="w-full h-14 text-base font-semibold bg-primary hover:bg-primary/80 text-white shadow-lg"
         >
-          Continue to Booking
+          {car?.isOnHold ? "Car is on hold" : "Continue to Booking"}
         </Button>
       </div>
 

@@ -1,3 +1,5 @@
+
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -6,6 +8,9 @@ import { LayoutContent } from "@/components/layout/LayoutContent";
 import ReactProvider from "@/components/providers/ReactProvider";
 import ReduxProvider from "@/components/providers/ReduxProvider";
 import { MapboxTestWrapper } from "@/components/wrappers/MapboxTestWrapper";
+import { SocketProvider } from "@/components/providers/SocketProvider";
+import { ToastProvider } from "@/components/providers/ToastProvider";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,6 +57,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+
+  
   return (
     <html lang="en">
       <head>
@@ -62,8 +70,12 @@ export default function RootLayout({
       >
         <ReactProvider>
           <ReduxProvider>
-            <LayoutContent>{children}</LayoutContent>
-            <MapboxTestWrapper />
+            <ToastProvider>
+              <SocketProvider>
+                <LayoutContent>{children}</LayoutContent>
+                <MapboxTestWrapper />
+              </SocketProvider>
+            </ToastProvider>
           </ReduxProvider>
         </ReactProvider>
       </body>

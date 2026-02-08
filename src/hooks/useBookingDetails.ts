@@ -3,7 +3,7 @@ import { BookingDetails } from '@/lib/slices/bookingSlice';
 import { useAppSelector } from '@/lib/store';
 import { useCallback, useState } from 'react';
 import { formatDateToYYYYMMDD } from '../utils/dateHelpers';
-import { formatTimeDisplay, generateTimeOptions, getEndDateMinDate, isEndTimeDisabled, isStartTimeDisabled } from '../utils/timeValidation';
+import { formatTimeDisplay, generateTimeOptions, getEndDateMinDate, isEndTimeDisabled, isStartTimeDisabled, isTimeInPastForDate } from '../utils/timeValidation';
 
 /**
  * Custom hook for managing booking details logic and validation
@@ -46,6 +46,12 @@ export function useBookingDetails(onDataChange?: (data: Partial<BookingDetails>)
 
     return selectedTime.getTime() < now.getTime();
   }, [bookingDetails.startDate]);
+
+  // Helper function to check if a time is in the past for the end date
+  const isEndTimeInPast = useCallback((time: string) => {
+    if (!bookingDetails.endDate) return false;
+    return isTimeInPastForDate(time, bookingDetails.endDate);
+  }, [bookingDetails.endDate]);
 
   // Helper function to calculate rental duration in hours
   const calculateRentalDuration = useCallback(() => {
@@ -111,6 +117,7 @@ export function useBookingDetails(onDataChange?: (data: Partial<BookingDetails>)
     // Functions
     handleDataChange,
     isTimeInPast,
+    isEndTimeInPast,
     calculateRentalDuration,
     isMinimumDurationMet,
     handleLocationSelect,

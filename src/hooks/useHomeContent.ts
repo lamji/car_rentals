@@ -6,7 +6,7 @@ import {
     SearchNearestGarageResponse,
     useNearestGarage,
 } from "@/lib/api/useNearestGarage";
-import { CARS } from "@/lib/data/cars";
+import { useCarsFromRedux } from "@/lib/data/cars";
 import type { LocationData } from "@/lib/npm-ready-stack/locationPicker/types";
 import useGetCurrentLocation from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useGetCurrentLocation";
 import useNearestGarageHook from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useNearestGarage";
@@ -34,6 +34,7 @@ export function useHomeContent() {
   const dispatch = useAppDispatch();
   const stateMapBox = useAppSelector((state) => state.mapBox);
   const stateData = useAppSelector((state) => state.data);
+  const carsFromRedux = useCarsFromRedux();
   
   // Location hook for retry functionality (same as LocationModal)
   const { getCurrentLocation: getMapboxCurrentLocation, loading: mapBoxLoading } = useGetCurrentLocation();
@@ -77,7 +78,7 @@ export function useHomeContent() {
     };
   }, [mapBoxLoading]);
 
-  console.log("Hero - stateMapBox:", stateMapBox);
+
 
   const handleLocationSelect = useCallback(
     async (locationString: string, locationData?: LocationData) => {
@@ -110,10 +111,10 @@ export function useHomeContent() {
           console.log("debug-location: Using coordinates from LocationModal for nearest garage search", { locationString, coordinates });
           
           // Debug: Check car data and coordinates
-          const carDataToUse = (stateData.cars && stateData.cars.length > 0) ? stateData.cars : CARS;
+          const carDataToUse = (stateData.cars && stateData.cars.length > 0) ? stateData.cars : carsFromRedux;
           console.log("debug-location: Car data being used", { 
             stateDataCars: stateData.cars?.length || 0, 
-            fallbackCars: CARS.length,
+            fallbackCars: carsFromRedux.length,
             totalCars: carDataToUse.length,
             coordinates,
             radius: 25
@@ -170,7 +171,7 @@ export function useHomeContent() {
         console.error("Error searching nearest garage:", error);
       }
     },
-    [setState, stateData.cars, getNearestGarage, dispatch, getLocationName],
+    [setState, stateData.cars, getNearestGarage, dispatch, getLocationName, carsFromRedux],
   );
 
   const handleClearLocation = useCallback(() => {
@@ -274,15 +275,18 @@ export function useHomeContent() {
     "all",
   );
 
-  const filteredCars = useMemo(() => {
-    // Extract car data from nearest garages or use empty array as fallback
-    const cars = stateData.nearestGarages.length > 0 
-      ? stateData.nearestGarages.map((garage: any) => garage.carData)
-      : (Array.isArray(stateData.cars) ? stateData.cars : (stateData.cars && stateData.cars.id ? [stateData.cars] : []));
-    
-    if (selectedCategory === "all") return cars;
-    return cars.filter((car: any) => car.type === selectedCategory);
-  }, [selectedCategory, stateData.cars, stateData.nearestGarages]);
+ const filteredCars = useMemo(() => {
+   // Extract car data from nearest garages or use empty array as fallback
+   const cars =
+     stateData.nearestGarages.length > 0
+       ? stateData.nearestGarages.map((garage: any) => garage.carData)
+       : stateData.allCars.map((car: any) => car)
+
+   if (selectedCategory === "all") return cars;
+   return cars.filter((car: any) => car.type === selectedCategory);
+ }, [selectedCategory, stateData.allCars, stateData.nearestGarages]);
+
+ console.log("Hero - stateMapBox:", { filteredCars, stateData });
 
   return {
     // State

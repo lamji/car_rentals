@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 
-import { CARS } from "@/lib/data/cars";
+import { useCarsFromRedux } from "@/lib/data/cars";
 import type { Car } from "@/lib/types";
 import type { CarsFilters } from "@/lib/types/booking";
 
@@ -13,10 +13,12 @@ export function useCars(params: {
   carType?: string;
   filters?: CarsFilters;
 }) {
+  const carsFromRedux = useCarsFromRedux();
+  
   return useMemo(() => {
     const { carType, filters } = params;
 
-    let cars: Car[] = [...CARS];
+    let cars: Car[] = [...carsFromRedux];
 
     // Calculate dynamic availability for all cars
     const today = new Date();
@@ -47,5 +49,5 @@ export function useCars(params: {
     }
 
     return cars;
-  }, [params]);
+  }, [params, carsFromRedux]);
 }

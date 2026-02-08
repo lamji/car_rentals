@@ -1,10 +1,8 @@
 import { formatCurrency } from '@/lib/paymentSummaryHelper'
 import { BookingDetails } from '@/lib/slices/bookingSlice'
-import { useAppSelector } from '@/lib/store'
 import { Truck } from 'lucide-react'
 import { useBookingDetails } from '../../hooks/useBookingDetails'
 import { formatDateToYYYYMMDD } from '../../utils/dateHelpers'
-import { formatTimeDisplay } from '../../utils/timeValidation'
 import { DesktopDateSelection } from './form/DesktopDateSelection'
 import { DesktopTimeSelection } from './form/DesktopTimeSelection'
 
@@ -36,6 +34,7 @@ export function RentalDetailsForm({ onDataChange, pricingDetails }: RentalDetail
     getEndDateMinDate,
     isEndTimeDisabled,
     isStartTimeDisabled,
+    isEndTimeInPast,
   } = useBookingDetails(onDataChange)
 
 
@@ -61,6 +60,7 @@ export function RentalDetailsForm({ onDataChange, pricingDetails }: RentalDetail
         bookingDetails={bookingDetails}
         generateTimeOptions={generateTimeOptions}
         isTimeInPast={isTimeInPast}
+        isEndTimeInPast={isEndTimeInPast}
         isEndTimeDisabled={isEndTimeDisabled}
         isStartTimeDisabled={isStartTimeDisabled}
         formatTimeDisplay={formatTimeDisplay}

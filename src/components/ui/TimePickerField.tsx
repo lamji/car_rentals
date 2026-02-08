@@ -28,6 +28,7 @@ interface TimePickerFieldProps {
   'data-testid'?: string
   timeOptions: TimeOption[]
   isTimeInPast: (time: string) => boolean
+  isEndTimeInPast?: (time: string) => boolean
   isEndTimeDisabled?: (endTime: string, startTime: string | undefined, startDate: string | undefined, endDate: string | undefined) => boolean
   startTime?: string
   startDate?: string
@@ -45,6 +46,7 @@ export function TimePickerField({
   'data-testid': dataTestId,
   timeOptions,
   isTimeInPast,
+  isEndTimeInPast,
   isEndTimeDisabled,
   startTime,
   startDate,
@@ -52,6 +54,8 @@ export function TimePickerField({
 }: TimePickerFieldProps) {
   const [showDropdown, setShowDropdown] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  console.log("tets:label", label)
 
   // Helper function to convert 24-hour time to 12-hour format
   const formatTime12Hour = (time24: string) => {
@@ -122,9 +126,13 @@ export function TimePickerField({
         >
           {timeOptions.map(({ displayTime, value }) => {
             const isPast = isTimeInPast(value);
+            const isEndPast = isEndTimeInPast && isEndTimeInPast(value);
             const isEndDisabled = isEndTimeDisabled && isEndTimeDisabled(value, startTime, startDate, endDate);
-            const isDisabled = isPast || isEndDisabled;
-            const disabledReason = isPast ? '(Past)' : isEndDisabled ? '(Invalid)' : '';
+            // Use different validation logic based on whether this is start time or end time picker
+            const isDisabled = label?.toLowerCase().includes('end') 
+              ? (isEndPast || isEndDisabled) 
+              : isPast;
+            const disabledReason = isPast ? '' : isEndPast ? '' : isEndDisabled ? '' : '';
             
             return (
               <SelectItem
