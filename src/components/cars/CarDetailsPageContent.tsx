@@ -11,6 +11,7 @@ import { useAppSelector } from "@/lib/store";
 import { Car, Copy, CreditCard, MapPin, Navigation, Phone, Settings, Users } from "lucide-react";
 import { useMemo } from "react";
 import { CarImages } from "./CarImages";
+import { getFutureUnavailableDates } from "@/utils/validateBlockedDates";
 
 export function CarDetailsPageContent() {
   const {
@@ -24,6 +25,14 @@ export function CarDetailsPageContent() {
     address,
     mapBoxDistanceText
   } = useCarDetailsPage();
+
+  // Calculate availability using the validation utility
+  const isAvailableToday = useMemo(() => {
+    if (!car?.availability?.unavailableDates) return true;
+    const futureUnavailableDates = getFutureUnavailableDates(car.availability.unavailableDates);
+    const today = new Date().toISOString().split('T')[0];
+    return !futureUnavailableDates.includes(today);
+  }, [car?.availability?.unavailableDates]);
 
   // Memoize map points to prevent unnecessary re-renders
   const memoPointA = useMemo(() => pointA, [pointA]);
@@ -69,10 +78,10 @@ export function CarDetailsPageContent() {
             </h1>
 
           </div>
-          <div className={`p-3 mt-4 text-sm font-medium px-3 py-1 rounded-lg text-center w-1/3 border border-green-300 mb-2 ${car.availability.isAvailableToday
+          <div className={`p-3 mt-4 text-sm font-medium px-3 py-1 rounded-lg text-center w-1/3 border border-green-300 mb-2 ${isAvailableToday
             ? 'bg-green-100/50 text-green-600'
             : 'bg-red-100/50 text-red-600'}`}>
-            {car.availability.isAvailableToday ? 'Available Now' : 'Currently Unavailable'}
+            {isAvailableToday ? 'Available Now' : 'Currently Unavailable'}
           </div>
           <div className="text-gray-600 text-sm flex flex-row gap-2 items-center">
             <MapPin className="h-4 w-4 text-primary" />

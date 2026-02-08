@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useProceedPaymet } from '@/lib/api/useProceedPaymet'
 import { formatCurrency, PaymentSummary } from '@/lib/paymentSummaryHelper'
 import { hideLoader, showLoader } from '@/lib/slices/globalLoaderSlice'
-import { useAppDispatch } from '@/lib/store'
+import { useAppDispatch, useAppSelector } from '@/lib/store'
 import { CreditCard, Shield, Smartphone } from 'lucide-react'
 import React from 'react'
+import { v4 as uuidv4 } from 'uuid'
 
 interface PaymentModalProps {
   isOpen: boolean
@@ -18,21 +19,50 @@ export function PaymentModal({ isOpen, onClose, paymentSummary, onPaymentComplet
   const dispatch = useAppDispatch()
   const { proceedPayment } = useProceedPaymet()
   const [isProcessing, setIsProcessing] = React.useState(false)
+  const state = useAppSelector((state) => state.booking)
+  const activeCars = useAppSelector((state) => state.data.cars)
+
 
   if (!isOpen) return null
 
   const handleGcashPayment = async () => {
     if (isProcessing) return
-    setIsProcessing(true)
-    dispatch(showLoader('Processing payment...'))
+    // setIsProcessing(true)
+    // dispatch(showLoader('Processing payment...'))
 
-    try {
-      await proceedPayment({ timeoutMs: 2000, progressIntervalMs: 500 })
-      onPaymentComplete()
-    } finally {
-      dispatch(hideLoader())
-      setIsProcessing(false)
+    // try {
+    //   await proceedPayment({ timeoutMs: 2000, progressInterv`alMs: 500 })
+    //   onPaymentComplete()
+    // } finally {
+    //   dispatch(hideLoader())
+    //   setIsProcessing(false)
+    // }
+    const paylod = {
+      bookingDetails: state.bookingDetails,
+      selectedCar: activeCars,
+      userId: uuidv4(),
+      bookingId: `BK-${Date.now().toString(36).toUpperCase()}`
     }
+    const paymongoPaylod = {
+      // PayMongo Payment Intent required fields (from CreatePaymentIntentRequest)
+      amount: Math.round(state.bookingDetails.totalPrice * 100), // Amount in cents
+      currency: 'PHP',
+      payment_method_allowed: ['gcash'], // Changed from payment_method_types
+      description: `Car rental - ${activeCars.name} (${state.bookingDetails.startDate} to ${state.bookingDetails.endDate})`,
+      
+      // Optional fields
+      statement_descriptor: 'CAR RENTAL',
+      capture_type: 'automatic', // Capture payment immediately
+      
+      // Metadata for tracking and reconciliation
+      metadata: {
+       paylod
+      }
+    }
+    console.log("testDAtaState", {
+     paylod,
+     paymongoPaylod
+    })
   }
 
   return (
@@ -138,3 +168,4 @@ export function PaymentModal({ isOpen, onClose, paymentSummary, onPaymentComplet
     </div>
   )
 }
+

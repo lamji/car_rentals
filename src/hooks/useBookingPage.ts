@@ -151,9 +151,9 @@ export function useBookingPage() {
    * Closes payment modal and moves to next step
    */
   const handlePaymentComplete = useCallback(() => {
-    dispatch(closePaymentModal());
-    dispatch(nextStep()); // Move to completion or confirmation step
-    // Here you would typically save the booking to backend
+    // dispatch(closePaymentModal());
+    // dispatch(nextStep()); // Move to completion or confirmation step
+    // // Here you would typically save the booking to backend
     console.log('Payment completed, booking confirmed');
   }, [dispatch]);
 

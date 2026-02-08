@@ -1,11 +1,13 @@
 "use client";
 
 import { DatePickerModal } from '@/components/ui/DatePickerModal';
-import * as DropdownMenu from "@/components/ui/dropdown-menu";
 import { LocationModal } from '@/lib/npm-ready-stack/locationPicker';
 import { BookingDetails } from '@/lib/slices/bookingSlice';
-import { format } from 'date-fns';
-import { Calendar, Clock, Truck } from 'lucide-react';
+import { DateSelection } from "./form/DateSelection";
+import { MobileTimeSelection } from "./form/MobileTimeSelection";
+import { DesktopDateSelection } from './form/DesktopDateSelection';
+import { DesktopTimeSelection } from './form/DesktopTimeSelection';
+import { Truck, CheckCircle, AlertCircle } from "lucide-react";
 import { useBookingDetails } from '../../hooks/useBookingDetails';
 import { formatCurrency } from '../../lib/paymentSummaryHelper';
 import { formatDateToYYYYMMDD } from '../../utils/dateHelpers';
@@ -50,132 +52,54 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
     mapBoxState
   } = useBookingDetails(onDataChange)
 
-  console.log('selectedCar', { pricingDetails, selectedCar })
 
   return (
     <div className="space-y-6">
       {/* Date Selection */}
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            <Calendar className="h-4 w-4 inline mr-1" />
-            Start Date
-          </label>
-          <button
-            onClick={() => setIsStartDatePickerOpen(true)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-left flex items-center justify-between hover:border-blue-300 transition-colors"
-          >
-            <span className={bookingDetails.startDate ? 'text-gray-900' : 'text-gray-500'}>
-              {getDisplayDate(bookingDetails.startDate)}
-            </span>
-            <Calendar className="h-4 w-4 text-gray-400" />
-          </button>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            <Calendar className="h-4 w-4 inline mr-1" />
-            End Date
-          </label>
-          <button
-            onClick={() => setIsEndDatePickerOpen(true)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-left flex items-center justify-between hover:border-blue-300 transition-colors"
-            disabled={!bookingDetails.startDate}
-          >
-            <span className={bookingDetails.endDate ? 'text-gray-900' : 'text-gray-500'}>
-              {getDisplayDate(bookingDetails.endDate)}
-            </span>
-            <Calendar className="h-4 w-4 text-gray-400" />
-          </button>
-        </div>
+      <div className="md:hidden">
+        <DateSelection
+          bookingDetails={bookingDetails}
+          onStartDateClick={() => setIsStartDatePickerOpen(true)}
+          onEndDateClick={() => setIsEndDatePickerOpen(true)}
+          getDisplayDate={getDisplayDate}
+        />
+      </div>
+      <div className="hidden md:block">
+        <DesktopDateSelection
+          bookingDetails={bookingDetails}
+          onStartDateSelect={(date) => {
+            const dateString = formatDateToYYYYMMDD(date);
+            handleDataChange({ startDate: dateString });
+          }}
+          onEndDateClick={handleEndDateSelect}
+          getEndDateMinDate={getEndDateMinDate}
+        />
       </div>
 
       {/* Time Selection */}
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            <Clock className="h-4 w-4 inline mr-1" />
-            Start Time
-          </label>
-          <DropdownMenu.DropdownMenu>
-            <DropdownMenu.DropdownMenuTrigger asChild>
-              <button
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-left flex items-center justify-between hover:border-blue-300 transition-colors"
-              >
-                <span className={bookingDetails.startTime ? 'text-gray-900' : 'text-gray-500'}>
-                  {bookingDetails.startTime ? formatTimeDisplay(bookingDetails.startTime) : 'Select time'}
-                </span>
-                <Clock className="h-4 w-4 text-gray-400" />
-              </button>
-            </DropdownMenu.DropdownMenuTrigger>
-            <DropdownMenu.DropdownMenuContent className="min-w-(--radix-dropdown-menu-trigger-width) max-h-40 overflow-y-auto" align="start">
-              {generateTimeOptions().map(({ displayTime, value }) => {
-                const isPast = isTimeInPast(value);
-
-                return (
-                  <DropdownMenu.DropdownMenuItem
-                    key={value}
-                    disabled={isPast}
-                    className={isPast ? "text-red-600 text-xs" : "text-xs"}
-                    onClick={() => handleDataChange({ startTime: value })}
-                  >
-                    {displayTime}
-                  </DropdownMenu.DropdownMenuItem>
-                );
-              })}
-            </DropdownMenu.DropdownMenuContent>
-          </DropdownMenu.DropdownMenu>
-          {bookingDetails.startDate && bookingDetails.startTime && isTimeInPast(bookingDetails.startTime) && (
-            <div className="text-red-600 text-xs mt-1 bg-red-50 p-2 rounded border border-red-200">
-              ⚠️ Invalid time selection: You selected started date <strong>{format(new Date(bookingDetails.startDate), 'MMM dd, yyyy')}</strong> at <strong>{formatTimeDisplay(bookingDetails.startTime)}</strong>, but this time is in the past. Please select a future time for today&apos;s booking.
-            </div>
-          )}
-          {bookingDetails.startDate && bookingDetails.startTime && bookingDetails.endDate && bookingDetails.startDate === bookingDetails.endDate && isStartTimeDisabled(bookingDetails.startTime, bookingDetails.startDate, bookingDetails.endDate) && (
-            <div className="text-red-600 text-xs mt-1 bg-red-50 p-2 rounded border border-red-200">
-              ⚠️ Invalid start time: You selected <strong>{formatTimeDisplay(bookingDetails.startTime)}</strong> for <strong>{format(new Date(bookingDetails.startDate), 'MMM dd, yyyy')}</strong> for end date. You only have <strong>{24 - parseInt(bookingDetails.startTime.split(':')[0])} hours</strong> remaining before the day ends, which doesn&apos;t meet the 12-hour minimum rental duration. Please select an earlier time or adjust your end date.
-            </div>
-          )}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            <Clock className="h-4 w-4 inline mr-1" />
-            End Time
-          </label>
-          <DropdownMenu.DropdownMenu>
-            <DropdownMenu.DropdownMenuTrigger asChild>
-              <button
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-left flex items-center justify-between hover:border-blue-300 transition-colors"
-              >
-                <span className={bookingDetails.endTime ? 'text-gray-900' : 'text-gray-500'}>
-                  {bookingDetails.endTime ? formatTimeDisplay(bookingDetails.endTime) : 'Select time'}
-                </span>
-                <Clock className="h-4 w-4 text-gray-400" />
-              </button>
-            </DropdownMenu.DropdownMenuTrigger>
-            <DropdownMenu.DropdownMenuContent className="min-w-(--radix-dropdown-menu-trigger-width) max-h-40 overflow-y-auto" align="start">
-              {generateTimeOptions().map(({ displayTime, value }) => {
-                const isDisabled = isEndTimeDisabled(
-                  value,
-                  bookingDetails.startTime,
-                  bookingDetails.startDate,
-                  bookingDetails.endDate
-                );
-
-                return (
-                  <DropdownMenu.DropdownMenuItem
-                    key={value}
-                    className={isDisabled ? "text-red-600 text-xs" : "text-xs"}
-                    disabled={isDisabled}
-                    onClick={() => !isDisabled && handleDataChange({ endTime: value })}
-                  >
-                    {displayTime}
-                  </DropdownMenu.DropdownMenuItem>
-                );
-              })}
-            </DropdownMenu.DropdownMenuContent>
-          </DropdownMenu.DropdownMenu>
-        </div>
+      <div className="md:hidden">
+        <MobileTimeSelection
+          bookingDetails={bookingDetails}
+          generateTimeOptions={generateTimeOptions}
+          isTimeInPast={isTimeInPast}
+          isEndTimeDisabled={isEndTimeDisabled}
+          isStartTimeDisabled={isStartTimeDisabled}
+          formatTimeDisplay={formatTimeDisplay}
+          onStartTimeChange={(time) => handleDataChange({ startTime: time })}
+          onEndTimeChange={(time) => handleDataChange({ endTime: time })}
+        />
+      </div>
+      <div className="hidden md:block">
+        <DesktopTimeSelection
+          bookingDetails={bookingDetails}
+          generateTimeOptions={generateTimeOptions}
+          isTimeInPast={isTimeInPast}
+          isEndTimeDisabled={isEndTimeDisabled}
+          isStartTimeDisabled={isStartTimeDisabled}
+          formatTimeDisplay={formatTimeDisplay}
+          onStartTimeChange={(time) => handleDataChange({ startTime: time })}
+          onEndTimeChange={(time) => handleDataChange({ endTime: time })}
+        />
       </div>
 
       {/* Duration and Validation */}
@@ -185,19 +109,21 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
             Duration: {calculateRentalDuration()?.toFixed(1)} hours
           </div>
           {!isMinimumDurationMet() && (
-            <div className="text-red-600 text-xs mt-1 bg-red-50 p-2 rounded border border-red-200">
-              ⚠️ Minimum rental duration is 12 hours. Please select a longer rental period.
+            <div className="text-red-600 text-xs mt-1 bg-red-50 p-2 rounded border border-red-200 flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>Minimum rental duration is 12 hours. Please select a longer rental period.</span>
             </div>
           )}
           {isMinimumDurationMet() && (
-            <div className="text-green-600 text-xs mt-1">
-              ✅ Minimum duration requirement met
+            <div className="text-green-600 text-xs mt-1 flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              <span>Minimum duration requirement met</span>
             </div>
           )}
         </div>
       )}
 
-      {/* Pickup Type Selection */}
+
       {/* Fulfillment Option - Only show for self-drive cars */}
       {selectedCar?.selfDrive && (
         <div>
@@ -275,16 +201,16 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
               </span>
               <span className="font-medium">{formatCurrency(pricingDetails.rentalPrice || 0)}</span>
             </div>
-            {bookingDetails.pickupType === 'delivery' && pricingDetails.deliveryFee && pricingDetails.deliveryFee > 0 && (
+            {bookingDetails.pickupType === 'delivery' && Number(pricingDetails.deliveryFee) > 0 && (
               <div className="flex justify-between">
                 <span className="text-gray-600">Delivery Fee:</span>
-                <span className="font-medium">{formatCurrency(pricingDetails.deliveryFee)}</span>
+                <span className="font-medium">{formatCurrency(pricingDetails.deliveryFee || 0)}</span>
               </div>
             )}
-            {!selectedCar?.selfDrive && pricingDetails.driverFee && pricingDetails.driverFee > 0 && (
+            {!selectedCar?.selfDrive && Number(pricingDetails.driverFee) > 0 && (
               <div className="flex justify-between">
                 <span className="text-gray-600">Driver Fee:</span>
-                <span className="font-medium">{formatCurrency(pricingDetails.driverFee)}</span>
+                <span className="font-medium">{formatCurrency(pricingDetails.driverFee || 0)}</span>
               </div>
             )}
             {Number(pricingDetails.excessHoursPrice) > 0 && (

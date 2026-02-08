@@ -4,7 +4,6 @@ import { BookingConfirmation } from '@/components/booking/BookingConfirmation'
 import { MobileRentalDetailsForm } from '@/components/booking/MobileRentalDetailsForm'
 import { PaymentModal } from '@/components/booking/PaymentModal'
 import { PersonalInfoForm } from '@/components/booking/PersonalInfoForm'
-import { RentalDetailsForm } from '@/components/booking/RentalDetailsForm'
 import { SelectedCarCard } from '@/components/booking/SelectedCarCard'
 import { Button } from '@/components/ui/button'
 import { useBookingPage } from '@/hooks/useBookingPage'
@@ -45,21 +44,10 @@ export default function BookingPage() {
       case 1:
         return <SelectedCarCard />
       case 2:
-        return (
-          <div>
-            {/* Mobile Version */}
-            <div className="sm:hidden">
-              <MobileRentalDetailsForm
-                onDataChange={handleRentalDetailsChange}
-                pricingDetails={selectedData?.pricingDetails || undefined}
-              />
-            </div>
-            {/* Desktop Version */}
-            <div className="hidden sm:block">
-              <RentalDetailsForm onDataChange={handleRentalDetailsChange} />
-            </div>
-          </div>
-        )
+        return <MobileRentalDetailsForm
+          onDataChange={handleRentalDetailsChange}
+          pricingDetails={selectedData?.pricingDetails || undefined}
+        />
       case 3:
         return <PersonalInfoForm onValidationChange={handlePersonalInfoValidationChange} />
       case 4:

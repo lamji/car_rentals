@@ -163,19 +163,19 @@ export function useMapboxRoute(mapRef: React.RefObject<mapboxgl.Map | null>) {
 
     // Check if map is loaded and style is ready
     const addRouteToMap = () => {
-      if (!mapRef.current!.isStyleLoaded()) {
+      if (!mapRef.current || !mapRef.current.isStyleLoaded()) {
         setTimeout(addRouteToMap, 100);
         return;
       }
 
       // Remove existing route if present
-      if (mapRef.current!.getSource("route")) {
-        mapRef.current!.removeLayer("route");
-        mapRef.current!.removeSource("route");
+      if (mapRef.current.getSource("route")) {
+        mapRef.current.removeLayer("route");
+        mapRef.current.removeSource("route");
       }
 
       // Add new route
-      mapRef.current!.addSource("route", {
+      mapRef.current.addSource("route", {
         type: "geojson",
         data: {
           type: "Feature",
@@ -184,7 +184,7 @@ export function useMapboxRoute(mapRef: React.RefObject<mapboxgl.Map | null>) {
         },
       });
 
-      mapRef.current!.addLayer({
+      mapRef.current.addLayer({
         id: "route",
         type: "line",
         source: "route",

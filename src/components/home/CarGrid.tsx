@@ -3,6 +3,7 @@ import { CarAvailabilityCard } from "@/components/cars/CarAvailabilityCard";
 import { setRadius } from "@/lib/slices/data";
 import { Car } from "@/lib/types";
 import { useDispatch, useSelector } from "react-redux";
+import { getFutureUnavailableDates } from "@/utils/validateBlockedDates";
 
 
 interface CarGridProps {
@@ -58,11 +59,10 @@ export function CarGrid({ filteredCars, detailsHrefFor, radiusList }: CarGridPro
       ) : (
         <div className="grid gap-2 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
           {filteredCars.map((car) => {
+            const futureUnavailableDates = getFutureUnavailableDates(car.availability.unavailableDates);
             const today = new Date().toISOString().split('T')[0];
-            const isTodayUnavailable = car.availability.unavailableDates.includes(today);
+            const isTodayUnavailable = futureUnavailableDates.includes(today);
             const isAvailable = !isTodayUnavailable;
-
-            console.log("test:car", car);
 
             return (
               <CarAvailabilityCard

@@ -61,7 +61,7 @@ function HomeContent() {
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <div className="flex flex-col min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+                <div className="w-5 h-5 flex items-center justify-center shrink-0">
                   <svg
                     className="w-4 h-4 text-white"
                     fill="currentColor"
@@ -95,7 +95,7 @@ function HomeContent() {
         </div>
 
         {/* Center content */}
-        <div className="relative z-10 flex-1 flex items-center justify-center text-center w-[100%]">
+        <div className="relative z-10 flex-1 flex items-center justify-center text-center w-full">
           <MobileHero
             location={currentAddress}
             onClearLocation={handleClearLocation}
@@ -124,7 +124,7 @@ function HomeContent() {
           />
 
           <div
-            className="pt-0 lg:col-span-3 px-5 lg:px-0 -mt-20 lg:-mt-0 rounded-tl-[1rem] rounded-tr-[1rem] bg-white border-0 border-gray-200 relative"
+            className="pt-0 lg:col-span-3 px-5 lg:px-0 -mt-20 lg:mt-0 rounded-tl-[1rem] rounded-tr-[1rem] bg-white border-0 border-gray-200 relative"
             data-testid="car-main-content"
           >
             <CarGrid

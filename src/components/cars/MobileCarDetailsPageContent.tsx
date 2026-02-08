@@ -12,7 +12,7 @@ import { useCarDetailsPage } from "@/hooks/useCarDetailsPage";
 import { formatCurrency } from "@/lib/currency";
 import { MapBoxService } from "@/lib/npm-ready-stack/mapboxService/ui";
 import { useAppSelector } from "@/lib/store";
-import { getFutureUnavailableDates } from "@/utils/dateHelpers";
+import { getFutureUnavailableDates } from "@/utils/validateBlockedDates";
 import { Calendar, Copy, MoveLeft, Phone, User } from "lucide-react";
 
 
@@ -34,6 +34,14 @@ export function MobileCarDetailsPageContent() {
     address,
     mapBoxDistanceText
   } = useCarDetailsPage();
+
+  // Calculate availability using the validation utility
+  const isAvailableToday = useMemo(() => {
+    if (!car?.availability?.unavailableDates) return true;
+    const futureUnavailableDates = getFutureUnavailableDates(car.availability.unavailableDates);
+    const today = new Date().toISOString().split('T')[0];
+    return !futureUnavailableDates.includes(today);
+  }, [car?.availability?.unavailableDates]);
 
   // Memoize map points to prevent unnecessary re-renders
   const memoPointA = useMemo(() => pointA, [pointA]);
@@ -146,18 +154,18 @@ export function MobileCarDetailsPageContent() {
                 {/* Availability Badge - Floating on top */}
                 <div className="absolute top-2 right-2">
                   <div
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${car?.availability?.isAvailableToday
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${isAvailableToday
                       ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                       : "bg-red-50 text-red-700 border border-red-200"
                       }`}
                   >
                     <div
-                      className={`h-1.5 w-1.5 rounded-full ${car?.availability?.isAvailableToday
+                      className={`h-1.5 w-1.5 rounded-full ${isAvailableToday
                         ? "bg-emerald-500"
                         : "bg-red-500"
                         }`}
                     ></div>
-                    {car?.availability?.isAvailableToday
+                    {isAvailableToday
                       ? "Available"
                       : "Unavailable"}
                   </div>

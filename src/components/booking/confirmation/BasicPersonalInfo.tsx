@@ -35,7 +35,7 @@ export function BasicPersonalInfo({
           <p className="text-sm" data-testid="last-name-value">{lastName || ''}</p>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div data-testid="contact-number-field">
           <span className="text-sm font-medium text-gray-500">
             Contact Number
@@ -48,6 +48,7 @@ export function BasicPersonalInfo({
           </span>
           <p className="text-sm" data-testid="email-value">{email || ''}</p>
         </div>
+        <div></div>
       </div>
     </>
   )
