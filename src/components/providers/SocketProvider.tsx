@@ -81,7 +81,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
        * Update selected car in redux
        */
       const carId = payload.data.car.id;
-      const currentCar = stateData.cars;
+      const currentCar = stateData?.cars;
       let updatedCar = currentCar;
       
       if (currentCar && currentCar._id === carId) {
@@ -114,7 +114,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       console.log("🧹 Cleaning up Socket.IO connection");
       socketInstance.disconnect();
     };
-  }, [queryClient, refetch, dispatch, stateData, process.env.NEXT_PUBLIC_API_URL]);
+  }, [queryClient, refetch, dispatch, stateData]);
 
   return (
     <SocketContext.Provider value={{ socket, isConnected }}>

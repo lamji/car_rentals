@@ -111,7 +111,7 @@ export function useHomeContent() {
           console.log("debug-location: Using coordinates from LocationModal for nearest garage search", { locationString, coordinates });
           
           // Debug: Check car data and coordinates
-          const carDataToUse = (stateData.cars && stateData.cars.length > 0) ? stateData.cars : carsFromRedux;
+          const carDataToUse = (stateData?.cars && stateData.cars.length > 0) ? stateData.cars : carsFromRedux;
           console.log("debug-location: Car data being used", { 
             stateDataCars: stateData.cars?.length || 0, 
             fallbackCars: carsFromRedux.length,
@@ -277,14 +277,17 @@ export function useHomeContent() {
 
  const filteredCars = useMemo(() => {
    // Extract car data from nearest garages or use empty array as fallback
+   const nearestGarages = Array.isArray(stateData?.nearestGarages) ? stateData?.nearestGarages : [];
+   const allCars = Array.isArray(stateData?.allCars) ? stateData?.allCars : [];
+
    const cars =
-     stateData.nearestGarages.length > 0
-       ? stateData.nearestGarages.map((garage: any) => garage.carData)
-       : stateData.allCars.map((car: any) => car)
+     nearestGarages?.length > 0
+       ? nearestGarages?.map((garage: any) => garage.carData)
+       : allCars?.map((car: any) => car)
 
    if (selectedCategory === "all") return cars;
    return cars.filter((car: any) => car.type === selectedCategory);
- }, [selectedCategory, stateData.allCars, stateData.nearestGarages]);
+ }, [selectedCategory, stateData?.allCars, stateData?.nearestGarages]);
 
  console.log("Hero - stateMapBox:", { filteredCars, stateData });
 
