@@ -35,7 +35,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     console.log("🚀 Initializing Socket.IO connection...");
     
     // Initialize Socket.IO connection
-    const socketInstance = io(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000", {
+    const socketInstance = io(process.env.NEXT_PUBLIC_API_URL, {
       transports: ["websocket", "polling"],
       autoConnect: true,
     });

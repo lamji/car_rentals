@@ -3,7 +3,7 @@ import { useGetData } from "plugandplay-react-query-hooks";
 
 export default function useGetCars() {
   const { data, isLoading, refetch } = useGetData<any>({
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000",
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || "",
     endpoint: "/api/cars",
     query: { page: 1 },
     axiosConfig: {

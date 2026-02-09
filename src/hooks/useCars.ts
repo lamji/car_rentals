@@ -18,7 +18,8 @@ export function useCars(params: {
   return useMemo(() => {
     const { carType, filters } = params;
 
-    let cars: Car[] = [...carsFromRedux];
+    // Add null check to prevent undefined error
+    let cars: Car[] = Array.isArray(carsFromRedux) ? [...carsFromRedux] : [];
 
     // Calculate dynamic availability for all cars
     const today = new Date();
