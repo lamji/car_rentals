@@ -16,7 +16,6 @@ export default function useGetCars() {
     },
     options: {
       queryKey: ["cars", "list", { page: 1 }],
-      enabled: !!process.env.NEXT_PUBLIC_API_URL && process.env.NEXT_PUBLIC_API_URL !== "https://your-backend-api.com",
       staleTime: 0,
       retry: 2,
       retryDelay: 1000,
@@ -28,16 +27,12 @@ export default function useGetCars() {
     console.error("🚨 Cars API Error:", error);
   }
 
-  // Log when API is disabled
-  if (!process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL === "https://your-backend-api.com") {
-    console.warn("⚠️ Cars API is disabled - using fallback data");
-  }
    
   return {
     data,
     isLoading,
     refetch,
     error,
-    isApiDisabled: !process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL === "https://your-backend-api.com"
+    isApiDisabled: !process.env.NEXT_PUBLIC_API_URL || ''
   };
 }

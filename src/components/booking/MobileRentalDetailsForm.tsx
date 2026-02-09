@@ -45,6 +45,8 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
     handleLocationSelect,
     handleEndDateSelect,
     getDisplayDate,
+    getUnavailableStartDates,
+    getUnavailableEndDates,
     formatTimeDisplay,
     generateTimeOptions,
     getEndDateMinDate,
@@ -267,6 +269,7 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
           handleDataChange({ startDate: dateString });
         }}
         title="Select Start Date"
+        disabledDates={getUnavailableStartDates()}
       />
 
       <DatePickerModal
@@ -276,6 +279,7 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
         onDateSelect={handleEndDateSelect}
         title="Select End Date"
         minDate={getEndDateMinDate(bookingDetails.startDate)}
+        disabledDates={getUnavailableEndDates()}
       />
     </div >
   )
