@@ -32,12 +32,22 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const stateData = useAppSelector((state) => state.data);
 
   useEffect(() => {
+    // Check if API is available before connecting
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const isApiDisabled = !apiUrl || apiUrl === "https://your-backend-api.com";
+    
+    if (isApiDisabled) {
+      console.warn("⚠️ Socket.IO connection disabled - API not configured");
+      return;
+    }
+    
     console.log("🚀 Initializing Socket.IO connection...");
     
     // Initialize Socket.IO connection
-    const socketInstance = io(process.env.NEXT_PUBLIC_API_URL, {
+    const socketInstance = io(apiUrl, {
       transports: ["websocket", "polling"],
       autoConnect: true,
+      timeout: 5000,
     });
 
     // Connection events
@@ -53,7 +63,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     });
 
     socketInstance.on("connect_error", (error) => {
-      console.log("❌ Socket.IO connection error:", error);
+      console.log("❌ Socket.IO connection error:", error.message);
+      console.log("🔧 This is expected when API is not available");
+      setIsConnected(false);
     });
 
     // Listen for all events for debugging
@@ -102,7 +114,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       console.log("🧹 Cleaning up Socket.IO connection");
       socketInstance.disconnect();
     };
-  }, [queryClient, refetch, dispatch, stateData]);
+  }, [queryClient, refetch, dispatch, stateData, process.env.NEXT_PUBLIC_API_URL]);
 
   return (
     <SocketContext.Provider value={{ socket, isConnected }}>

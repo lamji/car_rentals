@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 
-import { useCarsFromRedux } from "@/lib/data/cars";
+import { useCarsFromRedux, MOCK_CARS } from "@/lib/data/cars";
 import type { Car } from "@/lib/types";
 import type { CarsFilters } from "@/lib/types/booking";
 
@@ -18,8 +18,10 @@ export function useCars(params: {
   return useMemo(() => {
     const { carType, filters } = params;
 
-    // Add null check to prevent undefined error
-    let cars: Car[] = Array.isArray(carsFromRedux) ? [...carsFromRedux] : [];
+    // Use fallback data if Redux is empty
+    let cars: Car[] = Array.isArray(carsFromRedux) && carsFromRedux.length > 0 
+      ? [...carsFromRedux] 
+      : [...MOCK_CARS];
 
     // Calculate dynamic availability for all cars
     const today = new Date();
