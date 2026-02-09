@@ -12,7 +12,7 @@ import { useCarDetailsPage } from "@/hooks/useCarDetailsPage";
 import { formatCurrency } from "@/lib/currency";
 import { MapBoxService } from "@/lib/npm-ready-stack/mapboxService/ui";
 import { useAppSelector } from "@/lib/store";
-import { getFutureUnavailableDates } from "@/utils/validateBlockedDates";
+import { getFutureBookings,  isCarAvailableToday } from "@/utils/validateBlockedDates";
 import { Calendar, Copy, MoveLeft, Phone, User } from "lucide-react";
 
 export function MobileCarDetailsPageContent() {
@@ -32,15 +32,9 @@ export function MobileCarDetailsPageContent() {
     address,
     mapBoxDistanceText,
   } = useCarDetailsPage();
-
   // Calculate availability using the validation utility
   const isAvailableToday = useMemo(() => {
-    if (!car?.availability?.unavailableDates) return true;
-    const futureUnavailableDates = getFutureUnavailableDates(
-      car.availability.unavailableDates,
-    );
-    const today = new Date().toISOString().split("T")[0];
-    return !futureUnavailableDates.includes(today);
+    return isCarAvailableToday(car?.availability?.unavailableDates || []);
   }, [car?.availability?.unavailableDates]);
 
   // Memoize map points to prevent unnecessary re-renders
@@ -343,43 +337,80 @@ export function MobileCarDetailsPageContent() {
           </div>
         </div>
 
-        {/* Unavailable Dates */}
-        {car?.availability?.unavailableDates &&
-          (() => {
-            const futureDates = getFutureUnavailableDates(
-              car.availability.unavailableDates,
-            );
+        {/* Unavailable Dates / Bookings */}
+        {car?.availability?.unavailableDates && (() => {
+          const futureBookings = getFutureBookings(car.availability.unavailableDates);
 
-            return (
-              futureDates.length > 0 && (
-                <div className="my-4">
-                  <h3 className="text-gray-900 font-semibold text-sm mb-3">
-                    Unavailable Dates
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {futureDates
-                      .slice()
-                      .sort()
-                      .map((date) => (
-                        <div
-                          key={date}
-                          className="flex flex-col items-center gap-1 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
-                        >
-                          <Calendar className="h-6 w-6 text-red-500" />
-                          <span className="text-xs font-medium text-red-800 text-center">
-                            {new Date(date).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
-                          </span>
+          return (
+            futureBookings.length > 0 && (
+              <div className="my-4">
+                <h3 className="text-gray-900 font-semibold text-sm mb-3 flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-red-500" />
+                  Unavailable Dates
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {futureBookings
+                    .slice()
+                    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+                    .map((booking) => {
+                      console.log("test:bookings", booking)
+                      return (
+                      <div
+                        key={booking._id}
+                        className=""
+                      >
+                        <div className="relative bg-linear-to-r from-red-50 to-orange-50 border border-red-200 rounded-lg p-2 shadow-sm">
+                          <div className="flex items-center justify-center">
+                            <div className="text-left">
+                              <div style={{ fontSize: '10px' }} className="font-medium text-gray-900">From</div>
+                              <div style={{ fontSize: '10px' }} className="text-gray-600">
+                                {new Date(booking.startDate).toLocaleDateString('en-US', { 
+                                  month: 'short', 
+                                  day: 'numeric', 
+                                  year: 'numeric' 
+                                })}
+                              </div>
+                              <div style={{ fontSize: '10px' }} className="text-gray-500">
+                                {new Date(`2000-01-01T${booking.startTime}`).toLocaleTimeString('en-US', { 
+                                  hour: 'numeric', 
+                                  minute: '2-digit',
+                                  hour12: true 
+                                })}
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-center px-1">
+                              <div className="w-4 h-px bg-linear-to-r from-red-400 to-orange-400"></div>
+                              <div style={{ fontSize: '10px' }} className="text-gray-400 my-0.5">to</div>
+                              <div className="w-4 h-px bg-linear-to-r from-red-400 to-orange-400"></div>
+                            </div>
+                            <div className="text-right">
+                              <div style={{ fontSize: '10px' }} className="font-medium text-gray-900">Until</div>
+                              <div style={{ fontSize: '10px' }} className="text-gray-600">
+                                {new Date(booking.endDate).toLocaleDateString('en-US', { 
+                                  month: 'short', 
+                                  day: 'numeric', 
+                                  year: 'numeric' 
+                                })}
+                              </div>
+                              <div style={{ fontSize: '10px' }} className="text-gray-500">
+                                {new Date(`2000-01-01T${booking.endTime}`).toLocaleTimeString('en-US', { 
+                                  hour: 'numeric', 
+                                  minute: '2-digit',
+                                  hour12: true 
+                                })}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      ))}
-                  </div>
+                  
+                      </div>
+                    )
+                    })}
                 </div>
-              )
-            );
-          })()}
+              </div>
+            )
+          );
+        })()}
 
         {/* Owner Information */}
         <div className="grow my-4 w-full">
@@ -420,7 +451,7 @@ export function MobileCarDetailsPageContent() {
       {/* Floating Continue Booking Button */}
       <div className="fixed bottom-2 left-4 right-4 z-50">
         <Button
-          disabled={car?.isOnHold}
+          disabled={car?.isOnHold || !isAvailableToday}
           onClick={goToBooking}
           size="lg"
           className="w-full h-14 text-base font-semibold bg-primary hover:bg-primary/80 text-white shadow-lg"

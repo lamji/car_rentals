@@ -11,7 +11,7 @@ interface MobileTimeSelectionProps {
     startTime?: string;
     endTime?: string;
   };
-  generateTimeOptions: () => { displayTime: string; value: string }[];
+  generateTimeOptions: () => { displayTime: string; value: string; hour: number }[];
   isTimeInPast: (time: string) => boolean;
   isEndTimeInPast: (time: string) => boolean;
   isEndTimeDisabled: (
@@ -25,6 +25,7 @@ interface MobileTimeSelectionProps {
     startDate: string | undefined,
     endDate: string | undefined
   ) => boolean;
+  isStartTimeConflicting: (startTime: string) => boolean;
   formatTimeDisplay: (time: string) => string;
   onStartTimeChange: (time: string) => void;
   onEndTimeChange: (time: string) => void;
@@ -37,6 +38,7 @@ export function MobileTimeSelection({
   isEndTimeInPast,
   isEndTimeDisabled,
   isStartTimeDisabled,
+  isStartTimeConflicting,
   formatTimeDisplay,
   onStartTimeChange,
   onEndTimeChange
@@ -62,15 +64,18 @@ export function MobileTimeSelection({
           <DropdownMenu.DropdownMenuContent className="min-w-(--radix-dropdown-menu-trigger-width) max-h-40 overflow-y-auto" align="start">
             {generateTimeOptions().map(({ displayTime, value }) => {
               const isPast = isTimeInPast(value);
+              const isConflicting = bookingDetails.startDate ? isStartTimeConflicting(value) : false;
+              const isDisabled = isPast || isConflicting;
 
               return (
                 <DropdownMenu.DropdownMenuItem
                   key={value}
-                  disabled={isPast}
-                  className={isPast ? "text-red-600 text-xs" : "text-xs"}
-                  onClick={() => onStartTimeChange(value)}
+                  disabled={isDisabled}
+                  className={isDisabled ? "text-red-600 text-xs" : "text-xs"}
+                  onClick={() => !isDisabled && onStartTimeChange(value)}
                 >
                   {displayTime}
+                  {isConflicting && <span className="ml-2 text-xs">(Conflicts)</span>}
                 </DropdownMenu.DropdownMenuItem>
               );
             })}

@@ -12,6 +12,7 @@ interface DatePickerModalProps {
   title?: string;
   minDate?: Date;
   maxDate?: Date;
+  disabledDates?: string[]; // Array of date strings in YYYY-MM-DD format
 }
 
 export function DatePickerModal({
@@ -22,6 +23,7 @@ export function DatePickerModal({
   title = "Select Date",
   minDate = startOfDay(new Date()),
   maxDate,
+  disabledDates = [],
 }: DatePickerModalProps) {
   const [currentMonth, setCurrentMonth] = useState(selectedDate || new Date());
   const [localSelectedDate, setLocalSelectedDate] = useState(selectedDate);
@@ -61,6 +63,10 @@ export function DatePickerModal({
     
     const days = eachDayOfInterval({ start: startDate, end: endDate });
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    
+    console.log('debug:datepicker - Title:', title);
+    console.log('debug:datepicker - Disabled dates prop:', disabledDates);
+    console.log('debug:datepicker - Current month:', format(currentMonth, 'MMMM yyyy'));
 
     return (
       <div className="w-full">
@@ -79,7 +85,22 @@ export function DatePickerModal({
             const isCurrentMonth = isSameMonth(day, currentMonth);
             const isSelected = displayDate && isSameDay(day, displayDate);
             const isToday = isSameDay(day, new Date());
-            const isDisabled = isBefore(day, minDate) || (maxDate && isBefore(maxDate, day));
+            const dayString = format(day, 'yyyy-MM-dd');
+            const isDisabledByDates = disabledDates.includes(dayString);
+            const isDisabled = isBefore(day, minDate) || (maxDate && isBefore(maxDate, day)) || isDisabledByDates;
+            
+            // Debug log for dates around the booking period
+            if (dayString >= '2026-02-12' && dayString <= '2026-02-15') {
+              console.log('debug:datepicker - Date', dayString, ':', {
+                isCurrentMonth,
+                isSelected,
+                isToday,
+                isDisabledByDates,
+                isDisabled,
+                isBeforeMinDate: isBefore(day, minDate),
+                isBeforeMaxDate: maxDate ? isBefore(maxDate, day) : false
+              });
+            }
             
             return (
               <button

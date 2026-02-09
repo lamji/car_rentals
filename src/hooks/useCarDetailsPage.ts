@@ -6,7 +6,6 @@ import { useBooking } from "@/hooks/useBooking";
 import { useCar } from "@/hooks/useCar";
 import { setSelectedCar } from "@/lib/slices/bookingSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/store";
-import { calculateDistanceToCar, formatDistance } from "@/utils/distance";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useGeolocation } from "../lib/npm-ready-stack/locationPicker";
@@ -30,7 +29,7 @@ export function useCarDetailsPage() {
   const { showToast } = useToast();
   const previousIsOnHold = useRef<boolean | undefined>(undefined);
 
-  const { position, loading } = useGeolocation();
+  const {  loading } = useGeolocation();
   const id =
     typeof params.id === "string"
       ? params.id
@@ -39,12 +38,8 @@ export function useCarDetailsPage() {
         : "";
   const car = useCar(id);
       // Store entire car data in Redux
-  console.log("test:cardData:", {car,cars});
 
-  // Calculate distance from user's location to car's garage
-  const distance =
-    position && car ? calculateDistanceToCar(position, car) : null;
-  const distanceText = distance ? formatDistance(distance) : null;
+  const distanceText = cars?.distanceText;
 
   const { patchDraft } = useBooking();
 
@@ -70,6 +65,12 @@ export function useCarDetailsPage() {
   // Listen for hold status changes for this specific car
   useEffect(() => {
     if (!cars) return;
+    
+    // Initialize previousIsOnHold on first render to prevent false trigger
+    if (previousIsOnHold.current === undefined) {
+      previousIsOnHold.current = cars.isOnHold;
+      return;
+    }
     
     // Only show toast when isOnHold actually changes
     if (previousIsOnHold.current !== cars.isOnHold) {
@@ -156,7 +157,6 @@ export function useCarDetailsPage() {
     // State
     showMapModal,
     car:cars,
-    distance,
     distanceText,
     loading,
     id,

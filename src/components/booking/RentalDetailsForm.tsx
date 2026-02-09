@@ -38,10 +38,6 @@ export function RentalDetailsForm({ onDataChange, pricingDetails }: RentalDetail
   } = useBookingDetails(onDataChange)
 
 
-
-
-  console.log('selectedCar', { pricingDetails, selectedCar, bookingDetails })
-
   return (
     <div className="space-y-6">
       {/* Date Selection */}
@@ -128,7 +124,6 @@ export function RentalDetailsForm({ onDataChange, pricingDetails }: RentalDetail
               value="delivery"
               checked={bookingDetails.pickupType === 'delivery'}
               onChange={(e) => {
-                console.log('debug:radios - delivery radio clicked, value:', e.target.value)
                 handleDataChange({ pickupType: e.target.value as 'pickup' | 'delivery' })
               }}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"

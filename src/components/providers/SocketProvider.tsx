@@ -88,10 +88,12 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         updatedCar = {
           ...currentCar,
           isOnHold: payload.data.car.isOnHold,
-          holdReason: payload.data.car.holdReason || ''
+          holdReason: payload.data.car.holdReason || '',
+          availability: {
+            ...currentCar.availability,
+            unavailableDates: payload.data.car.availability?.unavailableDates || currentCar.availability?.unavailableDates || []
+          }
         };
-        
-        console.log("🔄 Updating Redux store directly with Socket.IO data");
         dispatch(setCars(updatedCar));
       }
       
