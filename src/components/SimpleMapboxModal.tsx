@@ -47,11 +47,9 @@ export function SimpleMapboxModal({ isOpen }: SimpleMapboxModalProps) {
   useEffect(() => {
     if (!isOpen || mapRef.current) return;
 
-    console.log("test:simple - Starting simple mapbox initialization");
-
     // Set access token
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN!;
-    console.log("test:simple - Access token set");
+
 
     // Create map centered between Point A and Point B
     const centerLng = (POINT_A.lng + POINT_B.lng) / 2;
@@ -82,11 +80,8 @@ export function SimpleMapboxModal({ isOpen }: SimpleMapboxModalProps) {
       });
     });
 
-    console.log("test:simple - Map created");
-
     // Fetch driving route from Mapbox Directions API
     const fetchRoute = async () => {
-      console.log("test:simple - Fetching driving route");
       const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${POINT_A.lng},${POINT_A.lat};${POINT_B.lng},${POINT_B.lat}?access_token=${process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}&geometries=geojson&overview=full&steps=true`;
 
       try {
@@ -94,7 +89,6 @@ export function SimpleMapboxModal({ isOpen }: SimpleMapboxModalProps) {
         const data = await response.json();
 
         if (data.routes && data.routes[0]) {
-          console.log("test:simple - Route data received");
           setRouteGeometry(data.routes[0].geometry);
           setRouteDetails({
             distance: data.routes[0].distance,
@@ -127,17 +121,12 @@ export function SimpleMapboxModal({ isOpen }: SimpleMapboxModalProps) {
           pointA: pointAData.features[0]?.place_name || "Point A",
           pointB: pointBData.features[0]?.place_name || "Point B",
         });
-
-        console.log("test:simple - Location names fetched");
       } catch (error) {
         console.error("test:simple - Reverse geocoding failed:", error);
       }
     };
 
     fetchLocationNames();
-
-    // Add Point A and Point B markers
-    console.log("test:simple - Adding Point A and Point B markers");
 
     // Create custom marker elements
     const createMarkerElement = (
@@ -176,8 +165,6 @@ export function SimpleMapboxModal({ isOpen }: SimpleMapboxModalProps) {
       .setPopup(new mapboxgl.Popup().setText("🏢 Garage"))
       .addTo(mapRef.current);
 
-    console.log("test:simple - All markers added");
-
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
@@ -189,8 +176,6 @@ export function SimpleMapboxModal({ isOpen }: SimpleMapboxModalProps) {
   // Add route when geometry is loaded
   useEffect(() => {
     if (!mapRef.current || !routeGeometry) return;
-
-    console.log("test:simple - Adding driving route to map");
 
     // Check if map is loaded and style is ready
     const addRouteToMap = () => {
@@ -230,7 +215,6 @@ export function SimpleMapboxModal({ isOpen }: SimpleMapboxModalProps) {
         },
       });
 
-      console.log("test:simple - Driving route added successfully");
     };
 
     addRouteToMap();
@@ -271,7 +255,7 @@ export function SimpleMapboxModal({ isOpen }: SimpleMapboxModalProps) {
                             <div className="text-[10px] md:text-xs text-gray-400 mb-0.5 md:mb-1">
                               From (Person)
                             </div>
-                            <div className="text-xs md:text-sm font-medium text-white break-words">
+                            <div className="text-xs md:text-sm font-medium text-white wrap-break-word">
                               {locationNames.pointA}
                             </div>
                           </div>
@@ -283,7 +267,7 @@ export function SimpleMapboxModal({ isOpen }: SimpleMapboxModalProps) {
                             <div className="text-[10px] md:text-xs text-gray-400 mb-0.5 md:mb-1">
                               To (Garage)
                             </div>
-                            <div className="text-xs md:text-sm font-medium text-white break-words">
+                            <div className="text-xs md:text-sm font-medium text-white wrap-break-word">
                               {locationNames.pointB}
                             </div>
                           </div>

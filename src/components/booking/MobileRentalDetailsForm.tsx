@@ -52,6 +52,7 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
     getEndDateMinDate,
     isEndTimeDisabled,
     isStartTimeDisabled,
+    isStartTimeConflicting,
     mapBoxState
   } = useBookingDetails(onDataChange)
 
@@ -88,6 +89,7 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
           isEndTimeInPast={isEndTimeInPast}
           isEndTimeDisabled={isEndTimeDisabled}
           isStartTimeDisabled={isStartTimeDisabled}
+          isStartTimeConflicting={isStartTimeConflicting}
           formatTimeDisplay={formatTimeDisplay}
           onStartTimeChange={(time) => handleDataChange({ startTime: time })}
           onEndTimeChange={(time) => handleDataChange({ endTime: time })}

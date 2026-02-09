@@ -33,12 +33,10 @@ export default function PaymentTestPage() {
           method={["gcash", "paymaya", "grab_pay", "card"]}
           amount={subtotal}
           errorCallBack={(err: any) => {
-            console.log("Payment Error:", err);
             setPaymentStatus("error");
             setMessage(err.message || "Payment failed");
           }}
           onSuccess={(paymentIntent: any) => {
-            console.log("Payment Success:", paymentIntent);
             setPaymentStatus("success");
             setMessage(`Payment successful! ID: ${paymentIntent.id}`);
           }}

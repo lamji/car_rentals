@@ -4,7 +4,7 @@ import { BookingDetails } from '@/lib/slices/bookingSlice';
 import { useAppSelector } from '@/lib/store';
 import { useCallback, useState, useEffect } from 'react';
 import { formatDateToYYYYMMDD } from '../utils/dateHelpers';
-import { formatTimeDisplay, generateTimeOptions, getEndDateMinDate, isEndTimeDisabled, isStartTimeDisabled, isTimeInPastForDate } from '../utils/timeValidation';
+import { formatTimeDisplay, generateTimeOptions, getEndDateMinDate, isEndTimeDisabled, isStartTimeDisabled, isTimeInPastForDate, isStartTimeConflictingWithBookings } from '../utils/timeValidation';
 
 /**
  * Custom hook for managing booking details logic and validation
@@ -137,77 +137,101 @@ export function useBookingDetails(onDataChange?: (data: Partial<BookingDetails>)
     return pastDates;
   }, []);
 
-  // Step 3: Get blocked dates based on booking time conflicts
+  // Get dates that should be blocked due to booking conflicts (12-hour minimum gap)
   const getBlockedDatesFromBookings = useCallback((): string[] => {
     const bookedDates = getBookedDates();
-    const blockedDates: string[] = [];
+    const blockedDates = new Set<string>();
     
     console.log('debug:blocking - Analyzing booking conflicts...');
     
-    bookedDates.forEach((booking: any, index: number) => {
+    for (let i = 0; i < bookedDates.length; i++) {
+      const booking = bookedDates[i];
       console.log('debug:blocking - Processing booking:', booking);
       
-      // Always block start dates
-      if (!blockedDates.includes(booking.startDate)) {
-        blockedDates.push(booking.startDate);
-        console.log('debug:blocking - Blocked start date:', booking.startDate);
-      }
+      // Always block the start date of any booking
+      blockedDates.add(booking.startDate);
+      console.log('debug:blocking - Blocked start date:', booking.startDate);
       
-      // Check for conflicts with other bookings
-      bookedDates.forEach((otherBooking: any, otherIndex: number) => {
-        if (index !== otherIndex) {
-          // Check if bookings are on consecutive days
-          const bookingEnd = new Date(booking.endDate);
-          const otherStart = new Date(otherBooking.startDate);
-          const dayDiff = Math.floor((otherStart.getTime() - bookingEnd.getTime()) / (1000 * 60 * 60 * 24));
+      // Also block the end date of any booking (for stricter logic)
+      blockedDates.add(booking.endDate);
+      
+      // Check conflicts with other bookings
+      for (let j = 0; j < bookedDates.length; j++) {
+        if (i === j) continue; // Skip self
+        
+        const otherBooking = bookedDates[j];
+        
+        // Check if this booking's start date conflicts with other booking's end date
+        if (booking.startDate === otherBooking.endDate) {
+          const [bookingStartHours, bookingStartMinutes] = booking.startTime.split(':').map(Number);
+          const [otherEndHours, otherEndMinutes] = otherBooking.endTime.split(':').map(Number);
           
-          if (dayDiff === 0 || dayDiff === 1) { // Same day or next day
-            // Parse times
-            const [bookingEndHour, bookingEndMin] = booking.endTime.split(':').map(Number);
-            const [otherStartHour, otherStartMin] = otherBooking.startTime.split(':').map(Number);
-            
-            const bookingEndTime = bookingEndHour * 60 + bookingEndMin;
-            const otherStartTime = otherStartHour * 60 + otherStartMin;
-            
-            // Calculate time between bookings
-            let timeBetweenBookings: number;
-            
-            if (dayDiff === 0) {
-              // Same day: time between end and start on same day
-              timeBetweenBookings = otherStartTime - bookingEndTime;
-            } else {
-              // Next day: time from booking end to midnight + time from midnight to next booking start
-              const midnightTime = 24 * 60; // 24:00 in minutes
-              timeBetweenBookings = (midnightTime - bookingEndTime) + otherStartTime;
-            }
-            
-            console.log('debug:blocking - Time analysis:', {
-              booking: `${booking.endTime} on ${booking.endDate}`,
-              otherBooking: `${otherBooking.startTime} on ${otherBooking.startDate}`,
-              timeBetweenBookings: `${timeBetweenBookings} minutes`,
-              minimumRequired: '12 hours = 720 minutes'
-            });
-            
-            // Block dates if time between bookings is less than 12 hours (720 minutes)
-            if (timeBetweenBookings < 720) {
-              if (!blockedDates.includes(booking.endDate)) {
-                blockedDates.push(booking.endDate);
-                console.log('debug:blocking - Blocked end date due to insufficient time:', booking.endDate);
-              }
-              if (!blockedDates.includes(otherBooking.startDate)) {
-                blockedDates.push(otherBooking.startDate);
-                console.log('debug:blocking - Blocked start date due to insufficient time:', otherBooking.startDate);
-              }
-            } else {
-              console.log('debug:blocking - Sufficient time between bookings, no blocking needed');
-            }
+          const bookingStartTime = bookingStartHours * 60 + bookingStartMinutes;
+          const otherBookingEndTime = otherEndHours * 60 + otherEndMinutes;
+          
+          // Calculate time between bookings (same day)
+          const timeBetweenBookings = bookingStartTime - otherBookingEndTime;
+          
+          console.log('debug:blocking - Time analysis:', {
+            booking: `${otherBooking.endTime} on ${otherBooking.endDate}`,
+            otherBooking: `${booking.startTime} on ${booking.startDate}`,
+            timeBetweenBookings: `${timeBetweenBookings} minutes`,
+            minimumRequired: '12 hours = 720 minutes'
+          });
+          
+          // If time between bookings is less than 12 hours, block both dates
+          if (timeBetweenBookings < 720 && timeBetweenBookings >= 0) {
+            blockedDates.add(otherBooking.endDate);
+            blockedDates.add(booking.startDate);
+            console.log('debug:blocking - Blocked end date due to insufficient time:', otherBooking.endDate);
+            console.log('debug:blocking - Blocked start date due to insufficient time:', booking.startDate);
           }
         }
-      });
-    });
+        
+        // Check cross-day conflicts (booking ends on day A, next booking starts on day B)
+        const bookingEnd = new Date(booking.endDate);
+        const otherStart = new Date(otherBooking.startDate);
+        
+        // Normalize dates to compare without time
+        bookingEnd.setHours(0, 0, 0, 0);
+        otherStart.setHours(0, 0, 0, 0);
+        
+        // Calculate days between bookings
+        const daysDiff = Math.round((otherStart.getTime() - bookingEnd.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (daysDiff === 1) {
+          // Bookings are on consecutive days, check time gap across midnight
+          const [bookingEndHours, bookingEndMinutes] = booking.endTime.split(':').map(Number);
+          const [otherStartHours, otherStartMinutes] = otherBooking.startTime.split(':').map(Number);
+          
+          const bookingEndTime = bookingEndHours * 60 + bookingEndMinutes;
+          const otherBookingStartTime = otherStartHours * 60 + otherStartMinutes;
+          
+          // Time from booking end to midnight + time from midnight to next booking start
+          const midnightTime = 24 * 60; // 24:00 in minutes
+          const timeBetweenBookings = (midnightTime - bookingEndTime) + otherBookingStartTime;
+          
+          console.log('debug:blocking - Time analysis:', {
+            booking: `${booking.endTime} on ${booking.endDate}`,
+            otherBooking: `${otherBooking.startTime} on ${otherBooking.startDate}`,
+            timeBetweenBookings: `${timeBetweenBookings} minutes`,
+            minimumRequired: '12 hours = 720 minutes'
+          });
+          
+          // If time between bookings is less than 12 hours, block both dates
+          if (timeBetweenBookings < 720) {
+            blockedDates.add(booking.endDate);
+            blockedDates.add(otherBooking.startDate);
+            console.log('debug:blocking - Blocked end date due to insufficient time:', booking.endDate);
+            console.log('debug:blocking - Blocked start date due to insufficient time:', otherBooking.startDate);
+          }
+        }
+      }
+    }
     
-    console.log('debug:blocking - Final blocked dates from conflicts:', blockedDates);
-    return blockedDates;
+    const result = Array.from(blockedDates);
+    console.log('debug:blocking - Final blocked dates from conflicts:', result);
+    return result;
   }, [getBookedDates]);
 
   // Check if a booked date has sufficient time left for new bookings
@@ -290,6 +314,37 @@ export function useBookingDetails(onDataChange?: (data: Partial<BookingDetails>)
     return true;
   }, [getBookedDates]);
 
+  // Check if a date should be completely blocked due to bookings ending on that date
+  const shouldBlockDateCompletely = useCallback((date: string): boolean => {
+    const bookedDates = selectedCar?.unavailableDates || [];
+    
+    // Check if any booking ends on this date with insufficient time remaining
+    for (const booking of bookedDates) {
+      if (booking.endDate === date) {
+        const [endHours, endMinutes] = booking.endTime.split(':').map(Number);
+        const bookingEndTime = endHours * 60 + endMinutes;
+        
+        // Calculate time remaining until end of day (23:59)
+        const endOfDayTime = 23 * 60 + 59; // 23:59 in minutes
+        const timeRemaining = endOfDayTime - bookingEndTime;
+        
+        console.log('debug:block-date - Checking date', date, ':', {
+          bookingEndTime: `${bookingEndTime} minutes (${booking.endTime})`,
+          timeRemaining: `${timeRemaining} minutes`,
+          shouldBlock: timeRemaining < 60
+        });
+        
+        // If less than 1 hour remaining, block the entire date
+        if (timeRemaining < 60) {
+          console.log('debug:block-date - Date', date, 'should be completely blocked - insufficient time after booking ends');
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }, [selectedCar]);
+
   // Get unavailable dates for start date picker (Step 3: include booking conflicts + time availability)
   const getUnavailableStartDates = useCallback((): string[] => {
     console.log('debug:startdate - === getUnavailableStartDates CALLED ===');
@@ -312,14 +367,21 @@ export function useBookingDetails(onDataChange?: (data: Partial<BookingDetails>)
         availableTimeDates.push(date);
         console.log('debug:startdate - Blocked as past date:', date);
       } else {
-        // For today and future dates, check if there's sufficient time
-        const hasTime = hasSufficientTimeOnDate(date);
-        console.log('debug:startdate - Has sufficient time on', date, ':', hasTime);
-        if (!hasTime) {
+        // Check if date should be completely blocked due to insufficient time after booking
+        const shouldBlock = shouldBlockDateCompletely(date);
+        if (shouldBlock) {
           availableTimeDates.push(date);
-          console.log('debug:startdate - Blocked due to insufficient time:', date);
+          console.log('debug:startdate - Blocked due to insufficient time after booking:', date);
         } else {
-          console.log('debug:startdate - NOT blocking - sufficient time:', date);
+          // For today and future dates, check if there's sufficient time
+          const hasTime = hasSufficientTimeOnDate(date);
+          console.log('debug:startdate - Has sufficient time on', date, ':', hasTime);
+          if (!hasTime) {
+            availableTimeDates.push(date);
+            console.log('debug:startdate - Blocked due to insufficient time:', date);
+          } else {
+            console.log('debug:startdate - NOT blocking - sufficient time:', date);
+          }
         }
       }
     });
@@ -333,7 +395,7 @@ export function useBookingDetails(onDataChange?: (data: Partial<BookingDetails>)
     console.log('debug: test startdate - Time blocked dates:', availableTimeDates);
     console.log('debug:startdate - === getUnavailableStartDates FINISHED ===');
     return allUnavailableDates;
-  }, [getPastDates, getBlockedDatesFromBookings, hasSufficientTimeOnDate]);
+  }, [getPastDates, getBlockedDatesFromBookings, hasSufficientTimeOnDate, shouldBlockDateCompletely]);
 
   
   // Get unavailable dates for end date picker (Step 3: include booking conflicts + stricter time logic)
@@ -377,6 +439,23 @@ export function useBookingDetails(onDataChange?: (data: Partial<BookingDetails>)
     }
   }, [bookingDetails]);
 
+  // Check if start time should be disabled based on booking conflicts
+  const isStartTimeConflicting = useCallback((startTime: string): boolean => {
+    console.log('debug:time-conflict - isStartTimeConflicting called with:', startTime, 'for date:', bookingDetails.startDate);
+    
+    if (!bookingDetails.startDate) {
+      console.log('debug:time-conflict - No start date selected, returning false');
+      return false;
+    }
+    
+    const bookedDates = selectedCar?.unavailableDates || [];
+    console.log('debug:time-conflict - Checking conflicts with bookings:', bookedDates);
+    
+    const result = isStartTimeConflictingWithBookings(startTime, bookingDetails.startDate, bookedDates);
+    console.log('debug:time-conflict - Result for', startTime, ':', result);
+    return result;
+  }, [bookingDetails.startDate, selectedCar]);
+
   // Check whenever bookingDetails change
   useEffect(() => {
     checkAndAlertCompleteBooking();
@@ -397,9 +476,6 @@ export function useBookingDetails(onDataChange?: (data: Partial<BookingDetails>)
     // Functions
     handleDataChange,
     isTimeInPast,
-    isEndTimeInPast,
-    calculateRentalDuration,
-    isMinimumDurationMet,
     handleLocationSelect,
     handleEndDateSelect,
     getDisplayDate,
@@ -407,12 +483,18 @@ export function useBookingDetails(onDataChange?: (data: Partial<BookingDetails>)
     getUnavailableStartDates,
     getUnavailableEndDates,
     
+    // Duration and validation
+    calculateRentalDuration,
+    isMinimumDurationMet,
+    isEndTimeInPast,
+    
     // Time validation utilities
     formatTimeDisplay: formatTimeDisplay,
     generateTimeOptions: generateTimeOptions,
     getEndDateMinDate: getEndDateMinDate,
     isEndTimeDisabled: isEndTimeDisabled,
     isStartTimeDisabled: isStartTimeDisabled,
+    isStartTimeConflicting: isStartTimeConflicting,
     charge: Number(process.env.CHARGE_PER_KM)  // Default to 30 if not set
   };
 }

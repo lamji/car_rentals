@@ -79,6 +79,86 @@ export function isStartTimeDisabled(
 }
 
 /**
+ * Check if start time conflicts with existing bookings on the same date
+ * @param startTime - The start time to check (format: "HH:00")
+ * @param startDate - The selected start date (format: "YYYY-MM-DD")
+ * @param unavailableDates - Array of existing bookings
+ * @returns boolean - true if start time should be disabled due to conflict
+ */
+export function isStartTimeConflictingWithBookings(
+  startTime: string,
+  startDate: string,
+  unavailableDates: Array<{
+    startDate: string;
+    endDate: string;
+    startTime: string;
+    endTime: string;
+    [key: string]: any;
+  }>
+): boolean {
+  if (!startDate || !unavailableDates || unavailableDates.length === 0) {
+    return false;
+  }
+
+  const [startHours] = startTime.split(':').map(Number);
+  const startTimeInMinutes = startHours * 60;
+
+  // Check if this start time conflicts with any booking on the same date
+  for (const booking of unavailableDates) {
+    // Check if booking overlaps with the selected start date
+    const bookingStart = new Date(booking.startDate);
+    const bookingEnd = new Date(booking.endDate);
+    const selectedDate = new Date(startDate);
+    
+    // Normalize dates to compare without time
+    bookingStart.setHours(0, 0, 0, 0);
+    bookingEnd.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 0);
+    
+    // Check if selected date falls within the booking period (inclusive)
+    if (selectedDate >= bookingStart && selectedDate <= bookingEnd) {
+      const [bookingEndHours] = booking.endTime.split(':').map(Number);
+      
+      // If this is the start date of the booking, check if start time is before booking end time
+      if (selectedDate.getTime() === bookingStart.getTime()) {
+        if (startTimeInMinutes < bookingEndHours * 60) {
+          console.log('debug:time-conflict - Start time conflicts with booking on same date:', {
+            startTime,
+            bookingStart: booking.startTime,
+            bookingEnd: booking.endTime,
+            bookingDate: booking.startDate
+          });
+          return true;
+        }
+      }
+      // If this is a middle date of multi-day booking, block entire day
+      else if (selectedDate > bookingStart && selectedDate < bookingEnd) {
+        console.log('debug:time-conflict - Start time conflicts with multi-day booking:', {
+          startTime,
+          bookingStart: booking.startDate,
+          bookingEnd: booking.endDate,
+          selectedDate: startDate
+        });
+        return true;
+      }
+      // If this is the end date of the booking, check if start time is before booking end time
+      else if (selectedDate.getTime() === bookingEnd.getTime()) {
+        if (startTimeInMinutes < bookingEndHours * 60) {
+          console.log('debug:time-conflict - Start time conflicts with booking end date:', {
+            startTime,
+            bookingEnd: booking.endTime,
+            bookingDate: booking.endDate
+          });
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
  * Check if a time is in the past for a specific date
  * @param time - Time in "HH:00" format
  * @param date - Date in "YYYY-MM-DD" format
