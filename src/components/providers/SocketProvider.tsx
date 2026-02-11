@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { setAllCars, setCars, setRecalCulate } from "@/lib/slices/data";
 import useGetCars from "@/lib/api/useGetCars";
 import { useAppDispatch, useAppSelector } from "@/lib/store";
+import { getUserAgentRoom } from "@/utils/getUserAgentRoom";
 
 interface SocketContextType {
   socket: Socket | null;
@@ -37,7 +38,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     const isApiDisabled = !apiUrl || apiUrl === "https://your-backend-api.com";
     
     if (isApiDisabled) {
-      console.warn("⚠️ Socket.IO connection disabled - API not configured");
+      console.warn("Socket.IO connection disabled - API not configured");
       return;
     }
     
@@ -50,30 +51,34 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
     // Connection events
     socketInstance.on("connect", () => {
-      console.log("🟢 Socket.IO connected globally");
-      console.log(`📍 Socket ID: ${socketInstance.id}`);
+      console.log("Socket.IO connected globally");
+      console.log(`Socket ID: ${socketInstance.id}`);
       setIsConnected(true);
+
+      // Join a room unique to this browser's userAgent for hold expiry signals
+      const userAgentRoom = getUserAgentRoom(navigator.userAgent);
+      socketInstance.emit("joinRoom", userAgentRoom);
+      console.log(`Joined hold room: ${userAgentRoom}`);
     });
 
     socketInstance.on("disconnect", () => {
-      console.log("🔴 Socket.IO disconnected globally");
+      console.log("Socket.IO disconnected globally");
       setIsConnected(false);
     });
 
     socketInstance.on("connect_error", (error) => {
-      console.log("❌ Socket.IO connection error:", error.message);
-      console.log("🔧 This is expected when API is not available");
+      console.log("Socket.IO connection error:", error.message);
       setIsConnected(false);
     });
 
     // Listen for all events for debugging
     socketInstance.onAny((eventName, ...args) => {
-      console.log(`📡 Socket.IO event received: ${eventName}`, args);
+      console.log(`Socket.IO event received: ${eventName}`, args);
     });
 
     // Listen for car hold status updates globally
     socketInstance.on("car_hold_status_updated", (payload: any) => {
-      console.log("🔥 SOCKET EVENT RECEIVED - car_hold_status_updated", {payload, stateData});
+      console.log("SOCKET EVENT RECEIVED - car_hold_status_updated", {payload, stateData});
 
       /**
        * Update selected car in redux
@@ -100,7 +105,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       */
       refetch().then((result) => {
         if (result.data) {
-          console.log("🔄 Refreshing Redux store with server data");
+          console.log("Refreshing Redux store with server data");
           dispatch(setAllCars(result.data.data));
           dispatch(setRecalCulate());
         }
@@ -111,7 +116,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
     // Cleanup on unmount
     return () => {
-      console.log("🧹 Cleaning up Socket.IO connection");
+      console.log("Cleaning up Socket.IO connection");
       socketInstance.disconnect();
     };
   }, [queryClient, refetch, dispatch, stateData]);

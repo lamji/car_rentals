@@ -5,6 +5,7 @@ import { useAppSelector, useAppDispatch } from "@/lib/store";
 import { useCallback, useState } from "react";
 import { useConfirmation } from "@/hooks/useConfirmation";
 import useReleaseHold from "@/lib/api/useReleaseHold";
+import { useHoldExpiry } from "@/hooks/useHoldExpiry";
 import { formatDateToYYYYMMDD } from "../utils/dateHelpers";
 import {
   formatTimeDisplay,
@@ -47,6 +48,24 @@ export function useBookingDetails(
   const { handleReleaseHold } = useReleaseHold({ id: selectedCar?._id || '' });
 
   console.log('debug:holdData - current holdData in hook:', holdData);
+
+  // Listen for hold expiry/warning socket events
+  useHoldExpiry({
+    onExpired: () => {
+      console.log('debug:holdExpiry - hold expired, clearing booking fields');
+      onDataChange?.({
+        startDate: undefined,
+        endDate: undefined,
+        startTime: undefined,
+        endTime: undefined,
+      });
+    },
+    onContinue: () => {
+      console.log('debug:holdExpiry - user chose to continue booking');
+    },
+    releaseHold: handleReleaseHold,
+    bookingId: holdData?.newBooking?._id,
+  });
 
   // Use custom hook for booking change tracking
   const bookingTracker = useBookingChangeTracker(

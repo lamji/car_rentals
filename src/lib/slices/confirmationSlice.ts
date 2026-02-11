@@ -50,11 +50,16 @@ const confirmationSlice = createSlice({
       state.isConfirming = false;
       _confirmationCallbacks = {};
     },
+    updateConfirmationMessage: (state, action: PayloadAction<string>) => {
+      if (state.options) {
+        state.options.message = action.payload;
+      }
+    },
     setConfirming: (state, action: PayloadAction<boolean>) => {
       state.isConfirming = action.payload;
     },
   },
 });
 
-export const { openConfirmation, closeConfirmation, setConfirming } = confirmationSlice.actions;
+export const { openConfirmation, closeConfirmation, updateConfirmationMessage, setConfirming } = confirmationSlice.actions;
 export default confirmationSlice.reducer;

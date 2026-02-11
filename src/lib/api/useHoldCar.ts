@@ -27,10 +27,11 @@ export default function useHoldCar({ id }: { id: string }) {
     const transformedData = {
       success: response.success,
       carId: response.data?._id,
-      holdExpiry: response.data?.holdExpiry,
+      holdExpiry: response.hold?.expiresAt || response.data?.holdExpiry,
       bookingDetails: response.data?.bookingDetails,
       newBooking: response.newBooking,  // This is at root level
       booking: response.booking,        // This is at root level
+      hold: response.hold,             // { room, expiresAt, durationMs }
     };
     
     console.log('debug:holdData - transformedData:', transformedData);

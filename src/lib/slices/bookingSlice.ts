@@ -43,6 +43,11 @@ interface HoldData {
     _id: string
   }
   booking?: any
+  hold?: {
+    room: string
+    expiresAt: string
+    durationMs: number
+  }
 }
 
 interface BookingState {
