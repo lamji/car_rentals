@@ -378,8 +378,6 @@ export function LocationModal({
     locationString: string
   ): Promise<Position | null> => {
     try {
-      console.log("debug-location: Geocoding location string to coordinates", { locationString });
-
       // Use Mapbox Geocoding API to convert address to coordinates
       const geocodingUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(locationString)}.json`;
       const params = new URLSearchParams({
@@ -398,7 +396,6 @@ export function LocationModal({
 
       if (data.features && data.features.length > 0) {
         const [lng, lat] = data.features[0].center;
-        console.log("debug-location: Successfully geocoded location string", { lat, lng, locationString });
         return { lat, lng };
       } else {
         console.warn("debug-location: No coordinates found for location string", { locationString });
@@ -419,15 +416,11 @@ export function LocationModal({
   const handleLocationSubmit = async () => {
     // If using current location
     if (useCurrentLocation) {
-      console.log("debug-location: Current location enabled, using Redux currentAddress", { useCurrentLocation, currentAddress });
-
       if (currentAddress && currentAddress !== 'Location unavailable') {
-        console.log("debug-location: Using currentAddress from Redux", { currentAddress });
         onLocationSelect(currentAddress);
         onClose();
         return;
       } else {
-        console.log("debug-location: currentAddress not available, triggering getCurrentPosition", { currentAddress });
         getCurrentPosition();
         return;
       }
@@ -466,8 +459,6 @@ export function LocationModal({
     // Convert location string to coordinates
     const coordinates = await locationStringToCoordinates(locationString);
     if (coordinates) {
-      console.log("debug-location: Manual location coordinates", { locationString, coordinates });
-      // You can use coordinates here if needed for future functionality
     }
 
     onLocationSelect(locationString, locationData);

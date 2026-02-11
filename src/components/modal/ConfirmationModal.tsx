@@ -34,7 +34,7 @@ export function ConfirmationModal() {
   if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && cancel()}>
+    <Dialog open={isOpen}>
       <DialogContent className="w-[90%] max-w-[90%] sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

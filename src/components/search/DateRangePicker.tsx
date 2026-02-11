@@ -135,15 +135,6 @@ export function DateRangePicker(props: {
                   // Check if date is disabled by external function (e.g., past dates)
                   const isExternallyDisabled = props.disabled ? props.disabled(date) : false;
 
-                  // Debug logging to verify unavailable dates matching
-                  console.log('Date validation:', {
-                    checking: dateStr,
-                    unavailableDates: props.unavailableDates,
-                    isUnavailable,
-                    isExternallyDisabled,
-                    willDisable: isUnavailable || isExternallyDisabled
-                  });
-
                   return isUnavailable || isExternallyDisabled;
                 }}
                 modifiers={{
@@ -161,7 +152,7 @@ export function DateRangePicker(props: {
                 }}
                 components={{
                   Day: (dayProps: { date?: Date; modifiers?: Record<string, boolean>; disabled?: boolean; className?: string }) => {
-                    const { date, modifiers, disabled } = dayProps;
+                    const { date } = dayProps;
                     if (!date) return <td {...dayProps} />;
 
                     // Format the date to match the unavailable dates format (YYYY-MM-DD)
@@ -169,18 +160,6 @@ export function DateRangePicker(props: {
 
                     // Check if date is unavailable due to car availability
                     const isUnavailable = props.unavailableDates?.includes(dateStr) || false;
-
-                    // Debug logging for Day component
-                    if (date.getDate() === 18 && date.getMonth() === 0) { // January 18th
-                      console.log("Day component debug - Jan 18, 2026:", {
-                        dateStr,
-                        unavailableDates: props.unavailableDates,
-                        isUnavailable,
-                        disabled,
-                        modifiers,
-                        allProps: dayProps
-                      });
-                    }
 
                     const dayContent = (
                       <td

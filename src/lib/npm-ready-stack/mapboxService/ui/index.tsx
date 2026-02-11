@@ -76,7 +76,6 @@ export function MapBoxService({
 
   // Don't initialize map until we have config
   const hasConfig = config.token && config.style;
-  console.log("test:ui - Has complete config:", hasConfig);
 
   // Initialize map with custom hook only when config is ready
   const { mapRef, mapContainerRef, initializeMap, cleanup } = useMapboxInit({

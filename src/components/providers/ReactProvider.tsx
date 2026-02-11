@@ -30,7 +30,7 @@ export default function ReactProvider({
   }, []);
 
   // Pass initialToken to Providers if needed for authentication
-  console.log("Initial token loaded:", initialToken);
+
 
   return (
     <Providers bearer={false} queryClient={queryClient}>

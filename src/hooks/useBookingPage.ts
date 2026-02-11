@@ -20,8 +20,6 @@ export function useBookingPage() {
   const { currentStep, selectedCar, bookingDetails, isPaymentModalOpen } = useBookingPersistence();
   const carState= useAppSelector((state) => state.data.cars);
   const mapBoxState = useAppSelector((state) => state.mapBox);
-
-  console.log('carState', carState);
   
   // State for PersonalInfoForm validation
   const [isPersonalInfoValid, setIsPersonalInfoValid] = useState(false);
@@ -37,7 +35,6 @@ export function useBookingPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoaded(true);
-      console.log('Booking page marked as loaded');
     }, 100); // Small delay to ensure Redux is ready
     
     return () => clearTimeout(timer);
@@ -48,7 +45,6 @@ export function useBookingPage() {
    */
   useEffect(() => {
     if (isLoaded && !selectedCar && car && carId) {
-      console.log('Car not in Redux, setting from URL:', carId);
       dispatch(setSelectedCar(car));
     }
   }, [isLoaded, selectedCar, car, carId, dispatch]);
@@ -60,7 +56,6 @@ export function useBookingPage() {
   const handlePersonalInfoValidationChange = useCallback((isValid: boolean, data?: PersonalInfoData) => {
     setIsPersonalInfoValid(isValid);
     setPersonalInfoData(data ?? null);
-    console.log('PersonalInfo validation:', { isValid, data });
   }, []);
 
   /**
@@ -68,9 +63,7 @@ export function useBookingPage() {
    * Updates booking details in Redux store
    */
   const handleRentalDetailsChange = useCallback((data: Partial<BookingDetails>) => {
-    console.log('Rental details updated:', {data});
     dispatch(setBookingDetails(data));
-    // console.log('Rental details updated:', data);
   }, [dispatch]);
 
   /**
@@ -119,7 +112,6 @@ export function useBookingPage() {
           // (selectedCar?.selfDrive ? bookingDetails.location : true) // Location only required for self-drive cars
         );
         const meetsDuration = isMinimumDurationMet();
-        console.log('test:canProceed', {hasRequiredFields, meetsDuration});
    
         canProceed = hasRequiredFields && meetsDuration;
         break;
@@ -154,7 +146,7 @@ export function useBookingPage() {
     // dispatch(closePaymentModal());
     // dispatch(nextStep()); // Move to completion or confirmation step
     // // Here you would typically save the booking to backend
-    console.log('Payment completed, booking confirmed');
+
   }, [dispatch]);
 
   /**
@@ -242,19 +234,7 @@ export function useBookingPage() {
     // Excess hours are already calculated in the main pricing logic above
     
     const totalPrice = Math.round((rentalPrice + deliveryFee + driverFee + excessHoursPrice) * 100) / 100;
-    
-    // Debug logging
-    console.log('Pricing Calculation Debug:', {
-      durationHours,
-      pricingType,
-      baseRentalPrice: pricingType === '24-hours' ? selectedCar.pricePer24Hours : selectedCar.pricePer12Hours,
-      excessHours,
-      excessHoursPrice,
-      finalRentalPrice: rentalPrice,
-      deliveryFee,
-      driverFee,
-      totalPrice
-    });
+
     
     return {
       rentalPrice,
@@ -309,17 +289,6 @@ export function useBookingPage() {
           ...pricingDetails // Store calculated pricing including deliveryFee
         }));
       }
-
-      console.log('Step 2 data dispatched to Redux',{
-          startDate,
-          endDate,
-          startTime,
-          endTime,
-          location,
-          pickupType,
-        
-      ...pricingDetails // Store calculated pricing including deliveryFee, excessHours, excessHoursPrice
-        });
       
     }
     

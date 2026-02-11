@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Car } from '@/lib/types'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
@@ -28,12 +29,29 @@ export interface BookingDetails {
   excessHoursPrice?: number
 }
 
+interface HoldData {
+  success: boolean
+  carId?: string
+  holdExpiry?: string
+  bookingDetails?: any
+  newBooking?: {
+    startDate: string
+    endDate: string
+    startTime: string
+    endTime: string
+    createdAt: string
+    _id: string
+  }
+  booking?: any
+}
+
 interface BookingState {
   selectedCar: Car | null
   bookingDetails: BookingDetails
   currentStep: number
   isCompleted: boolean
   isPaymentModalOpen: boolean
+  holdData: HoldData | null
 }
 
 const initialState: BookingState = {
@@ -41,7 +59,8 @@ const initialState: BookingState = {
   bookingDetails: {},
   currentStep: 1,
   isCompleted: false,
-  isPaymentModalOpen: false
+  isPaymentModalOpen: false,
+  holdData: null
 }
 
 const bookingSlice = createSlice({
@@ -107,6 +126,14 @@ const bookingSlice = createSlice({
     },
     closePaymentModal: (state) => {
       state.isPaymentModalOpen = false
+    },
+    setHoldData: (state, action: PayloadAction<HoldData>) => {
+      console.log('debug:holdData - setHoldData reducer called with:', action.payload)
+      state.holdData = action.payload
+    },
+    clearHoldData: (state) => {
+      console.log('debug:holdData - clearHoldData reducer called')
+      state.holdData = null
     }
   }
 })
@@ -121,7 +148,9 @@ export const {
   clearBooking,
   resetProgress,
   openPaymentModal,
-  closePaymentModal
+  closePaymentModal,
+  setHoldData,
+  clearHoldData
 } = bookingSlice.actions
 
 export default bookingSlice.reducer

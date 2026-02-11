@@ -41,8 +41,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    console.log("🚀 Initializing Socket.IO connection...");
-    
     // Initialize Socket.IO connection
     const socketInstance = io(apiUrl, {
       transports: ["websocket", "polling"],

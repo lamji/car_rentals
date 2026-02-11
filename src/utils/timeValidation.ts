@@ -216,8 +216,6 @@ export function getEndDateMinDate(startDate: string | undefined): Date | undefin
     return new Date(startDate);
   }
 
-  // If selected date is tomorrow (or any future date), disable today date for end date selection
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  return tomorrow;
+  // If selected date is in the future, the end date must be >= start date
+  return new Date(startDate);
 }

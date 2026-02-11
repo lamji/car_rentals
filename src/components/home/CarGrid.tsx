@@ -62,8 +62,6 @@ export function CarGrid({ filteredCars, detailsHrefFor, radiusList }: CarGridPro
             // Use new booking-based availability check
             const isAvailable = isCarAvailableToday(car.availability?.unavailableDates || []);
             const isOnHold = car.isOnHold;
-            console.log('test:is available', {isAvailable, car, isOnHold});
-
             return (
               <CarAvailabilityCard
                 key={car.id}

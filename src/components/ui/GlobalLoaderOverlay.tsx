@@ -10,7 +10,7 @@ export function GlobalLoaderOverlay() {
 
   return (
     <div
-      className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center"
+      className="fixed inset-0 z-100 bg-black/50 flex items-center justify-center"
       data-testid="global-loader"
       aria-busy="true"
       aria-live="polite"

@@ -39,9 +39,6 @@ export function LayoutContent({ children }: LayoutContentProps) {
     handleSelectGarage,
   } = useHomeContent();
   const pathname = usePathname();
-  const state = useSelector((state: RootState) => state.data.allCars);
-
-  console.log("test state:", state)
 
   /**
    * Initialize Cloudinary configuration
@@ -66,16 +63,11 @@ export function LayoutContent({ children }: LayoutContentProps) {
 
   // Set Mapbox configuration on component mount
   useEffect(() => {
-    console.log("debug-location: Setting Mapbox config");
-    console.log(
-      "debug-location: Token:",
-      process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
-    );
+  
     setConfig({
       token: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
       style: "mapbox://styles/lamjilampago/ckg2ggpzw0r9j19mit7o0fr2n",
     });
-    console.log("debug-location: Config set complete");
   }, [setConfig]);
 
  
@@ -132,7 +124,6 @@ export function LayoutContent({ children }: LayoutContentProps) {
    * setPosition will be use in calculation of the distance
    */
   useEffect(() => {
-    console.log("debug-location: LayoutContent useEffect", { data });
     checkLocationOnce();
   }, [checkLocationOnce, data]);
 

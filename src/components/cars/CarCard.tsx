@@ -14,9 +14,6 @@ export function CarCard(props: { car: Car; href: string }) {
   const car = props.car;
   const { position } = useGeolocation();
 
-  // Simple debug to see if this is being called
-  console.log(`🚗 CarCard: ${car.name}, has position: ${!!position}`);
-
   // Calculate distance from user's location to car's garage
   const distance = position ? calculateDistanceToCar(position, car) : null;
   const distanceText = distance ? formatDistance(distance) : null;

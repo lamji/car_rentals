@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/store";
-import { openConfirmation, closeConfirmation, setConfirming } from "@/lib/slices/confirmationSlice";
+import { openConfirmation, closeConfirmation, setConfirming, getConfirmationCallbacks } from "@/lib/slices/confirmationSlice";
 import type { ConfirmationOptions } from "@/lib/slices/confirmationSlice";
 
 export function useConfirmation() {
@@ -21,23 +21,25 @@ export function useConfirmation() {
   }, [dispatch]);
 
   const confirm = useCallback(async () => {
-    if (!options?.onConfirm) return;
+    const callbacks = getConfirmationCallbacks();
+    if (!callbacks?.onConfirm) return;
 
     try {
       dispatch(setConfirming(true));
-      await options.onConfirm();
+      await callbacks.onConfirm();
       dispatch(closeConfirmation());
     } catch (error) {
       console.error("Confirmation action failed:", error);
     } finally {
       dispatch(setConfirming(false));
     }
-  }, [options, dispatch]);
+  }, [dispatch]);
 
   const cancel = useCallback(() => {
-    options?.onCancel?.();
+    const callbacks = getConfirmationCallbacks();
+    callbacks?.onCancel?.();
     dispatch(closeConfirmation());
-  }, [options, dispatch]);
+  }, [dispatch]);
 
   return {
     isOpen,

@@ -44,7 +44,6 @@ export function useMapboxRoute(mapRef: React.RefObject<mapboxgl.Map | null>) {
    * @param pointB - Ending point coordinates
    */
   const fetchRoute = async (pointA: Point, pointB: Point) => {
-    console.log("test:hooks - Fetching driving route");
     const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${pointA.lng},${pointA.lat};${pointB.lng},${pointB.lat}?access_token=${process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}&geometries=geojson&overview=full&steps=true`;
 
     try {
@@ -52,7 +51,6 @@ export function useMapboxRoute(mapRef: React.RefObject<mapboxgl.Map | null>) {
       const data = await response.json();
 
       if (data.routes && data.routes[0]) {
-        console.log("test:hooks - Route data received");
         setRouteGeometry(data.routes[0].geometry);
         setRouteDetails({
           distance: data.routes[0].distance,
@@ -88,7 +86,7 @@ export function useMapboxRoute(mapRef: React.RefObject<mapboxgl.Map | null>) {
         pointB: pointBData.features[0]?.place_name || "Point B",
       });
 
-      console.log("test:hooks - Location names fetched");
+ 
     } catch (error) {
       console.error("test:hooks - Reverse geocoding failed:", error);
     }
@@ -132,8 +130,6 @@ export function useMapboxRoute(mapRef: React.RefObject<mapboxgl.Map | null>) {
     (pointA: Point, pointB: Point) => {
       if (!mapRef.current) return;
 
-      console.log("test:hooks - Adding Point A and Point B markers");
-
       // Point A - Green marker (start) - Person
       const pointAElement = createMarkerElement("user", "green");
       new mapboxgl.Marker({ element: pointAElement })
@@ -147,8 +143,6 @@ export function useMapboxRoute(mapRef: React.RefObject<mapboxgl.Map | null>) {
         .setLngLat([pointB.lng, pointB.lat])
         .setPopup(new mapboxgl.Popup().setText("🏢 Garage"))
         .addTo(mapRef.current);
-
-      console.log("test:hooks - All markers added");
     },
     [mapRef],
   );
@@ -158,8 +152,6 @@ export function useMapboxRoute(mapRef: React.RefObject<mapboxgl.Map | null>) {
    */
   useEffect(() => {
     if (!mapRef.current || !routeGeometry) return;
-
-    console.log("test:hooks - Adding driving route to map");
 
     // Check if map is loaded and style is ready
     const addRouteToMap = () => {
@@ -199,7 +191,6 @@ export function useMapboxRoute(mapRef: React.RefObject<mapboxgl.Map | null>) {
         },
       });
 
-      console.log("test:hooks - Driving route added successfully");
     };
 
     addRouteToMap();

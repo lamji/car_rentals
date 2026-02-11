@@ -35,8 +35,6 @@ const extractPublicId = (imageUrl: string): string => {
     // Remove file extension for Cloudinary API
     const publicIdWithoutExt = publicId.replace(/\.[^/.]+$/, '');
     
-    console.log('Extracted public ID:', publicIdWithoutExt, 'from URL:', imageUrl);
-    
     return publicIdWithoutExt;
   } catch (error) {
     console.error('Failed to extract public ID from URL:', imageUrl, error);
@@ -53,10 +51,6 @@ export default function useUploadImage(): UseUploadImageReturn {
     preset: presetFromInit, 
     useSigned 
   } = useInitCloudenary()
-
-  console.log("debug-cloudinary: cloudNameFromInit", cloudNameFromInit);
-  console.log("debug-cloudinary: presetFromInit", presetFromInit);
-  console.log("debug-cloudinary: useSigned", useSigned);
 
   const uploadImage = async (file: File): Promise<string> => {
     if (!cloudNameFromInit || !presetFromInit) {
@@ -149,13 +143,11 @@ export default function useUploadImage(): UseUploadImageReturn {
       if (!result.success) {
         // Don't throw error for "not found" cases - it's already deleted
         if (result.message?.includes('not found') || result.message?.includes('already deleted')) {
-          console.log('Image was already deleted or not found in Cloudinary:', publicId);
           return; // Success - image is already gone
         }
         throw new Error(result.message || 'Failed to delete image');
       }
 
-      console.log('Image deleted successfully from Cloudinary:', publicId);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Delete failed';
       
@@ -163,9 +155,7 @@ export default function useUploadImage(): UseUploadImageReturn {
       if (!errorMessage.includes('not found') && !errorMessage.includes('already deleted')) {
         setError(errorMessage);
         throw err;
-      } else {
-        console.log('Image was already deleted or not found:', errorMessage);
-      }
+      } 
     } finally {
       setIsLoading(false);
     }

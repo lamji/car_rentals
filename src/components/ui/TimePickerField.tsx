@@ -55,8 +55,6 @@ export function TimePickerField({
   const [showDropdown, setShowDropdown] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  console.log("tets:label", label)
-
   // Helper function to convert 24-hour time to 12-hour format
   const formatTime12Hour = (time24: string) => {
     if (!time24) return '';
