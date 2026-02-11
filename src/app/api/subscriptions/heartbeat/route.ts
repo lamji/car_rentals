@@ -57,8 +57,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log(`💓 Heartbeat received from: ${subscriptionId}`);
     
     return NextResponse.json({
       success: true,

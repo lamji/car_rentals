@@ -19,8 +19,6 @@ export function Hero({
 }: HeroProps) {
   const dispatch = useDispatch();
 
-  console.log("test:state", state);
-
   /**
    * Handle opening the location modal via Redux
    * @returns {void}

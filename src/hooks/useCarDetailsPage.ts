@@ -144,15 +144,6 @@ export function useCarDetailsPage() {
     totalCharge,
     formattedCharge,
   } = useCalculateRotes({ pointA, pointB });
-
-  console.log(
-    "test:mapbox",
-    mapBoxDistance,
-    mapBoxDistanceText,
-    chargePerKm,
-    totalCharge,
-    formattedCharge,
-  );
   return {
     // State
     showMapModal,

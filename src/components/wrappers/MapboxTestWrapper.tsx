@@ -21,7 +21,6 @@ export function MapboxTestWrapper() {
    */
   const handleClose = () => {
     setIsOpen(false);
-    console.log("MapboxTestModal close requested");
   };
 
   if (!isOpen) return null;

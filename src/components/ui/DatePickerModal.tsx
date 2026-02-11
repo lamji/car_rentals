@@ -63,10 +63,6 @@ export function DatePickerModal({
     
     const days = eachDayOfInterval({ start: startDate, end: endDate });
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    
-    console.log('debug:datepicker - Title:', title);
-    console.log('debug:datepicker - Disabled dates prop:', disabledDates);
-    console.log('debug:datepicker - Current month:', format(currentMonth, 'MMMM yyyy'));
 
     return (
       <div className="w-full">
@@ -87,20 +83,9 @@ export function DatePickerModal({
             const isToday = isSameDay(day, new Date());
             const dayString = format(day, 'yyyy-MM-dd');
             const isDisabledByDates = disabledDates.includes(dayString);
-            const isDisabled = isBefore(day, minDate) || (maxDate && isBefore(maxDate, day)) || isDisabledByDates;
-            
-            // Debug log for dates around the booking period
-            if (dayString >= '2026-02-12' && dayString <= '2026-02-15') {
-              console.log('debug:datepicker - Date', dayString, ':', {
-                isCurrentMonth,
-                isSelected,
-                isToday,
-                isDisabledByDates,
-                isDisabled,
-                isBeforeMinDate: isBefore(day, minDate),
-                isBeforeMaxDate: maxDate ? isBefore(maxDate, day) : false
-              });
-            }
+            // Fix: Use date comparison instead of datetime for minDate check
+            const isBeforeMinDate = isBefore(startOfDay(day), startOfDay(minDate));
+            const isDisabled = isBeforeMinDate || (maxDate && isBefore(maxDate, day)) || isDisabledByDates;
             
             return (
               <button

@@ -78,8 +78,6 @@ export function ImageUpload({
 
       // Notify parent component
       onChange(uploadedUrl);
-
-      console.log('Image uploaded successfully:', uploadedUrl);
     } catch (error) {
       console.error('Upload failed:', error);
       // Reset preview on error

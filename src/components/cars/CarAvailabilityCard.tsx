@@ -21,7 +21,6 @@ export function CarAvailabilityCard({ car, isAvailable, isOnHold, href }: Props)
   const dispatch = useDispatch();
   const router = useRouter();
 
-  console.log("test:car", car);
 
   return (
     <Card className="transition-shadow hover:shadow-lg h-full flex flex-col gap-2 border shadow-sm bg-gray-50 sm:bg-background">

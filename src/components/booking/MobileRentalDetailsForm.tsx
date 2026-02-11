@@ -9,6 +9,7 @@ import { DesktopDateSelection } from './form/DesktopDateSelection';
 import { DesktopTimeSelection } from './form/DesktopTimeSelection';
 import { Truck, CheckCircle, AlertCircle } from "lucide-react";
 import { useBookingDetails } from '../../hooks/useBookingDetails';
+import { useAlerts } from '../../hooks/useAlerts';
 import { formatCurrency } from '../../lib/paymentSummaryHelper';
 import { formatDateToYYYYMMDD } from '../../utils/dateHelpers';
 
@@ -53,9 +54,13 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
     isEndTimeDisabled,
     isStartTimeDisabled,
     isStartTimeConflicting,
-    mapBoxState
+    bookingTracker,
+    handleDataChangeWithValidation,
+    mapBoxState,
+    handleDateClickWithHoldCheck
   } = useBookingDetails(onDataChange)
 
+  const { showErrorAlert } = useAlerts()
 
   return (
     <div className="space-y-6">
@@ -63,8 +68,8 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
       <div className="md:hidden">
         <DateSelection
           bookingDetails={bookingDetails}
-          onStartDateClick={() => setIsStartDatePickerOpen(true)}
-          onEndDateClick={() => setIsEndDatePickerOpen(true)}
+          onStartDateClick={() => handleDateClickWithHoldCheck(() => setIsStartDatePickerOpen(true))}
+          onEndDateClick={() => handleDateClickWithHoldCheck(() => setIsEndDatePickerOpen(true))}
           getDisplayDate={getDisplayDate}
         />
       </div>
@@ -72,10 +77,14 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
         <DesktopDateSelection
           bookingDetails={bookingDetails}
           onStartDateSelect={(date) => {
-            const dateString = formatDateToYYYYMMDD(date);
-            handleDataChange({ startDate: dateString });
+            handleDateClickWithHoldCheck(() => {
+              const dateString = formatDateToYYYYMMDD(date);
+              handleDataChangeWithValidation({ startDate: dateString }, showErrorAlert);
+            });
           }}
-          onEndDateClick={handleEndDateSelect}
+          onEndDateClick={(date) => {
+            handleDateClickWithHoldCheck(() => handleEndDateSelect(date));
+          }}
           getEndDateMinDate={getEndDateMinDate}
         />
       </div>
@@ -91,6 +100,7 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
           isStartTimeDisabled={isStartTimeDisabled}
           isStartTimeConflicting={isStartTimeConflicting}
           formatTimeDisplay={formatTimeDisplay}
+          disabled={!bookingDetails.startDate || !bookingDetails.endDate}
           onStartTimeChange={(time) => handleDataChange({ startTime: time })}
           onEndTimeChange={(time) => handleDataChange({ endTime: time })}
         />
@@ -104,6 +114,7 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
           isEndTimeDisabled={isEndTimeDisabled}
           isStartTimeDisabled={isStartTimeDisabled}
           formatTimeDisplay={formatTimeDisplay}
+          disabled={!bookingDetails.startDate || !bookingDetails.endDate}
           onStartTimeChange={(time) => handleDataChange({ startTime: time })}
           onEndTimeChange={(time) => handleDataChange({ endTime: time })}
         />
@@ -268,7 +279,7 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
         selectedDate={bookingDetails.startDate ? new Date(bookingDetails.startDate) : undefined}
         onDateSelect={(date) => {
           const dateString = formatDateToYYYYMMDD(date);
-          handleDataChange({ startDate: dateString });
+          handleDataChangeWithValidation({ startDate: dateString }, showErrorAlert);
         }}
         title="Select Start Date"
         disabledDates={getUnavailableStartDates()}
@@ -278,11 +289,32 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
         isOpen={isEndDatePickerOpen}
         onClose={() => setIsEndDatePickerOpen(false)}
         selectedDate={bookingDetails.endDate ? new Date(bookingDetails.endDate) : undefined}
-        onDateSelect={handleEndDateSelect}
+        onDateSelect={(date) => {
+          const dateString = formatDateToYYYYMMDD(date);
+          handleDataChangeWithValidation({ endDate: dateString }, showErrorAlert);
+        }}
         title="Select End Date"
         minDate={getEndDateMinDate(bookingDetails.startDate)}
         disabledDates={getUnavailableEndDates()}
       />
+
+      {/* Loading indicator for car hold process */}
+      {bookingTracker.isHoldLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 shadow-2xl max-w-sm mx-4">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <div className="w-12 h-12 border-4 border-blue-200 rounded-full"></div>
+                <div className="absolute top-0 left-0 w-12 h-12 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+              </div>
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Checking Availability</h3>
+                <p className="text-sm text-gray-600">Please wait while we check if the car is available and hold it for you...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div >
   )
 }

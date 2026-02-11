@@ -51,7 +51,6 @@ export function FloatingLocationTestButton() {
   useEffect(() => {
     const info = detectBrowser();
     setBrowserInfo(info);
-    console.log("🔍 Browser detected:", info);
   }, []);
 
   /**
@@ -82,11 +81,9 @@ export function FloatingLocationTestButton() {
    * @returns {void}
    */
   const handleRetryPermission = () => {
-    console.log("🔄 Retrying location permission...");
     resetPermissionState();
     // Small delay to ensure state is reset before requesting again
     setTimeout(() => {
-      console.log("🔄 Requesting permission after reset...");
       requestLocationPermission();
     }, 100);
   };
@@ -97,11 +94,9 @@ export function FloatingLocationTestButton() {
    * @returns {void}
    */
   const handleForceRequest = () => {
-    console.log("🚀 Force requesting location...");
     resetPermissionState();
     // Force a direct getCurrentPosition call
     setTimeout(() => {
-      console.log("🚀 Direct getCurrentPosition call...");
       getCurrentPosition();
     }, 100);
   };
@@ -112,9 +107,7 @@ export function FloatingLocationTestButton() {
    * @returns {void}
    */
   const handleNuclearRequest = () => {
-    console.log("💥 Nuclear location request - bypassing all checks...");
-
-    if (!navigator.geolocation) {
+      if (!navigator.geolocation) {
       console.error("❌ Geolocation not supported");
       return;
     }
@@ -122,7 +115,7 @@ export function FloatingLocationTestButton() {
     // Direct call to browser API
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        console.log("✅ Nuclear request successful:", position);
+
         // Manually update state since we're bypassing the hook
         resetPermissionState();
       },
@@ -143,13 +136,10 @@ export function FloatingLocationTestButton() {
    * @returns {void}
    */
   const handleOpenIOSSettings = () => {
-    console.log("🔧 Attempting to open iOS Settings...");
     const message = getSettingsAccessMessage();
-    console.log("📱", message);
 
     const success = attemptOpenIOSSettings();
     if (!success) {
-      console.log("❌ Could not open Settings automatically");
       // Show iOS guide as fallback
       setShowIOSGuide(true);
     }

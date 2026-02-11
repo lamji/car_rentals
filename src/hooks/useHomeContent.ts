@@ -7,7 +7,6 @@ import {
     useNearestGarage,
 } from "@/lib/api/useNearestGarage";
 import { useCarsFromRedux } from "@/lib/data/cars";
-import type { LocationData } from "@/lib/npm-ready-stack/locationPicker/types";
 import useGetCurrentLocation from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useGetCurrentLocation";
 import useNearestGarageHook from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useNearestGarage";
 import useReverseLocation from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useReveseLocation";
@@ -81,8 +80,7 @@ export function useHomeContent() {
 
 
   const handleLocationSelect = useCallback(
-    async (locationString: string, locationData?: LocationData) => {
-      console.log("Hero - locationData:", locationData);
+    async (locationString: string) => {
       setState({ location: locationString }, { replace: true });
       setIsLocationModalOpen(false);
 
@@ -108,17 +106,8 @@ export function useHomeContent() {
           const [lng, lat] = data.features[0].center;
           const coordinates = { lat, lng };
           
-          console.log("debug-location: Using coordinates from LocationModal for nearest garage search", { locationString, coordinates });
-          
           // Debug: Check car data and coordinates
           const carDataToUse = (stateData?.cars && stateData.cars.length > 0) ? stateData.cars : carsFromRedux;
-          console.log("debug-location: Car data being used", { 
-            stateDataCars: stateData.cars?.length || 0, 
-            fallbackCars: carsFromRedux.length,
-            totalCars: carDataToUse.length,
-            coordinates,
-            radius: 25
-          });
               
           // Use the hook to find nearest garages by coordinates
           const garageResults = await getNearestGarage(carDataToUse, coordinates, 25);
@@ -165,10 +154,10 @@ export function useHomeContent() {
           dispatch(setCurrentAddress(locationString));
           dispatch(setPosition(coordinates));
         } else {
-          console.warn("debug-location: Could not geocode location string", { locationString });
+          // Could not geocode location string
         }
-      } catch (error) {
-        console.error("Error searching nearest garage:", error);
+      } catch {
+        // Error searching nearest garage
       }
     },
     [setState, stateData.cars, getNearestGarage, dispatch, getLocationName, carsFromRedux],
@@ -191,7 +180,6 @@ export function useHomeContent() {
 
   const handleLocationChange = useCallback(
     (value: string) => {
-      console.log("handleLocationChange called with:", value);
       setState({ location: value });
       alert(value); // Testing alert
 
@@ -211,8 +199,8 @@ export function useHomeContent() {
             });
             setNearestGarageResults(results);
             setIsNearestGarageModalOpen(true);
-          } catch (error) {
-            console.error("Error searching nearest garage:", error);
+          } catch {
+            // Error searching nearest garage
           }
         }, 500); // 500ms debounce
 
@@ -234,7 +222,6 @@ export function useHomeContent() {
 
   const handleSelectGarage = useCallback(
     (carId: string) => {
-      console.log("Selected car:", carId);
       setIsNearestGarageModalOpen(false);
 
       // Extract car ID from the listing ID (format: "car-listing-{carId}")
@@ -289,8 +276,7 @@ export function useHomeContent() {
    return cars.filter((car: any) => car.type === selectedCategory);
  }, [selectedCategory, stateData?.allCars, stateData?.nearestGarages]);
 
- console.log("Hero - stateMapBox:", { filteredCars, stateData });
-
+ 
   return {
     // State
     state,

@@ -353,7 +353,6 @@ export function MobileCarDetailsPageContent() {
                     .slice()
                     .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
                     .map((booking) => {
-                      console.log("test:bookings", booking)
                       return (
                       <div
                         key={booking._id}

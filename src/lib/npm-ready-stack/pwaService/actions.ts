@@ -33,8 +33,7 @@ export async function subscribeUser(sub: SerializedPushSubscription, subscriptio
   const id = subscriptionId || sub.endpoint.split('/').pop()?.substring(0, 8) || 'unknown'
   
   subscriptions.set(id, sub)
-  console.log(`📱 Subscription stored with ID: ${id}`)
-  console.log(`📊 Total subscriptions: ${subscriptions.size}`)
+
   
   // In production: await db.subscriptions.create({ data: { id, subscription: sub } })
   return { success: true, subscriptionId: id }
@@ -49,11 +48,9 @@ export async function subscribeUser(sub: SerializedPushSubscription, subscriptio
 export async function unsubscribeUser(subscriptionId?: string): Promise<PushActionResponse> {
   if (subscriptionId) {
     subscriptions.delete(subscriptionId)
-    console.log(`🗑️ Removed subscription: ${subscriptionId}`)
   } else {
     // Clear all if no ID provided
     subscriptions.clear()
-    console.log(`🗑️ Cleared all subscriptions`)
   }
   
   // In production: await db.subscriptions.delete({ where: { id: subscriptionId } })
@@ -75,14 +72,11 @@ export async function sendNotification(message: string, subscriptionId?: string)
     }
     // Use the first available subscription as fallback
     subscriptionId = availableIds[0]
-    console.log(`📱 No target ID specified, using: ${subscriptionId}`)
   }
 
   const targetSubscription = subscriptions.get(subscriptionId)
   if (!targetSubscription) {
     const availableIds = Array.from(subscriptions.keys())
-    console.log(`❌ Subscription not found: ${subscriptionId}`)
-    console.log(`📋 Available subscriptions: ${availableIds.join(', ') || 'none'}`)
     return { 
       success: false, 
       error: `Subscription '${subscriptionId}' not found. Available: ${availableIds.join(', ') || 'none'}` 
@@ -90,8 +84,6 @@ export async function sendNotification(message: string, subscriptionId?: string)
   }
 
   try {
-    console.log(`🎯 Sending to subscription ID: ${subscriptionId}`)
-    console.log(`📱 Target endpoint: ${targetSubscription.endpoint.substring(0, 50)}...`)
     
     await webpush.sendNotification(
       targetSubscription as unknown as webpush.PushSubscription,
@@ -107,10 +99,8 @@ export async function sendNotification(message: string, subscriptionId?: string)
       })
     )
     
-    console.log(`✅ Notification sent successfully to: ${subscriptionId}`)
     return { success: true }
-  } catch (error) {
-    console.error('Error sending push notification:', error)
+  } catch {
     return { success: false, error: 'Failed to send notification' }
   }
 }
@@ -143,8 +133,6 @@ export async function sendNotificationToAll(message: string): Promise<PushAction
     }
   }
 
-  console.log(`📊 Sent to ${sentCount}/${allIds.length} subscriptions`)
-  
   return {
     success: sentCount > 0,
     sentCount,

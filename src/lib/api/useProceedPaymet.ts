@@ -15,31 +15,7 @@
      const timeoutMs = args?.timeoutMs ?? 2000
      const progressIntervalMs = args?.progressIntervalMs ?? 500
 
-     console.log('=== PROCEED PAYMENT (SIMULATED) ===')
-     console.log('Step 1: Selected Car:', selectedCar)
-     console.log('Step 2: Rental Details:', {
-       startDate: bookingDetails.startDate,
-       endDate: bookingDetails.endDate,
-       startTime: bookingDetails.startTime,
-       endTime: bookingDetails.endTime,
-       location: bookingDetails.location,
-       pickupType: bookingDetails.pickupType,
-       rentalPrice: bookingDetails.rentalPrice,
-       deliveryFee: bookingDetails.deliveryFee,
-       totalPrice: bookingDetails.totalPrice,
-       pricingType: bookingDetails.pricingType,
-       durationHours: bookingDetails.durationHours
-     })
-     console.log('Step 3: Personal Info:', {
-       firstName: bookingDetails.firstName,
-       middleName: bookingDetails.middleName,
-       lastName: bookingDetails.lastName,
-       contactNumber: bookingDetails.contactNumber,
-       email: bookingDetails.email,
-       idType: bookingDetails.idType,
-       licenseNumber: bookingDetails.licenseNumber,
-       dataConsent: bookingDetails.dataConsent
-     })
+   
 
      const startedAt = Date.now()
 
@@ -60,7 +36,6 @@
        }, timeoutMs)
      })
 
-     console.log('=== PROCEED PAYMENT (SIMULATED) COMPLETE ===')
      return { ok: true as const }
    }, [bookingDetails, selectedCar])
 
