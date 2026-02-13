@@ -112,17 +112,22 @@ export function useCarDetailsPage() {
     fetchAddress();
   }, [car?.garageLocation?.coordinates, getLocationNameFromPoint]);
 
+  const mapBoxState = useAppSelector((state: any) => state.mapBox);
+
   useEffect(() => {
-    getCurrentLocation();
+    // Only fetch GPS if no position exists in Redux (user hasn't selected a location)
+    if (!mapBoxState.current.position?.lat) {
+      getCurrentLocation();
+    }
   }, []);
 
-  // Memoize pointA and pointB to prevent unnecessary re-renders
+  // Use Redux position (from LocationModal or GPS) as source of truth, fallback to GPS data
   const pointA = useMemo(
     () => ({
-      lat: currentData?.lat || 0,
-      lng: currentData?.lng || 0,
+      lat: mapBoxState.current.position?.lat || currentData?.lat || 0,
+      lng: mapBoxState.current.position?.lng || currentData?.lng || 0,
     }),
-    [currentData?.lat, currentData?.lng],
+    [mapBoxState.current.position?.lat, mapBoxState.current.position?.lng, currentData?.lat, currentData?.lng],
   );
 
   const pointB = useMemo(

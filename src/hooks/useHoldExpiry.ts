@@ -34,11 +34,13 @@ export function useHoldExpiry(options?: HoldExpiryOptions) {
   const { showConfirmation } = useConfirmation();
   const dispatch = useAppDispatch();
   const optionsRef = useRef(options);
+  const socketRef = useRef(socket);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Keep ref up to date
+  // Keep refs up to date
   useEffect(() => {
     optionsRef.current = options;
+    socketRef.current = socket;
   });
 
   // Cleanup interval on unmount
@@ -97,7 +99,8 @@ export function useHoldExpiry(options?: HoldExpiryOptions) {
           stopCountdown();
           // Emit extend_hold to backend to restart the 2-min countdown
           const room = getUserAgentRoom(navigator.userAgent);
-          socket?.emit("extend_hold", { room });
+          console.log("debug:holdExpiry - emitting extend_hold, socket connected:", !!socketRef.current?.connected, "room:", room);
+          socketRef.current?.emit("extend_hold", { room });
           optionsRef.current?.onContinue?.();
         },
         onCancel: async () => {

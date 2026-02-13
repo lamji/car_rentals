@@ -450,7 +450,7 @@ export function MobileCarDetailsPageContent() {
       {/* Floating Continue Booking Button */}
       <div className="fixed bottom-2 left-4 right-4 z-50">
         <Button
-          disabled={car?.isOnHold || !isAvailableToday}
+          disabled={car?.isOnHold }
           onClick={goToBooking}
           size="lg"
           className="w-full h-14 text-base font-semibold bg-primary hover:bg-primary/80 text-white shadow-lg"

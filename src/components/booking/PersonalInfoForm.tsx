@@ -242,35 +242,36 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                     </div>
                   </div>
 
-                  {/* Data Consent Checkbox */}
-                  <CheckboxField
-                    name="dataConsent"
-                    label="I agree to the Data Privacy Consent terms and conditions."
-                    helpText="Click to review and agree to our comprehensive data privacy policy."
-                    checked={formValues.dataConsent || false}
-                    onCheckedChange={handleCheckboxChange}
-                    errors={errors}
-                    required
-                  />
-
-                  {/* Data Privacy Consent Modal */}
-                  <DataPrivacyModal
-                    open={showConsentModal}
-                    onOpenChange={setShowConsentModal}
-                    onScroll={handleScroll}
-                    hasScrolledToBottom={hasScrolledToBottom}
-                    onDecline={() => {
-                      setShowConsentModal(false)
-                      setValue('dataConsent', false)
-                      trigger('dataConsent')
-                    }}
-                    onAgree={() => {
-                      setModalAgreed(true)
-                      setShowConsentModal(false)
-                    }}
-                  />
                 </>
               )}
+
+              {/* Data Consent Checkbox */}
+              <CheckboxField
+                name="dataConsent"
+                label="I agree to the Data Privacy Consent terms and conditions."
+                helpText="Click to review and agree to our comprehensive data privacy policy."
+                checked={formValues.dataConsent || false}
+                onCheckedChange={handleCheckboxChange}
+                errors={errors}
+                required
+              />
+
+              {/* Data Privacy Consent Modal */}
+              <DataPrivacyModal
+                open={showConsentModal}
+                onOpenChange={setShowConsentModal}
+                onScroll={handleScroll}
+                hasScrolledToBottom={hasScrolledToBottom}
+                onDecline={() => {
+                  setShowConsentModal(false)
+                  setValue('dataConsent', false)
+                  trigger('dataConsent')
+                }}
+                onAgree={() => {
+                  setModalAgreed(true)
+                  setShowConsentModal(false)
+                }}
+              />
             </form>
           </CardContent>
         </Card>

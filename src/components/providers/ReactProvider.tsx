@@ -27,13 +27,21 @@ export default function ReactProvider({
   useEffect(() => {
     const token = localStorage.getItem("token");
     setInitialToken(token);
+
+    // Listen for token updates from useGuestToken (custom event)
+    const handleTokenUpdate = () => {
+      const updatedToken = localStorage.getItem("token");
+      setInitialToken(updatedToken);
+    };
+    window.addEventListener("token-updated", handleTokenUpdate);
+    return () => window.removeEventListener("token-updated", handleTokenUpdate);
   }, []);
 
   // Pass initialToken to Providers if needed for authentication
 
 
   return (
-    <Providers bearer={false} queryClient={queryClient}>
+    <Providers bearer={true} queryClient={queryClient} token={initialToken}>
       {children}
     </Providers>
   );

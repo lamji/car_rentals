@@ -42,7 +42,7 @@ export function CarAvailabilityCard({ car, isAvailable, isOnHold, href }: Props)
               variant={isOnHold ? "destructive" : isAvailable ? "default" : "secondary"}
               className={isOnHold ? "bg-red-500 hover:bg-red-600" : isAvailable ? "bg-green-500 hover:bg-green-600" : ""}
             >
-              {isOnHold ? "ON HOLD" : isAvailable ? "Available" : "Unavailable"}
+              {isOnHold ? "ON HOLD" : isAvailable ? "Available" : "Unavailable today"}
             </Badge>
           </div>
         </div>
@@ -98,7 +98,6 @@ export function CarAvailabilityCard({ car, isAvailable, isOnHold, href }: Props)
       <CardFooter className="p-2 pt-0 sm:p-4 sm:pt-0">
         <Button
           className="w-full text-xs sm:text-sm"
-          disabled={!isAvailable || isOnHold}
           onClick={() => {
             dispatch(setCars(car))
             router.push(href)

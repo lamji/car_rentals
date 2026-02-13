@@ -30,6 +30,7 @@ interface TimePickerFieldProps {
   isTimeInPast: (time: string) => boolean
   isEndTimeInPast?: (time: string) => boolean
   isEndTimeDisabled?: (endTime: string, startTime: string | undefined, startDate: string | undefined, endDate: string | undefined) => boolean
+  isStartTimeConflicting?: (startTime: string) => boolean
   startTime?: string
   startDate?: string
   endDate?: string
@@ -48,6 +49,7 @@ export function TimePickerField({
   isTimeInPast,
   isEndTimeInPast,
   isEndTimeDisabled,
+  isStartTimeConflicting,
   startTime,
   startDate,
   endDate
@@ -82,7 +84,7 @@ export function TimePickerField({
 
   return (
     <div 
-      className={`relative ${className}`} 
+      className={`relative ${className} `} 
       ref={containerRef}
       id={id}
       data-testid={dataTestId}
@@ -109,7 +111,7 @@ export function TimePickerField({
         <SelectTrigger
           id={id ? `${id}-trigger` : undefined}
           data-testid={dataTestId ? `${dataTestId}-trigger` : undefined}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="bg-white w-full px-3 py-6 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:primary"
         >
           <SelectValue placeholder="Select time">
           {selectedTime ? formatTime12Hour(selectedTime) : null}
@@ -126,10 +128,11 @@ export function TimePickerField({
             const isPast = isTimeInPast(value);
             const isEndPast = isEndTimeInPast && isEndTimeInPast(value);
             const isEndDisabled = isEndTimeDisabled && isEndTimeDisabled(value, startTime, startDate, endDate);
+            const isConflicting = isStartTimeConflicting ? isStartTimeConflicting(value) : false;
             // Use different validation logic based on whether this is start time or end time picker
             const isDisabled = label?.toLowerCase().includes('end') 
               ? (isEndPast || isEndDisabled) 
-              : isPast;
+              : (isPast || isConflicting);
             const disabledReason = isPast ? '' : isEndPast ? '' : isEndDisabled ? '' : '';
             
             return (

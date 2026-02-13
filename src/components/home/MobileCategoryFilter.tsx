@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useRipple } from "@/hooks/useRipple";
 import type { CarType } from "@/lib/types";
 
 interface Category {
@@ -22,6 +23,7 @@ export function MobileCategoryFilter({
   setSelectedCategory,
 }: MobileCategoryFilterProps) {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const createRipple = useRipple();
 
   return (
     <>
@@ -66,11 +68,12 @@ export function MobileCategoryFilter({
                 {categories.map((cat) => (
                   <button
                     key={cat.value}
-                    onClick={() => {
+                    onClick={(e) => {
+                      createRipple(e);
                       setSelectedCategory(cat.value);
                       setIsFilterModalOpen(false);
                     }}
-                    className={`w-full rounded-lg px-4 py-3 text-left text-sm font-medium transition-colors border ${
+                    className={`relative overflow-hidden w-full rounded-lg px-4 py-3 text-left text-sm font-medium transition-colors border ${
                       selectedCategory === cat.value
                         ? "bg-primary text-primary-foreground border-primary"
                         : "bg-background text-foreground border-gray-300 hover:bg-gray-50"

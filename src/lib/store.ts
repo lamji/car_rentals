@@ -15,6 +15,7 @@ import navigationReducer from './slices/navigationSlice';
 import provincesReducer from './slices/provincesSlice';
 import regionsReducer from './slices/regionsSlice';
 import uiReducer from './slices/uiSlice';
+import authReducer from './slices/authSlice';
 
 // Persist config for address slice only (to cache geocoded addresses)
 const addressPersistConfig = {
@@ -27,7 +28,7 @@ const addressPersistConfig = {
 const bookingPersistConfig = {
   key: 'booking',
   storage,
-  whitelist: ['selectedCar', 'bookingDetails', 'currentStep', 'isPaymentModalOpen'] // Persist all booking data including modal state
+  whitelist: ['selectedCar', 'bookingDetails', 'currentStep', 'isPaymentModalOpen', 'retryPayload'] // Persist all booking data including modal state and retry payload
 };
 
 // Persist config for mapBox slice (to save current address and saved addresses)
@@ -35,6 +36,13 @@ const mapBoxPersistConfig = {
   key: 'mapBox',
   storage,
   whitelist: ['current', 'savedAddresses'] // Persist current address and saved addresses list
+};
+
+// Persist config for auth slice (to save guest token across refreshes)
+const authPersistConfig = {
+  key: 'auth',
+  storage,
+  whitelist: ['guestToken', 'guestId']
 };
 
 // Persist config for data slice (to save nearest garages and cars)
@@ -59,13 +67,14 @@ const rootReducer = combineReducers({
   mapBox: persistReducer(mapBoxPersistConfig, mapBoxReducer),
   navigation: navigationReducer,
   ui: uiReducer,
+  auth: persistReducer(authPersistConfig, authReducer),
 });
 
 // Root persist config (optional - for entire store if needed)
 const rootPersistConfig = {
   key: 'root',
   storage,
-  whitelist: ['address', 'booking', 'mapBox', 'data'] // Persist address cache, booking data, mapBox addresses, and data slice
+  whitelist: ['address', 'booking', 'mapBox', 'data', 'auth'] // Persist address cache, booking data, mapBox addresses, data slice, and auth
 };
 
 export const store = configureStore({

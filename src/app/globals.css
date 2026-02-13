@@ -161,6 +161,14 @@
     }
   }
 
+  /* Ripple effect animation */
+  @keyframes ripple-effect {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+
   /* Mapbox canvas border radius override - desktop only */
   @media (min-width: 768px) {
     [data-testid="car-details-page"] .mapboxgl-canvas {

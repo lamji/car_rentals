@@ -1,12 +1,9 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { useProceedPaymet } from '@/lib/api/useProceedPaymet'
 import { formatCurrency, PaymentSummary } from '@/lib/paymentSummaryHelper'
-// import { hideLoader, showLoader } from '@/lib/slices/globalLoaderSlice'
-import { useAppDispatch, useAppSelector } from '@/lib/store'
-import { CreditCard, Shield, Smartphone } from 'lucide-react'
-import React from 'react'
-import { v4 as uuidv4 } from 'uuid'
+import { usePaymentModal } from '@/hooks/usePaymentModal'
+import { PaymentCheckoutModal } from '@/components/booking/PaymentCheckoutModal'
+import { CreditCard, Loader2, Shield, Smartphone } from 'lucide-react'
 
 interface PaymentModalProps {
   isOpen: boolean
@@ -15,62 +12,18 @@ interface PaymentModalProps {
   onPaymentComplete: () => void
 }
 
-export function PaymentModal({ isOpen, onClose, paymentSummary, onPaymentComplete }: PaymentModalProps) {
-  const dispatch = useAppDispatch()
-  const { proceedPayment } = useProceedPaymet()
-  const [isProcessing, setIsProcessing] = React.useState(false)
-  const state = useAppSelector((state) => state.booking)
-  const activeCars = useAppSelector((state) => state.data.cars)
-
+export function PaymentModal({ isOpen, onClose, paymentSummary }: PaymentModalProps) {
+  const { handleGcashPayment, isProcessing, checkoutUrl, isCheckoutOpen, closeCheckout } = usePaymentModal()
 
   if (!isOpen) return null
 
-  const handleGcashPayment = async () => {
-    if (isProcessing) return
-    // setIsProcessing(true)
-    // dispatch(showLoader('Processing payment...'))
-
-    // try {
-    //   await proceedPayment({ timeoutMs: 2000, progressInterv`alMs: 500 })
-    //   onPaymentComplete()
-    // } finally {
-    //   dispatch(hideLoader())
-    //   setIsProcessing(false)
-    // }
-    const payload = {
-      bookingDetails: state.bookingDetails,
-      selectedCar: activeCars,
-      userId: uuidv4(),
-      bookingId: `BK-${Date.now().toString(36).toUpperCase()}`,
-      paymentStatus:"pending"
-    }
-    const paymongoPayload = {
-      "amount": 200,
-      "description": "Car Rental Payment",
-      "returnUrl": "https://car-rentals-seven-gamma.vercel.app/",
-      "billing": {
-        "name": "Jick test",
-        "email": "lampagojick5@gmail.com",
-        "phone": "09206502183",
-        "address": {
-          "line1": "line 1",
-          "city": "city",
-          "state": "state",
-          "postal_code": "6006",
-          "country": "PH"
-        }
-      },
-      metadata: {
-       payload
-      }
-    }
-    console.log("testDAtaState", {
-     payload,
-     paymongoPayload
-    })
-  }
-
   return (
+    <>
+    <PaymentCheckoutModal
+      isOpen={isCheckoutOpen}
+      checkoutUrl={checkoutUrl}
+      onClose={closeCheckout}
+    />
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="payment-modal">
       <div className="bg-white rounded-lg max-w-md w-full mx-4 max-h-[90vh] flex flex-col">
         <Card className="p-0 py-6 shadow-none border-none flex-1 overflow-y-auto">
@@ -165,12 +118,20 @@ export function PaymentModal({ isOpen, onClose, paymentSummary, onPaymentComplet
               data-testid="complete-payment-button"
               disabled={isProcessing}
             >
-              Proceed to Payment
+              {isProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                "Proceed to Payment"
+              )}
             </Button>
           </div>
         </div>
       </div>
     </div>
+    </>
   )
 }
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { NearestGarageModal } from "@/components/location/NearestGarageModal";
@@ -21,6 +22,9 @@ import { closeLocationModal } from "../../lib/slices/uiSlice";
 import { HeaderWithLocation } from "./HeaderWithLocation";
 import useGetCars from "@/lib/api/useGetCars";
 import { setAllCars } from "@/lib/slices/data";
+import { useRootHoldExpiry } from "@/hooks/useRootHoldExpiry";
+import useGuestToken from "@/lib/api/useGuestToken";
+import { setGuestAuth } from "@/lib/slices/authSlice";
 
 interface LayoutContentProps {
   children: React.ReactNode;
@@ -31,6 +35,28 @@ export function LayoutContent({ children }: LayoutContentProps) {
   const { setConfig } = useInitConfig();
   const { init: initializedCloudinary } = useInitCloudenary()
   const { checkLocationOnce } = useLocationPermission();
+  useRootHoldExpiry();
+
+  // Fetch guest token on app load if not logged in and no token exists
+  const guestToken = useSelector((state: RootState) => state.auth.guestToken);
+  const { getGuestToken } = useGuestToken();
+
+  useEffect(() => {
+    if (guestToken) return; // Already have a token
+    const fetchToken = async () => {
+      try {
+        const response: any = await getGuestToken({});
+        if (response?.success && response?.token && response?.guestId) {
+          dispatch(setGuestAuth({ token: response.token, guestId: response.guestId }));
+          console.log("debug:auth - guest token acquired");
+        }
+      } catch (error) {
+        console.error("debug:auth - failed to get guest token:", error);
+      }
+    };
+    fetchToken();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guestToken]);
   const {
     handleLocationSelect,
     isNearestGarageModalOpen,

@@ -25,6 +25,7 @@ interface DesktopTimeSelectionProps {
     startDate: string | undefined,
     endDate: string | undefined
   ) => boolean;
+  isStartTimeConflicting?: (startTime: string) => boolean;
   formatTimeDisplay: (time: string) => string;
   disabled?: boolean;
   onStartTimeChange: (time: string) => void;
@@ -38,6 +39,7 @@ export function DesktopTimeSelection({
   isEndTimeInPast,
   isEndTimeDisabled,
   isStartTimeDisabled,
+  isStartTimeConflicting,
   formatTimeDisplay,
   disabled = false,
   onStartTimeChange,
@@ -53,6 +55,7 @@ export function DesktopTimeSelection({
           icon={Clock}
           timeOptions={generateTimeOptions()}
           isTimeInPast={isTimeInPast}
+          isStartTimeConflicting={isStartTimeConflicting}
           disabled={disabled}
         />
         {bookingDetails.startDate && bookingDetails.startTime && isTimeInPast(bookingDetails.startTime) && (
