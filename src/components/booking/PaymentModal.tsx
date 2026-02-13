@@ -42,10 +42,22 @@ export function PaymentModal({ isOpen, onClose, paymentSummary }: PaymentModalPr
                   <span className="text-gray-600">Rental Cost</span>
                   <span className="font-medium">{formatCurrency(paymentSummary.rentalCost)}</span>
                 </div>
-                {paymentSummary.deliveryFee > 0 && (
+                {Number(paymentSummary.deliveryFee) > 0 && (
                   <div className="flex justify-between" data-testid="delivery-fee-row">
                     <span className="text-gray-600">Delivery Fee</span>
-                    <span className="font-medium">{formatCurrency(paymentSummary.deliveryFee)}</span>
+                    <span className="font-medium">{formatCurrency(paymentSummary.deliveryFee || 0)}</span>
+                  </div>
+                )}
+                {Number(paymentSummary.driverFee) > 0 && (
+                  <div className="flex justify-between" data-testid="driver-fee-row">
+                    <span className="text-gray-600">Driver Fee</span>
+                    <span className="font-medium">{formatCurrency(paymentSummary.driverFee)}</span>
+                  </div>
+                )}
+                {Number(paymentSummary.excessHoursPrice) > 0 && (
+                  <div className="flex justify-between" data-testid="excess-hours-row">
+                    <span className="text-gray-600">Excess Hours ({paymentSummary.excessHours || 0}h)</span>
+                    <span className="font-medium">{formatCurrency(paymentSummary.excessHoursPrice)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-semibold pt-2 border-t" data-testid="total-amount-row">
@@ -100,6 +112,15 @@ export function PaymentModal({ isOpen, onClose, paymentSummary }: PaymentModalPr
                   <p className="text-sm text-green-600 font-medium">Down Payment Required</p>
                   <p className="text-2xl font-bold text-green-800">{formatCurrency(paymentSummary.downPaymentRequired)}</p>
                   <p className="text-xs text-green-600 mt-1">20% of total rental cost</p>
+                </div>
+              </div>
+
+              {/* Refund Policy Info */}
+              <div className="bg-amber-50 p-4 rounded-lg border border-amber-200" data-testid="refund-policy-section">
+                <div className="space-y-2" data-testid="refund-policy-content">
+                  <p className="text-xs font-medium text-amber-800">Refund Policy:</p>
+                  <p className="text-xs text-amber-700">• No refund if client cancels after booking approval</p>
+                  <p className="text-xs text-amber-700">• Auto-refund if owner disapproves the booking</p>
                 </div>
               </div>
             </div>

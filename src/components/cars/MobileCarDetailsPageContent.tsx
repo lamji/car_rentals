@@ -238,6 +238,13 @@ export function MobileCarDetailsPageContent() {
         {/* Divider */}
         <div className="w-full h-px bg-gray-200 mb-4"></div>
 
+        {/* Minimum Booking Info */}
+        <div className="bg-amber-50 border border-amber-200 rounded-md px-3 py-2 mb-4">
+          <p className="text-xs text-amber-800 leading-relaxed">
+            <span className="font-semibold">Minimum Booking:</span> 12 hours. Additional hours will be charged at the hourly rate if exceeded.
+          </p>
+        </div>
+
         {/* Three Boxes */}
         <div className="flex gap-3 w-full">
           {/* Box 1 - Per Hour */}
@@ -411,9 +418,11 @@ export function MobileCarDetailsPageContent() {
           );
         })()}
 
+      
+
         {/* Owner Information */}
-        <div className="grow my-4 w-full">
-          <h3 className="text-gray-900 font-semibold text-sm mb-3">
+        <div className="grow my-0 w-full">
+          <h3 className="text-gray-900 font-semibold text-sm mb-0">
             Owner Information
           </h3>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -445,8 +454,33 @@ export function MobileCarDetailsPageContent() {
             </div>
           </div>
         </div>
+          {/* Booking Information */}
+        <div className="px-0 mb-20 mt-2">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div className="flex items-start gap-2">
+              <div className="bg-amber-100 rounded-full p-1 mt-0.5">
+                <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-amber-900 mb-2 text-sm">Booking Information</h4>
+                <ul className="text-xs text-amber-800 space-y-1">
+                  {car?.selfDrive && (
+                    <>
+                      <li>• Self-drive requires valid driver&apos;s license verification</li>
+                      <li>• Screenshots from LTO portal may be required for verification</li>
+                    </>
+                  )}
+                  <li>• Once booking is approved, no refund upon client cancellation</li>
+                  <li>• If booking is rejected by the owner, an automatic refund will be processed</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
+      
       {/* Floating Continue Booking Button */}
       <div className="fixed bottom-2 left-4 right-4 z-50">
         <Button

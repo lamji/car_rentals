@@ -22,6 +22,7 @@ export interface BookingDetails {
   // Pricing calculations from Step 2
   rentalPrice?: number
   deliveryFee?: number
+  driverFee?: number
   totalPrice?: number
   pricingType?: 'hourly' | '12-hours' | '24-hours' | 'daily'
   durationHours?: number

@@ -128,8 +128,10 @@ export function usePaymentModal() {
       console.log("debug:payment - hold cleared, booking is now permanent");
 
       // Step 3: Build PayMongo GCash payload
+      const totalPrice = state.bookingDetails.totalPrice || 200;
+      const downPaymentAmount = Math.round(totalPrice * 0.2 * 100) / 100; // 20% down payment
       const paymongoPayload = {
-        amount: state.bookingDetails.totalPrice || 200,
+        amount: downPaymentAmount,
         description: "Car Rental Payment",
         returnUrl: `${window.location.origin}/payment/waiting?bookingId=${encodeURIComponent(payload.bookingId)}`,
         billing: {

@@ -125,18 +125,23 @@ export function CarDetailsPageContent() {
           <h3 className="text-lg font-bold text-gray-900 mt-3">Rates</h3>
           <h3 className="text-lg font-bold text-gray-900 mt-3"></h3>
           <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <div className="bg-amber-50 border border-amber-200 rounded-md px-3 py-2 mb-4">
+              <p className="text-sm text-amber-800">
+                <span className="font-semibold">Minimum Booking:</span> 12 hours. Additional hours will be charged at the hourly rate if exceeded.
+              </p>
+            </div>
             <div className="flex flex-row items-center mb-5 justify-between gap-2">
               <div className="text-lg font-bold text-gray-900 flex items-center gap-2 bg-green-100/50 rounded-lg px-3 py-2 flex-1 border border-green-300">
                 <div className="bg-primary rounded p-1"><CreditCard className="h-5 w-5 text-white" /></div>
-                ₱{car.pricePerHour?.toLocaleString() || '0'}/hr
+                ₱{car.pricePerHour?.toLocaleString() || '0'} per hour
               </div>
               <div className="text-lg font-bold text-gray-900 flex items-center gap-2 bg-green-100/50 rounded-lg px-3 py-2 flex-1 border border-green-300">
                 <div className="bg-primary rounded p-1"><CreditCard className="h-5 w-5 text-white" /></div>
-                ₱{car.pricePer12Hours?.toLocaleString() || '0'}/12hr
+                ₱{car.pricePer12Hours?.toLocaleString() || '0'} per 12hr
               </div>
               <div className="text-lg font-bold text-gray-900 flex items-center gap-2 bg-green-100/50 rounded-lg px-3 py-2 flex-1 border border-green-300">
                 <div className="bg-primary rounded p-1"><CreditCard className="h-5 w-5 text-white" /></div>
-                ₱{car.pricePer24Hours?.toLocaleString() || '0'}/24hr
+                ₱{car.pricePer24Hours?.toLocaleString() || '0'} per 24hr
               </div>
             </div>
             <div className="flex flex-col space-y-3">
@@ -253,6 +258,8 @@ export function CarDetailsPageContent() {
                       <li>• Screenshots from LTO portal may be required for verification</li>
                     </>
                   )}
+                  <li>• Once booking is approved, no refund upon client cancellation</li>
+                  <li>• If booking is rejected by the owner, an automatic refund will be processed</li>
                 </ul>
               </div>
             </div>
