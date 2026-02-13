@@ -11,6 +11,7 @@ import useGetCurrentLocation from "@/lib/npm-ready-stack/mapboxService/bl/hooks/
 import useNearestGarageHook from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useNearestGarage";
 import useReverseLocation from "@/lib/npm-ready-stack/mapboxService/bl/hooks/useReveseLocation";
 import { setCurrentAddress, setPosition } from "@/lib/slices/mapBoxSlice";
+import { setCars, setNearestGarage } from "@/lib/slices/data";
 import type { CarType } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -153,6 +154,26 @@ export function useHomeContent() {
           // Update the Redux address and location
           dispatch(setCurrentAddress(locationString));
           dispatch(setPosition(coordinates));
+
+          // Recalculate nearest garages with updated distanceText for Redux
+          const updatedGarages = await Promise.all(garageResults.map(async (garage) => {
+            const readableAddress = await getLocationName(garage.lat, garage.lng);
+            return {
+              ...garage,
+              address: readableAddress,
+              distanceText: garage.distanceText,
+              carData: {
+                ...garage.carData,
+                garageAddress: readableAddress,
+                distanceText: garage.distanceText,
+                garageLocation: {
+                  ...garage.carData.garageLocation,
+                  address: readableAddress,
+                }
+              }
+            };
+          }));
+          dispatch(setNearestGarage(updatedGarages));
         } else {
           // Could not geocode location string
         }
@@ -227,10 +248,17 @@ export function useHomeContent() {
       // Extract car ID from the listing ID (format: "car-listing-{carId}")
       const actualCarId = carId.replace("car-listing-", "");
 
+      // Find the car data from nearestGarages and set it in Redux
+      const nearestGarages = Array.isArray(stateData?.nearestGarages) ? stateData.nearestGarages : [];
+      const selectedGarage = nearestGarages.find((g: any) => g.carData?.id === actualCarId);
+      if (selectedGarage?.carData) {
+        dispatch(setCars(selectedGarage.carData));
+      }
+
       // Redirect to car details page
       router.push(`/cars/${actualCarId}`);
     },
-    [router],
+    [router, stateData?.nearestGarages, dispatch],
   );
 
   const detailsHrefFor = useCallback(
@@ -266,15 +294,20 @@ export function useHomeContent() {
    // Extract car data from nearest garages or use empty array as fallback
    const nearestGarages = Array.isArray(stateData?.nearestGarages) ? stateData?.nearestGarages : [];
    const allCars = Array.isArray(stateData?.allCars) ? stateData?.allCars : [];
+   const hasUserLocation = !!stateMapBox.current.position?.lat;
 
+   // If user has a location set (GPS or LocationModal), only show nearby garages
+   // If no location set, show all cars as fallback
    const cars =
      nearestGarages?.length > 0
        ? nearestGarages?.map((garage: any) => garage.carData)
-       : allCars?.map((car: any) => car)
+       : hasUserLocation
+         ? []
+         : allCars?.map((car: any) => car)
 
    if (selectedCategory === "all") return cars;
    return cars.filter((car: any) => car.type === selectedCategory);
- }, [selectedCategory, stateData?.allCars, stateData?.nearestGarages]);
+ }, [selectedCategory, stateData?.allCars, stateData?.nearestGarages, stateMapBox]);
 
  
   return {

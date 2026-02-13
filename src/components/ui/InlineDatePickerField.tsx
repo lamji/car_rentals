@@ -11,10 +11,12 @@ interface InlineDatePickerFieldProps {
   onDateSelect: (date: Date) => void
   disabled?: boolean
   minDate?: Date
+  disabledDates?: Date[]
   icon?: LucideIcon
   className?: string
   id?: string
   'data-testid'?: string
+  onOpen?: (openCalendar: () => void) => void
 }
 
 export function InlineDatePickerField({ 
@@ -23,10 +25,12 @@ export function InlineDatePickerField({
   onDateSelect, 
   disabled = false,
   minDate,
+  disabledDates = [],
   icon: Icon = Calendar,
   className = "",
   id,
-  'data-testid': dataTestId
+  'data-testid': dataTestId,
+  onOpen
 }: InlineDatePickerFieldProps) {
   const [showCalendar, setShowCalendar] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(selectedDate || new Date())
@@ -65,7 +69,9 @@ export function InlineDatePickerField({
       const isSelected = selectedDate && isSameDay(day, selectedDate)
       const isCurrentMonth = isSameMonth(day, currentMonth)
       const isTodayDate = isToday(day)
-      const isDisabled = isBefore(day, minDate || startOfDay(new Date()))
+      const isDateBlocked = disabledDates.some((d) => isSameDay(day, d))
+      const normalizedMinDate = minDate ? startOfDay(minDate) : startOfDay(new Date())
+      const isDisabled = isBefore(day, normalizedMinDate) || isDateBlocked
 
       return (
         <button
@@ -117,7 +123,18 @@ export function InlineDatePickerField({
         </label>
       )}
       <button
-        onClick={() => !disabled && setShowCalendar(!showCalendar)}
+        onClick={() => {
+          if (disabled) return;
+          if (showCalendar) {
+            setShowCalendar(false);
+            return;
+          }
+          if (onOpen) {
+            onOpen(() => setShowCalendar(true));
+          } else {
+            setShowCalendar(true);
+          }
+        }}
         disabled={disabled}
         className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-left flex items-center justify-between hover:border-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         id={id ? `${id}-button` : undefined}

@@ -2,6 +2,7 @@
 import { usePostData } from "plugandplay-react-query-hooks";
 import { useDispatch } from "react-redux";
 import { setHoldData, clearHoldData } from "@/lib/slices/bookingSlice";
+import { showAlert } from "@/lib/slices/alertSlice";
 import { useConfirmation } from "@/hooks/useConfirmation";
 import useReleaseHold from "./useReleaseHold";
 
@@ -16,7 +17,6 @@ export default function useHoldCar({ id }: { id: string }) {
     endpoint: `/api/cars/hold-date/${id}`,
     // invalidateQueryKey: ["users", "list"],
     axiosConfig: {
-      headers: { Authorization: "Bearer token123" },
       timeout: 5000,
     },
   options: {
@@ -73,7 +73,26 @@ export default function useHoldCar({ id }: { id: string }) {
     return transformedData;  // Return the transformed data
   },
   onError: (error:any) => {
-    console.error("Error creating user:", error);
+    console.error("debug:holdData - hold car error:", error);
+
+    const apiData = error?.response?.data;
+    const requestedDates = apiData?.data?.requestedDates;
+    let errorTitle = "Hold Failed";
+    let errorMessage = error?.message || "Unable to hold the car. Please try again.";
+
+    if (apiData?.message === "Date is unavailable" && requestedDates) {
+      errorTitle = "Date Unavailable";
+      errorMessage = `The selected dates (${requestedDates.startDate} ${requestedDates.startTime} to ${requestedDates.endDate} ${requestedDates.endTime}) are already booked. Please choose different dates.`;
+    } else if (apiData?.message) {
+      errorMessage = apiData.message;
+    }
+
+    dispatch(showAlert({
+      type: "error",
+      title: errorTitle,
+      message: errorMessage,
+      duration: 8000,
+    }));
   },
 },
   });

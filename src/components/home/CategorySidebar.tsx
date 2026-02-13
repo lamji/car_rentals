@@ -1,5 +1,6 @@
 "use client";
 
+import { useRipple } from "@/hooks/useRipple";
 import type { CarType } from "@/lib/types";
 
 interface Category {
@@ -18,6 +19,7 @@ export function CategorySidebar({
   selectedCategory,
   setSelectedCategory,
 }: CategorySidebarProps) {
+  const createRipple = useRipple();
   return (
     <div className="lg:col-span-1 lg:border-r-4 lg:border-r-border lg:pr-8" data-testid="category-sidebar">
       {/* Desktop header - hidden on mobile */}
@@ -35,11 +37,11 @@ export function CategorySidebar({
           {categories.map((cat) => (
             <button
               key={cat.value}
-              onClick={() => setSelectedCategory(cat.value)}
+              onClick={(e) => { createRipple(e); setSelectedCategory(cat.value); }}
               data-testid={`category-filter-${cat.value}`}
               data-category-value={cat.value}
               data-selected={selectedCategory === cat.value}
-              className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors border ${
+              className={`relative overflow-hidden w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors border ${
                 selectedCategory === cat.value
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-background text-foreground border-gray-300 hover:bg-gray-50"

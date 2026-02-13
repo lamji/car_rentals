@@ -142,8 +142,8 @@ export default function PaymentSuccessPage() {
           </Button>
           
           <Button asChild variant="ghost" className="w-full">
-            <Link href="/payment/test">
-              Test Another Payment
+            <Link href="/cars">
+              Browse More Cars
             </Link>
           </Button>
         </div>

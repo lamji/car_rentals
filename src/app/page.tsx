@@ -131,6 +131,7 @@ function HomeContent() {
               filteredCars={filteredCars}
               detailsHrefFor={detailsHrefFor}
               radiusList={radiusList}
+              selectedCategory={selectedCategory}
               data-testid="car-grid-wrapper"
             />
           </div>

@@ -11,13 +11,19 @@ interface DesktopDateSelectionProps {
   onStartDateSelect: (date: Date) => void;
   onEndDateClick: (date: Date) => void;
   getEndDateMinDate: (startDate?: string) => Date | undefined;
+  disabledStartDates?: string[];
+  disabledEndDates?: string[];
+  onOpen?: (openCalendar: () => void) => void;
 }
 
 export function DesktopDateSelection({ 
   bookingDetails, 
   onStartDateSelect, 
   onEndDateClick, 
-  getEndDateMinDate
+  getEndDateMinDate,
+  disabledStartDates = [],
+  disabledEndDates = [],
+  onOpen,
 }: DesktopDateSelectionProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -25,7 +31,9 @@ export function DesktopDateSelection({
         label="Start Date"
         selectedDate={bookingDetails.startDate ? new Date(bookingDetails.startDate) : undefined}
         onDateSelect={onStartDateSelect}
+        disabledDates={disabledStartDates.map((d) => new Date(d))}
         icon={Calendar}
+        onOpen={onOpen}
       />
 
       <InlineDatePickerField
@@ -34,7 +42,9 @@ export function DesktopDateSelection({
         onDateSelect={onEndDateClick}
         disabled={!bookingDetails.startDate}
         minDate={getEndDateMinDate(bookingDetails.startDate)}
+        disabledDates={disabledEndDates.map((d) => new Date(d))}
         icon={Calendar}
+        onOpen={onOpen}
       />
     </div>
   );

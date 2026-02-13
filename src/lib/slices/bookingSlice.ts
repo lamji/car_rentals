@@ -57,6 +57,7 @@ interface BookingState {
   isCompleted: boolean
   isPaymentModalOpen: boolean
   holdData: HoldData | null
+  retryPayload: any | null
 }
 
 const initialState: BookingState = {
@@ -65,7 +66,8 @@ const initialState: BookingState = {
   currentStep: 1,
   isCompleted: false,
   isPaymentModalOpen: false,
-  holdData: null
+  holdData: null,
+  retryPayload: null
 }
 
 const bookingSlice = createSlice({
@@ -84,6 +86,11 @@ const bookingSlice = createSlice({
       
       state.selectedCar = action.payload
       state.isCompleted = false
+      
+      // Set default pickup type if not already set
+      if (!state.bookingDetails.pickupType) {
+        state.bookingDetails.pickupType = 'pickup'
+      }
     },
     setBookingDetails: (state, action: PayloadAction<Partial<BookingDetails>>) => {
       state.bookingDetails = { ...state.bookingDetails, ...action.payload }
@@ -121,6 +128,7 @@ const bookingSlice = createSlice({
       state.bookingDetails = {}
       state.currentStep = 1
       state.isCompleted = false
+      state.isPaymentModalOpen = false
     },
     resetProgress: (state) => {
       state.currentStep = 1
@@ -139,6 +147,12 @@ const bookingSlice = createSlice({
     clearHoldData: (state) => {
       console.log('debug:holdData - clearHoldData reducer called')
       state.holdData = null
+    },
+    setRetryPayload: (state, action: PayloadAction<any>) => {
+      state.retryPayload = action.payload
+    },
+    clearRetryPayload: (state) => {
+      state.retryPayload = null
     }
   }
 })
@@ -155,7 +169,9 @@ export const {
   openPaymentModal,
   closePaymentModal,
   setHoldData,
-  clearHoldData
+  clearHoldData,
+  setRetryPayload,
+  clearRetryPayload
 } = bookingSlice.actions
 
 export default bookingSlice.reducer

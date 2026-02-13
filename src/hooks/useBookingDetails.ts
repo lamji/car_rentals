@@ -4,8 +4,6 @@ import { BookingDetails, clearHoldData } from "@/lib/slices/bookingSlice";
 import { useAppSelector, useAppDispatch } from "@/lib/store";
 import { useCallback, useState } from "react";
 import { useConfirmation } from "@/hooks/useConfirmation";
-import useReleaseHold from "@/lib/api/useReleaseHold";
-import { useHoldExpiry } from "@/hooks/useHoldExpiry";
 import { formatDateToYYYYMMDD } from "../utils/dateHelpers";
 import {
   formatTimeDisplay,
@@ -45,27 +43,11 @@ export function useBookingDetails(
   const holdData = useAppSelector((state) => state.booking.holdData);
   const dispatch = useAppDispatch();
   const { showConfirmation } = useConfirmation();
-  const { handleReleaseHold } = useReleaseHold({ id: selectedCar?._id || '' });
 
   console.log('debug:holdData - current holdData in hook:', holdData);
 
-  // Listen for hold expiry/warning socket events
-  useHoldExpiry({
-    onExpired: () => {
-      console.log('debug:holdExpiry - hold expired, clearing booking fields');
-      onDataChange?.({
-        startDate: undefined,
-        endDate: undefined,
-        startTime: undefined,
-        endTime: undefined,
-      });
-    },
-    onContinue: () => {
-      console.log('debug:holdExpiry - user chose to continue booking');
-    },
-    releaseHold: handleReleaseHold,
-    bookingId: holdData?.newBooking?._id,
-  });
+  // Hold expiry/warning socket events are now handled globally in LayoutContent
+  // via useRootHoldExpiry hook, so they work even on the payment page.
 
   // Use custom hook for booking change tracking
   const bookingTracker = useBookingChangeTracker(
@@ -85,33 +67,33 @@ export function useBookingDetails(
     [onDataChange],
   );
 
-  // Handle date click with hold check - releases hold if user wants to change dates
+  // Handle date click with hold check - warns user before changing dates
+  // Does NOT release the hold eagerly — the server replaces the old hold
+  // atomically when the new hold succeeds via startHoldCountdown.
+  // If the new hold fails, the old hold remains protected on the server.
   const handleDateClickWithHoldCheck = useCallback((openDatePicker: () => void) => {
     console.log('debug:holdData - handleDateClickWithHoldCheck called, holdData:', holdData);
     if (holdData?.success && holdData.newBooking) {
       showConfirmation({
         title: "Change Dates?",
-        message: "You currently have a car held for your selected dates. Changing dates will release the current hold. Do you want to continue?",
+        message: "You currently have a car held for your selected dates. Changing dates will replace the current hold once new dates are confirmed. Do you want to continue?",
         confirmText: "Yes, Change Dates",
         cancelText: "Keep Current Dates",
         variant: "destructive",
-        onConfirm: async () => {
-          try {
-            if (holdData.newBooking?._id) {
-              await handleReleaseHold(holdData.newBooking._id);
-            }
-          } catch (error) {
-            console.error('debug:holdData - Error releasing hold:', error);
-          } finally {
-            dispatch(clearHoldData());
-            handleDataChange({
-              startDate: undefined,
-              endDate: undefined,
-              startTime: undefined,
-              endTime: undefined,
-            });
-            openDatePicker();
-          }
+        onConfirm: () => {
+          // Clear local hold state and dates, but do NOT release on server.
+          // The server will atomically replace the old hold when the new
+          // hold request succeeds (via clearHoldCountdown in startHoldCountdown).
+          // If the new hold fails, the old hold's server-side countdown
+          // keeps the dates protected until it expires.
+          dispatch(clearHoldData());
+          handleDataChange({
+            startDate: undefined,
+            endDate: undefined,
+            startTime: undefined,
+            endTime: undefined,
+          });
+          openDatePicker();
         },
         onCancel: () => {
           // Do nothing, keep current dates
@@ -120,7 +102,7 @@ export function useBookingDetails(
     } else {
       openDatePicker();
     }
-  }, [holdData, showConfirmation, handleReleaseHold, dispatch, handleDataChange]);
+  }, [holdData, showConfirmation, dispatch, handleDataChange]);
 
   // Helper function to check if a time is in the past for today's booking
   const isTimeInPast = useCallback(

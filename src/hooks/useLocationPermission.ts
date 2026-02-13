@@ -128,9 +128,14 @@ export function useLocationPermission() {
     // Only run if not loading and not already checked
     if (!loading && !locationCheckRef.current) {
       locationCheckRef.current = true; // Mark as checked
-      checkLocationPermission();
+      // Skip GPS if user already has a position (e.g. from LocationModal or persisted state)
+      if (currentPosition) {
+        recalculateNearestGarages();
+      } else {
+        checkLocationPermission();
+      }
     }
-  }, [loading, checkLocationPermission, carsFromRedux]);
+  }, [loading, checkLocationPermission, currentPosition, recalculateNearestGarages, carsFromRedux]);
 
   return {
     checkLocationOnce,

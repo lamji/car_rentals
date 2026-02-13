@@ -181,23 +181,31 @@ export function usePersonalInfoForm({ onValidationChange }: UsePersonalInfoFormP
     // Only pass form data if all required fields have values
     const requiresId = selectedCar?.selfDrive
 
-    const completeData = formValues.firstName &&
+    const hasBaseFields = formValues.firstName &&
       formValues.lastName &&
       formValues.contactNumber &&
       formValues.email &&
-      formValues.dataConsent &&
-      (!requiresId || (formValues.licenseNumber && formValues.idType)) ? {
-      firstName: formValues.firstName,
+      formValues.dataConsent
+
+    const hasSelfDriveFields = !requiresId || (
+      formValues.licenseNumber &&
+      formValues.idType &&
+      formValues.licenseImage &&
+      formValues.ltoPortalScreenshot
+    )
+
+    const completeData = hasBaseFields && hasSelfDriveFields ? {
+      firstName: formValues.firstName as string,
       middleName: formValues.middleName || '',
-      lastName: formValues.lastName,
-      contactNumber: formValues.contactNumber,
-      email: formValues.email,
+      lastName: formValues.lastName as string,
+      contactNumber: formValues.contactNumber as string,
+      email: formValues.email as string,
       licenseNumber: formValues.licenseNumber || '',
       idType: formValues.idType || '',
-      dataConsent: formValues.dataConsent
+      dataConsent: !!formValues.dataConsent
     } : undefined
-
-    onValidationChange?.(isValid, completeData)
+console.log('debug:personalInfo - completeData:', {completeData, isValid,hasSelfDriveFields,hasBaseFields, requiresId})
+    onValidationChange?.(!!completeData, completeData)
   }, [isValid, formValues, onValidationChange, requiresId, selectedCar?.selfDrive])
 
   /**

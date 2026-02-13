@@ -2,6 +2,7 @@ import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 import * as React from "react"
 
+import { useRipple } from "@/hooks/useRipple"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
@@ -41,19 +42,30 @@ function Button({
   variant = "default",
   size = "default",
   asChild = false,
+  onClick,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
   }) {
   const Comp = asChild ? Slot : "button"
+  const createRipple = useRipple()
+
+  const handleClick = React.useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      createRipple(e)
+      onClick?.(e)
+    },
+    [createRipple, onClick]
+  )
 
   return (
     <Comp
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn("relative overflow-hidden", buttonVariants({ variant, size, className }))}
+      onClick={asChild ? onClick : handleClick}
       {...props}
     />
   )

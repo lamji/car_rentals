@@ -44,7 +44,6 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
     calculateRentalDuration,
     isMinimumDurationMet,
     handleLocationSelect,
-    handleEndDateSelect,
     getDisplayDate,
     getUnavailableStartDates,
     getUnavailableEndDates,
@@ -77,15 +76,17 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
         <DesktopDateSelection
           bookingDetails={bookingDetails}
           onStartDateSelect={(date) => {
-            handleDateClickWithHoldCheck(() => {
-              const dateString = formatDateToYYYYMMDD(date);
-              handleDataChangeWithValidation({ startDate: dateString }, showErrorAlert);
-            });
+            const dateString = formatDateToYYYYMMDD(date);
+            handleDataChangeWithValidation({ startDate: dateString }, showErrorAlert);
           }}
           onEndDateClick={(date) => {
-            handleDateClickWithHoldCheck(() => handleEndDateSelect(date));
+            const dateString = formatDateToYYYYMMDD(date);
+            handleDataChangeWithValidation({ endDate: dateString }, showErrorAlert);
           }}
           getEndDateMinDate={getEndDateMinDate}
+          disabledStartDates={getUnavailableStartDates()}
+          disabledEndDates={getUnavailableEndDates()}
+          onOpen={(openCalendar) => handleDateClickWithHoldCheck(openCalendar)}
         />
       </div>
 
@@ -113,6 +114,7 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
           isEndTimeInPast={isEndTimeInPast}
           isEndTimeDisabled={isEndTimeDisabled}
           isStartTimeDisabled={isStartTimeDisabled}
+          isStartTimeConflicting={isStartTimeConflicting}
           formatTimeDisplay={formatTimeDisplay}
           disabled={!bookingDetails.startDate || !bookingDetails.endDate}
           onStartTimeChange={(time) => handleDataChange({ startTime: time })}

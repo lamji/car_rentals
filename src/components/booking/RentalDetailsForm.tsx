@@ -2,6 +2,7 @@ import { formatCurrency } from '@/lib/paymentSummaryHelper'
 import { BookingDetails } from '@/lib/slices/bookingSlice'
 import { Truck } from 'lucide-react'
 import { useBookingDetails } from '../../hooks/useBookingDetails'
+import { useAlerts } from '../../hooks/useAlerts'
 import { formatDateToYYYYMMDD } from '../../utils/dateHelpers'
 import { DesktopDateSelection } from './form/DesktopDateSelection'
 import { DesktopTimeSelection } from './form/DesktopTimeSelection'
@@ -28,14 +29,20 @@ export function RentalDetailsForm({ onDataChange, pricingDetails }: RentalDetail
     isTimeInPast,
     calculateRentalDuration,
     isMinimumDurationMet,
-    handleEndDateSelect,
     formatTimeDisplay,
     generateTimeOptions,
     getEndDateMinDate,
     isEndTimeDisabled,
     isStartTimeDisabled,
+    isStartTimeConflicting,
     isEndTimeInPast,
+    getUnavailableStartDates,
+    getUnavailableEndDates,
+    handleDataChangeWithValidation,
+    handleDateClickWithHoldCheck,
   } = useBookingDetails(onDataChange)
+
+  const { showErrorAlert } = useAlerts()
 
 
   return (
@@ -44,11 +51,20 @@ export function RentalDetailsForm({ onDataChange, pricingDetails }: RentalDetail
       <DesktopDateSelection
         bookingDetails={bookingDetails}
         onStartDateSelect={(date) => {
-          const dateString = formatDateToYYYYMMDD(date);
-          handleDataChange({ startDate: dateString });
+          handleDateClickWithHoldCheck(() => {
+            const dateString = formatDateToYYYYMMDD(date);
+            handleDataChangeWithValidation({ startDate: dateString }, showErrorAlert);
+          });
         }}
-        onEndDateClick={handleEndDateSelect}
+        onEndDateClick={(date) => {
+          handleDateClickWithHoldCheck(() => {
+            const dateString = formatDateToYYYYMMDD(date);
+            handleDataChangeWithValidation({ endDate: dateString }, showErrorAlert);
+          });
+        }}
         getEndDateMinDate={getEndDateMinDate}
+        disabledStartDates={getUnavailableStartDates()}
+        disabledEndDates={getUnavailableEndDates()}
       />
 
       {/* Time Selection */}
@@ -59,7 +75,9 @@ export function RentalDetailsForm({ onDataChange, pricingDetails }: RentalDetail
         isEndTimeInPast={isEndTimeInPast}
         isEndTimeDisabled={isEndTimeDisabled}
         isStartTimeDisabled={isStartTimeDisabled}
+        isStartTimeConflicting={isStartTimeConflicting}
         formatTimeDisplay={formatTimeDisplay}
+        disabled={!bookingDetails.startDate || !bookingDetails.endDate}
         onStartTimeChange={(time) => handleDataChange({ startTime: time })}
         onEndTimeChange={(time) => handleDataChange({ endTime: time })}
       />
