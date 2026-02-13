@@ -11,6 +11,9 @@ export interface PricingBreakdown {
 export interface PaymentSummary {
   rentalCost: number
   deliveryFee: number
+  driverFee: number
+  excessHours: number
+  excessHoursPrice: number
   totalAmount: number
   downPaymentRequired: number
   remainingBalance: number
@@ -117,7 +120,10 @@ export function calculatePaymentSummary(
 
   return {
     rentalCost,
-    deliveryFee:bookingDetails.deliveryFee || 0,
+    deliveryFee: bookingDetails.deliveryFee || 0,
+    driverFee: bookingDetails.driverFee || 0,
+    excessHours: bookingDetails.excessHours || 0,
+    excessHoursPrice: bookingDetails.excessHoursPrice || 0,
     totalAmount,
     downPaymentRequired,
     remainingBalance,

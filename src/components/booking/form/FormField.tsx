@@ -31,6 +31,10 @@ interface FormFieldProps<T extends FieldPath<PersonalInfoData>> {
   className?: string
   /** onBlur handler for Redux persistence */
   onBlur?: (fieldName: T, value: string) => void
+  /** Maximum character length for the input */
+  maxLength?: number
+  /** Input mode hint for mobile keyboards */
+  inputMode?: 'text' | 'numeric' | 'tel' | 'email'
 }
 
 /**
@@ -50,7 +54,9 @@ export function FormField<T extends FieldPath<PersonalInfoData>>({
   inputTestId,
   errorTestId,
   className,
-  onBlur
+  onBlur,
+  maxLength,
+  inputMode
 }: FormFieldProps<T>) {
   // Generate default test IDs if not provided
   const fieldTestId = testId || `${name}-field`
@@ -79,6 +85,8 @@ export function FormField<T extends FieldPath<PersonalInfoData>>({
           }
         })}
         placeholder={placeholder}
+        maxLength={maxLength}
+        inputMode={inputMode}
         className={`border-primary ${errors[name] ? 'border-red-300' : ''}`}
       />
       {errors[name] && (

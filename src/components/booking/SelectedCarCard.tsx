@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { useAppSelector } from '@/lib/store'
-import { getFutureUnavailableDates } from '@/utils/validateBlockedDates'
+import { getFutureBookings } from '@/utils/validateBlockedDates'
 import { CalendarX, Car, ChevronDown, ChevronUp, Fuel, Settings, Tag, Users } from 'lucide-react'
 import { useState } from 'react'
 
@@ -10,7 +10,7 @@ export function SelectedCarCard() {
   const selectedCar = useAppSelector(state => state.data.cars)
   const [showAllDates, setShowAllDates] = useState(false)
 
-  const futureUnavailableDates = getFutureUnavailableDates(selectedCar?.availability?.unavailableDates || [])
+  const futureBookings = getFutureBookings(selectedCar?.availability?.unavailableDates || [])
 
 
   if (!selectedCar) {
@@ -30,7 +30,7 @@ export function SelectedCarCard() {
   }
 
   return (
-    <Card className="border-primary/20 shadow-none">
+    <Card className="border-primary/20 shadow-none ">
       <CardContent className="p-0">
         {/* Header */}
         <div className="bg-primary/5 px-4 py-3 flex items-center justify-between">
@@ -102,39 +102,81 @@ export function SelectedCarCard() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CalendarX className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">Unavailable</span>
+              <span className="text-xs text-muted-foreground">Bookings</span>
             </div>
             <span className="text-sm font-medium text-gray-900">
-              {futureUnavailableDates.length > 0
-                ? `${futureUnavailableDates.length} dates`
+              {futureBookings.length > 0
+                ? `${futureBookings.length} booking${futureBookings.length > 1 ? 's' : ''}`
                 : 'None'
               }
             </span>
           </div>
         </div>
 
-        {/* Unavailable Dates */}
-        {futureUnavailableDates.length > 0 && (
+        {/* Bookings */}
+        {futureBookings.length > 0 && (
           <>
             <Separator />
             <div className="px-4 py-3">
-              <span className="text-xs font-medium text-muted-foreground block mb-2">Blocked Dates</span>
-              <div data-testid="unavailable-dates-container" className="flex flex-wrap gap-1.5">
-                {(showAllDates ? futureUnavailableDates : futureUnavailableDates.slice(0, 5)).map((date: string) => (
-                  <Badge
-                    key={date}
-                    data-testid={`unavailable-date-${date}`}
-                    variant="destructive"
-                    className="text-[10px] font-normal px-2 py-0.5"
+              <span className="text-xs font-medium text-muted-foreground block mb-2">Upcoming Bookings</span>
+              <div data-testid="bookings-container" className="flex flex-wrap gap-2">
+                {(showAllDates ? futureBookings : futureBookings.slice(0, 3))
+                  .slice()
+                  .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+                  .map((booking: any) => (
+                  <div
+                    key={booking._id}
+                    data-testid={`booking-${booking._id}`}
+                    className="relative bg-linear-to-r from-red-50 to-orange-50 border border-red-200 rounded-lg p-2 shadow-sm"
                   >
-                    {new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </Badge>
+                    <div className="flex items-center justify-center">
+                      <div className="text-left">
+                        <div style={{ fontSize: '10px' }} className="font-medium text-gray-900">From</div>
+                        <div style={{ fontSize: '10px' }} className="text-gray-600">
+                          {new Date(booking.startDate).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric' 
+                          })}
+                        </div>
+                        <div style={{ fontSize: '10px' }} className="text-gray-500">
+                          {new Date(`2000-01-01T${booking.startTime}`).toLocaleTimeString('en-US', { 
+                            hour: 'numeric', 
+                            minute: '2-digit',
+                            hour12: true 
+                          })}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-center px-1">
+                        <div className="w-4 h-px bg-linear-to-r from-red-400 to-orange-400"></div>
+                        <div style={{ fontSize: '10px' }} className="text-gray-400 my-0.5">to</div>
+                        <div className="w-4 h-px bg-linear-to-r from-red-400 to-orange-400"></div>
+                      </div>
+                      <div className="text-right">
+                        <div style={{ fontSize: '10px' }} className="font-medium text-gray-900">Until</div>
+                        <div style={{ fontSize: '10px' }} className="text-gray-600">
+                          {new Date(booking.endDate).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric' 
+                          })}
+                        </div>
+                        <div style={{ fontSize: '10px' }} className="text-gray-500">
+                          {new Date(`2000-01-01T${booking.endTime}`).toLocaleTimeString('en-US', { 
+                            hour: 'numeric', 
+                            minute: '2-digit',
+                            hour12: true 
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 ))}
-                {futureUnavailableDates.length > 5 && (
+                {futureBookings.length > 3 && (
                   <Badge
-                    data-testid="unavailable-dates-more"
+                    data-testid="bookings-more"
                     variant="outline"
-                    className="text-[10px] font-normal px-2 py-0.5 border-destructive/30 text-destructive cursor-pointer hover:bg-destructive/10 flex items-center gap-1"
+                    className="text-[10px] font-normal px-2 py-0.5 border-destructive/30 text-destructive cursor-pointer hover:bg-destructive/10 flex items-center gap-1 w-fit"
                     onClick={() => setShowAllDates(!showAllDates)}
                   >
                     {showAllDates ? (
@@ -145,7 +187,7 @@ export function SelectedCarCard() {
                     ) : (
                       <>
                         <ChevronDown className="h-3 w-3" />
-                        +{futureUnavailableDates.length - 5} more
+                        +{futureBookings.length - 3} more
                       </>
                     )}
                   </Badge>

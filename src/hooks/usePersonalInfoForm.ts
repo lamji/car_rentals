@@ -194,7 +194,7 @@ export function usePersonalInfoForm({ onValidationChange }: UsePersonalInfoFormP
       formValues.ltoPortalScreenshot
     )
 
-    const completeData = hasBaseFields && hasSelfDriveFields ? {
+    const completeData = isValid && hasBaseFields && hasSelfDriveFields ? {
       firstName: formValues.firstName as string,
       middleName: formValues.middleName || '',
       lastName: formValues.lastName as string,

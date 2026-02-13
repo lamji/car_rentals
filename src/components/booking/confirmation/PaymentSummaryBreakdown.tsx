@@ -29,16 +29,16 @@ export function PaymentSummaryBreakdown({
           <span className="font-medium" data-testid="delivery-fee-amount">{formatCurrency(deliveryFee)}</span>
         </div>
       )}
-      {driverFee && Number(driverFee) > 0 && (
+      { Number(driverFee) > 0 && (
         <div className="flex justify-between text-sm" data-testid="driver-fee">
           <span className="text-gray-600">Driver Fee</span>
-          <span className="font-medium" data-testid="driver-fee-amount">{formatCurrency(driverFee)}</span>
+          <span className="font-medium" data-testid="driver-fee-amount">{formatCurrency(driverFee || 0)}</span>
         </div>
       )}
-      {excessHoursPrice && Number(excessHoursPrice) > 0 && (
+      {Number(excessHoursPrice) > 0 && (
         <div className="flex justify-between text-sm" data-testid="excess-hours-fee">
           <span className="text-gray-600">Excess Hours ({excessHours || 0}h)</span>
-          <span className="font-medium" data-testid="excess-hours-fee-amount">{formatCurrency(excessHoursPrice)}</span>
+          <span className="font-medium" data-testid="excess-hours-fee-amount">{formatCurrency(excessHoursPrice || 0)}</span>
         </div>
       )}
       <div className="border-t pt-2" data-testid="total-amount">

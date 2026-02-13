@@ -107,16 +107,17 @@ export function PersonalInfoForm({ onValidationChange }: PersonalInfoFormProps) 
                     register={register}
                     errors={errors}
                     required
-                    placeholder="Enter your contact number"
+                    placeholder="09XXXXXXXXX"
                     className="mb-0"
                     onBlur={handleFieldBlur}
+                    maxLength={11}
+                    inputMode="numeric"
                     validation={{
-                      pattern: { value: /^[0-9+\-\s()]+$/, message: 'Please enter a valid contact number' },
-                      minLength: { value: 10, message: 'Contact number must be at least 10 digits' }
+                      pattern: { value: /^09\d{9}$/, message: 'Must start with 09 and be exactly 11 digits' }
                     }}
                   />
                   <p className="text-xs text-gray-500" data-testid="contact-help-text">
-                    Include country code for international numbers
+                    Philippine mobile number format: 09XXXXXXXXX (11 digits)
                   </p>
                 </div>
 
