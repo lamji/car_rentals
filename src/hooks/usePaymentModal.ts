@@ -81,6 +81,8 @@ export function usePaymentModal() {
   const handleGcashPayment = useCallback(async () => {
     if (isProcessing) return;
 
+    console.log("debug:payment - starting payment flow",{guestToken, guestId});
+
     if (!guestToken) {
       dispatch(showAlert({
         type: "error",
@@ -127,7 +129,7 @@ export function usePaymentModal() {
 
       // Step 3: Build PayMongo GCash payload
       const paymongoPayload = {
-        amount: 200,
+        amount: state.bookingDetails.totalPrice || 200,
         description: "Car Rental Payment",
         returnUrl: `${window.location.origin}/payment/waiting?bookingId=${encodeURIComponent(payload.bookingId)}`,
         billing: {
