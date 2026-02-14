@@ -1,233 +1,278 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Calendar,
-  Car,
-  CheckCircle,
-  Clock,
-  CreditCard,
-  HelpCircle,
-  Truck,
-  UserCheck
-} from "lucide-react";
-import { useState } from "react";
+import { useAiAssistant } from "@/hooks/useAiAssistant";
+import { RootState } from "@/lib/store";
+import { Send, X, Trash2, Loader2 } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useSelector } from "react-redux";
+
+const AVATAR_URL =
+  "https://res.cloudinary.com/dlax3esau/image/upload/v1771041869/ChatGPT_Image_Feb_14_2026_11_57_50_AM_svfe1e.png";
+
+const QUICK_QUESTIONS = [
+  "How do I book a car?",
+  "What cars are available near me?",
+  "Check my booking",
+  "What is the refund policy?",
+];
 
 /**
  * HowBookingWorksDialog component
- * Displays a floating question mark icon that opens a dialog
- * explaining the full booking process step by step
+ * AI-powered chat assistant that answers car rental booking questions
  */
 export function HowBookingWorksDialog() {
   const [open, setOpen] = useState(false);
+  const [input, setInput] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
-  const steps = [
-    {
-      icon: <Car className="h-6 w-6 text-blue-600" />,
-      title: "1. Browse & Select a Car",
-      description:
-        "Our system automatically shows cars available within your current location radius. Explore vehicles near you, filter by category, check availability, and choose the perfect car for your needs.",
-      color: "bg-blue-50 border-blue-200",
-    },
-    {
-      icon: <Clock className="h-6 w-6 text-orange-600" />,
-      title: "2. Car on Hold",
-      description:
-        "Once you select a car, the car is placed on hold for 2 minutes to prevent double booking. Complete your booking within this time, or the car will become available again for other users.",
-      color: "bg-orange-50 border-orange-200",
-    },
-    {
-      icon: <Calendar className="h-6 w-6 text-green-600" />,
-      title: "3. Complete Your Booking Details",
-      description: (
-        <div>
-          Select your start and end dates with preferred times (minimum 12 hours). Then choose:
-          <br /><br />
-          • Pickup Method: Pick up from our garage for free, or have the car delivered to your location for a small fee
-          <br /><br />
-          • Driver Option: Some cars come with a professional driver, or choose self-drive to hit the road on your own
-        </div>
-      ),
-      color: "bg-green-50 border-green-200",
-    },
-    {
-      icon: <CreditCard className="h-6 w-6 text-pink-600" />,
-      title: "4. Customer Information",
-      description: (
-        <div>
-          Provide your personal details and complete the verification process. For self-drive rentals, you&apos;ll need:
-          <br /><br />
-          • Valid Driver&apos;s License ID (have screenshot ready to upload)
-          <br />
-          • LTO Portal verification (have screenshot ready to upload)
-          <br />
-          • Contact information and address
-        </div>
-      ),
-      color: "bg-pink-50 border-pink-200",
-    },
-    {
-      icon: <CheckCircle className="h-6 w-6 text-emerald-600" />,
-      title: "5. Review & Pay",
-      description: (
-        <div>
-          Review your booking summary with a full price breakdown, then complete your down payment online.
-          <br /><br />
-          • Pay down payment to secure booking
-          <br />
-          • Wait for approval (refund sent immediately if disapproved)
-          <br />
-          • Expect a call or text from the car owner, or you can call the owner if needed or has questions
-          <br />
-          • Once approved: no cancellation or no refund if cancelled
-        </div>
-      ),
-      color: "bg-emerald-50 border-emerald-200",
-    },
-    {
-      icon: <CheckCircle className="h-6 w-6 text-blue-600" />,
-      title: "6. Confirmation & Enjoy!",
-      description:
-        "Receive your booking confirmation via email with the contract attached. Pick up or receive your car and enjoy your ride!",
-      color: "bg-blue-50 border-blue-200",
-    },
-  ];
+  const mapbox = useSelector((state: RootState) => state.mapBox?.current);
+  const guestToken = useSelector((state: RootState) => state.auth?.guestToken);
 
-  const pricingInfo = [
-    {
-      icon: <Clock className="h-4 w-4 text-gray-600" />,
-      label: "12-Hour Rate",
-      detail: "For rentals up to 12 hours",
+  const locationContext = useMemo(() => {
+    if (!mapbox?.address) return undefined;
+    return {
+      address: mapbox.address,
+      city: mapbox.city,
+      province: mapbox.province,
+    };
+  }, [mapbox?.address, mapbox?.city, mapbox?.province]);
+
+  const { messages, isLoading, sendMessage, clearChat, waitingForEmail, waitingForOtp } = useAiAssistant({
+    location: locationContext,
+    token: guestToken,
+  });
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+    // Keep input focused when messages update (AI responding)
+    if (open) inputRef.current?.focus();
+  }, [messages, isLoading, scrollToBottom, open]);
+
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [open]);
+
+  const handleSend = useCallback(() => {
+    if (!input.trim() || isLoading) return;
+    sendMessage(input);
+    setInput("");
+  }, [input, isLoading, sendMessage]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
     },
-    {
-      icon: <Clock className="h-4 w-4 text-gray-600" />,
-      label: "24-Hour Rate",
-      detail: "For rentals from 12 to 24 hours",
+    [handleSend]
+  );
+
+  const handleQuickQuestion = useCallback(
+    (question: string) => {
+      sendMessage(question);
     },
-    {
-      icon: <Clock className="h-4 w-4 text-gray-600" />,
-      label: "Multi-Day",
-      detail: "24-hour rate × number of days",
-    },
-    {
-      icon: <Clock className="h-4 w-4 text-gray-600" />,
-      label: "Excess Hours",
-      detail: "Charged per hour beyond the package",
-    },
-    {
-      icon: <Truck className="h-4 w-4 text-gray-600" />,
-      label: "Delivery Fee",
-      detail: "Based on distance (self-drive only)",
-    },
-    {
-      icon: <UserCheck className="h-4 w-4 text-gray-600" />,
-      label: "Driver Fee",
-      detail: "Per day for cars with driver",
-    },
-  ];
+    [sendMessage]
+  );
 
   return (
     <>
-      {/* Floating Question Mark Button */}
+      {/* Floating Chat Button */}
       <button
-        onClick={() => setOpen(true)}
-        className="fixed bottom-15 right-2 z-9999 flex items-center justify-center w-14 h-14 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 hover:scale-110 transition-all duration-200 active:scale-95"
-        aria-label="How booking works"
+        onClick={() => setOpen(!open)}
+        className="fixed bottom-15 right-2 z-9999 flex items-center justify-center w-14 h-14 rounded-full  hover:scale-110 transition-all duration-200 active:scale-95 overflow-hidden "
+        aria-label="Chat with Renty"
       >
-        <HelpCircle className="h-7 w-7" />
+        <Image
+          src={AVATAR_URL}
+          alt="Renty AI Assistant"
+          width={70}
+          height={70}
+          className="object-cover"
+        />
       </button>
 
-      {/* Dialog */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl w-[95vw] sm:w-full">
-          <DialogHeader>
-            <DialogTitle className="text-xl flex items-center gap-2">
-              <HelpCircle className="h-5 w-5 text-blue-600" />
-              How Booking Works
-            </DialogTitle>
-            <DialogDescription>
-              Follow these simple steps to rent a car with us.
-            </DialogDescription>
-          </DialogHeader>
+      {/* Chat Panel */}
+      {open && (
+        <div className="fixed bottom-32 right-2 z-9999 w-[340px] sm:w-[380px] max-h-[70vh] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-200">
+          {/* Header */}
+          <div className="flex items-center gap-3 px-4 py-3 bg-linear-to-r from-blue-600 to-blue-700 text-white">
+            <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/30 shrink-0">
+              <Image
+                src={AVATAR_URL}
+                alt="Renty"
+                width={70}
+                height={70}
+                className="object-cover"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold text-sm">Renty</div>
+              <div className="text-[10px] text-blue-100">
+                Car Rental Assistant
+              </div>
+            </div>
+            <button
+              onClick={clearChat}
+              className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+              aria-label="Clear chat"
+              title="Clear chat"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setOpen(false)}
+              className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+              aria-label="Close chat"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
 
-          {/* Steps */}
-          <div className="space-y-3 mt-2">
-            {steps.map((step, index) => (
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-[200px] max-h-[calc(70vh-140px)]">
+            {/* Welcome message */}
+            {messages.length === 0 && (
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 mt-0.5">
+                    <Image
+                      src={AVATAR_URL}
+                      alt="Renty"
+                      width={28}
+                      height={28}
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-3 py-2 max-w-[85%]">
+                    <p className="text-sm text-gray-800">
+                      Hi! I&apos;m <strong>Renty</strong>, your car rental
+                      assistant. Ask me anything about booking, pricing,
+                      payments, or policies!
+                    </p>
+                  </div>
+                </div>
+
+                {/* Quick questions */}
+                <div className="pl-9 space-y-1.5">
+                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                    Quick questions
+                  </p>
+                  {QUICK_QUESTIONS.map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => handleQuickQuestion(q)}
+                      className="block w-full text-left text-xs px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors border border-blue-100"
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Chat messages */}
+            {messages.map((msg, i) => (
               <div
-                key={index}
-                className={`flex items-start gap-3 p-3 rounded-lg border ${step.color}`}
+                key={i}
+                className={`flex gap-2 ${msg.role === "user" ? "justify-end" : ""}`}
               >
-                <div className="shrink-0 mt-0.5">{step.icon}</div>
-                <div>
-                  <div className="font-semibold text-sm text-gray-900">
-                    {step.title}
+                {msg.role === "assistant" && (
+                  <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 mt-0.5">
+                    <Image
+                      src={AVATAR_URL}
+                      alt="Renty"
+                      width={28}
+                      height={28}
+                      className="object-cover"
+                    />
                   </div>
-                  <div className="text-xs text-gray-600 mt-0.5">
-                    {step.description}
-                  </div>
+                )}
+                <div
+                  className={`rounded-2xl px-3 py-2 max-w-[85%] text-sm ${
+                    msg.role === "user"
+                      ? "bg-blue-600 text-white rounded-tr-sm whitespace-pre-wrap"
+                      : "bg-gray-100 text-gray-800 rounded-tl-sm" + (msg.isHtml ? "" : " whitespace-pre-wrap")
+                  }`}
+                >
+                  {msg.isHtml ? (
+                    <div
+                      dangerouslySetInnerHTML={{ __html: msg.content }}
+                      onClick={(e) => {
+                        const target = e.target as HTMLElement;
+                        const anchor = target.closest('a');
+                        if (anchor && anchor.getAttribute('href')?.startsWith('/')) {
+                          e.preventDefault();
+                          setOpen(false);
+                          router.push(anchor.getAttribute('href')!);
+                        }
+                      }}
+                    />
+                  ) : (
+                    msg.content
+                  )}
                 </div>
               </div>
             ))}
-          </div>
 
-          {/* Pricing Info */}
-          <div className="mt-4">
-            <h4 className="font-semibold text-sm text-gray-900 mb-2">
-              Pricing Breakdown
-            </h4>
-            <div className="grid grid-cols-2 gap-2">
-              {pricingInfo.map((info, index) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-2 p-2 bg-gray-50 rounded-md border border-gray-100"
-                >
-                  <div className="shrink-0 mt-0.5">{info.icon}</div>
-                  <div>
-                    <div className="font-medium text-xs text-gray-900">
-                      {info.label}
-                    </div>
-                    <div className="text-[11px] text-gray-500">
-                      {info.detail}
-                    </div>
-                  </div>
+            {/* Loading indicator */}
+            {isLoading && (
+              <div className="flex gap-2">
+                <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 mt-0.5">
+                  <Image
+                    src={AVATAR_URL}
+                    alt="Renty"
+                    width={28}
+                    height={28}
+                    className="object-cover"
+                  />
                 </div>
-              ))}
+                <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3">
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input */}
+          <div className="px-3 py-2 border-t border-gray-100 bg-gray-50">
+            <div className="flex items-center gap-2">
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={waitingForOtp ? "Enter 6-digit code..." : waitingForEmail ? "Enter your email address..." : "Ask me anything..."}
+                className="flex-1 text-sm px-3 py-2 bg-white border border-gray-200 rounded-full outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-colors"
+              />
+              <button
+                onClick={handleSend}
+                disabled={!input.trim() || isLoading}
+                className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+                aria-label="Send message"
+              >
+                <Send className="h-4 w-4" />
+              </button>
             </div>
+            <p className="text-[9px] text-gray-400 text-center mt-1">
+              Powered by AI - Answers may not always be accurate
+            </p>
           </div>
-
-
-
-          {/* Tips */}
-          <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <h4 className="font-semibold text-sm text-amber-900 mb-1">
-              Tips
-            </h4>
-            <ul className="text-xs text-amber-800 space-y-1">
-              <li>- Minimum rental duration is 12 hours</li>
-              <li>- Driver fee only applies after 12+ excess hours per day</li>
-              <li>- Delivery is available for self-drive cars only</li>
-              <li>- Blocked dates on the calendar are unavailable</li>
-            </ul>
-          </div>
-
-          <DialogFooter>
-            <Button
-              onClick={() => setOpen(false)}
-              className="w-full"
-            >
-              Got it!
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </>
   );
 }
