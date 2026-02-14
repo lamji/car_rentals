@@ -52,6 +52,7 @@ export function usePaymentModal() {
 
       if (data.status === "paid") {
         dispatch(clearRetryPayload());
+        dispatch(clearBooking());
         const params = new URLSearchParams({
           booking_id: data.bookingId || "",
           payment_id: data.paymentId || "",
@@ -182,7 +183,6 @@ export function usePaymentModal() {
 
       // Step 5: Track active booking and open fullscreen checkout
       activeBookingIdRef.current = payload.bookingId;
-      dispatch(clearBooking())
       openCheckout(paymentResponse.data.checkoutUrl);
     } catch (error: any) {
       console.error("debug:payment - error in payment flow:", error);
