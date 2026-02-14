@@ -141,6 +141,9 @@ function markdownToHtml(text: string): string {
   // Wrap consecutive <li> in <ul>
   html = html.replace(/((?:<li[^>]*>.*?<\/li>)+)/g, '<ul style="margin:6px 0;padding-left:16px;list-style:disc;">$1</ul>');
 
+  // Markdown links: [text](url)
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color:#2563eb;text-decoration:underline;font-weight:500;">$1</a>');
+
   // Inline code: `code`
   html = html.replace(/`([^`]+)`/g, '<code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;font-size:11px;">$1</code>');
 
@@ -169,9 +172,9 @@ const SYSTEM_PROMPT = `You are "Renty", a professional car rental call center ag
 
 TONE & STYLE:
 - Respond like a professional call center agent. Be warm but efficient.
-- NEVER start with "I found a car" or "I'm Renty" or any robotic intro. Just answer the question.
-- Only introduce yourself as "Renty" in your VERY FIRST message of the entire conversation. After that, NEVER repeat it.
-- NEVER repeat greetings, intros, or summaries the user already heard. Just answer what they asked.
+- NEVER say "I'm Renty", "I am Renty", "This is Renty", or introduce yourself in ANY message. The user already knows who you are from the chat UI.
+- NEVER start responses with greetings like "Hello", "Hi", "Hey there" in follow-up messages. Only greet in the very first reply of the conversation.
+- NEVER repeat information the user already received. Just answer the new question.
 - Keep follow-up answers to 1-2 sentences. Be direct.
 - Respond in the same language the user uses (English or Filipino/Tagalog).
 
@@ -237,13 +240,15 @@ export async function POST(request: NextRequest) {
     let recentCarsContext = '';
     if (lastShownCars && Array.isArray(lastShownCars) && lastShownCars.length > 0) {
       const carCount = lastShownCars.length;
+      const todayStr = new Date().toISOString().split('T')[0];
+      recentCarsContext += `\n\nTODAY'S DATE: ${todayStr}`;
       recentCarsContext += `\n\n=== SEARCH RESULTS: EXACTLY ${carCount} CAR${carCount > 1 ? 'S' : ''} FOUND (from search near "${lastSearchLocation || 'user location'}") ===`;
       recentCarsContext += `\nThe search returned EXACTLY ${carCount} car${carCount > 1 ? 's' : ''}. These are the ONLY cars from this search. Do NOT invent, add, or mention any other cars.`;
       lastShownCars.forEach((car: Record<string, unknown>, i: number) => {
         const unavail = (car.unavailableDates as Array<{startDate?: string; endDate?: string; startTime?: string; endTime?: string}>) || [];
         recentCarsContext += `\n\n--- CAR ${i + 1} ---`;
         recentCarsContext += `\n   Name: ${car.name} (${car.year} ${car.type})`;
-        recentCarsContext += `\n   Distance: ${car.distanceText}`;
+        recentCarsContext += `\n   Distance from user's location: ${car.distanceText}`;
         recentCarsContext += `\n   Transmission: ${car.transmission} | Fuel: ${car.fuel} | Seats: ${car.seats}`;
         recentCarsContext += `\n   Pricing: Per day: P${car.pricePerDay} | 12hr: P${car.pricePer12Hours} | 24hr: P${car.pricePer24Hours} | Hourly: P${car.pricePerHour}`;
         recentCarsContext += `\n   Self-drive: ${car.selfDrive ? 'Yes (customer drives themselves)' : 'No (comes with a driver)'}`;
@@ -253,7 +258,6 @@ export async function POST(request: NextRequest) {
         recentCarsContext += `\n   Owner: ${car.ownerName || 'N/A'} | Contact: ${car.ownerContact || 'N/A'}`;
         recentCarsContext += `\n   Rating: ${car.rating}/5 | Rented: ${car.rentedCount} times`;
         recentCarsContext += `\n   On hold: ${car.isOnHold ? 'Yes' : 'No'}`;
-        recentCarsContext += `\n   Available today: ${car.isAvailableToday !== false ? 'Yes' : 'No'}`;
         recentCarsContext += `\n   Detail page: /cars/${car.id}`;
         if (unavail.length > 0) {
           recentCarsContext += `\n   Unavailable dates:`;
@@ -280,16 +284,22 @@ export async function POST(request: NextRequest) {
       }
 
       recentCarsContext += `\n`;
-      recentCarsContext += `\nRULE 3 - ANSWER CURRENT QUESTION ONLY: Do NOT repeat or reference previous questions, previous dates, or previous topics. Focus ONLY on what the user is asking RIGHT NOW.`;
+      recentCarsContext += `\nRULE 3 - ANSWER CURRENT QUESTION ONLY (CRITICAL):`;
+      recentCarsContext += `\n  - Read ONLY the user's LAST message. Answer ONLY that question.`;
+      recentCarsContext += `\n  - Do NOT repeat, summarize, or reference ANY previous answers or topics.`;
+      recentCarsContext += `\n  - If user asks "how much is 12 hours?", ONLY give the 12-hour price. Do NOT mention self-drive, driver fees, or anything else.`;
+      recentCarsContext += `\n  - If user asks "is it self-drive?", ONLY answer about self-drive. Do NOT mention prices, availability, or anything else.`;
+      recentCarsContext += `\n  - Each response must be about ONE topic only — the topic of the user's last message.`;
       recentCarsContext += `\n`;
-      recentCarsContext += `\nRULE 4 - AVAILABILITY CHECK:`;
-      recentCarsContext += `\n  Internally check the "Unavailable dates" in the car data. Compare the user's requested dates against each range. Then give the result IMMEDIATELY in ONE sentence.`;
-      recentCarsContext += `\n  NEVER say "let me check", "let me see", "according to the data", "according to the unavailable dates", "I need to check", or narrate your thinking process.`;
-      recentCarsContext += `\n  NEVER break your answer into parts like "available on March 10, but let me check the rest".`;
-      recentCarsContext += `\n  Just give the final answer directly:`;
-      recentCarsContext += `\n  - AVAILABLE: "Yes, the [name] is available from [start] to [end]. Would you like to book it?"`;
+      recentCarsContext += `\nRULE 4 - AVAILABILITY CHECK (MUST FOLLOW EXACTLY):`;
+      recentCarsContext += `\n  STEP 1: Look at the "Unavailable dates" field for the car.`;
+      recentCarsContext += `\n  STEP 2: If user says "today" or "now", use TODAY'S DATE (${new Date().toISOString().split('T')[0]}) as both start and end date.`;
+      recentCarsContext += `\n  STEP 3: Check if the requested date range overlaps with ANY unavailable range. Overlap means: unavailableStart <= requestedEnd AND unavailableEnd >= requestedStart.`;
+      recentCarsContext += `\n  STEP 4: If there IS an overlap, the car is NOT available. If there is NO overlap, the car IS available.`;
+      recentCarsContext += `\n  STEP 5: Give the result in ONE sentence. No explanation of how you checked.`;
+      recentCarsContext += `\n  - AVAILABLE: "Yes, the [name] is available [date]. Would you like to book it?"`;
       recentCarsContext += `\n  - NOT AVAILABLE: "Sorry, the [name] is booked from [conflicting start] to [conflicting end]. Would you like to check other dates?"`;
-      recentCarsContext += `\n  That's it. One sentence. No explanation of how you checked.`;
+      recentCarsContext += `\n  NEVER say "let me check" or narrate your thinking. Just give the final answer.`;
       recentCarsContext += `\n`;
       recentCarsContext += `\nRULE 5 - DIRECT ANSWERS: You are a professional call center agent. Give instant, confident answers. 1 sentence max for simple questions. Examples:`;
       recentCarsContext += `\n  Q: "Is it self-drive?" -> "Yes, the ${lastShownCars[0].name} is self-drive."`;
@@ -307,58 +317,78 @@ export async function POST(request: NextRequest) {
       recentCarsContext += `\n`;
       recentCarsContext += `\nRULE 7 - AMBIGUOUS DATES: If user says a day number without a month (e.g. "this coming 30"), ask which month.`;
       recentCarsContext += `\n`;
-      recentCarsContext += `\nRULE 8 - OUT OF SCOPE QUESTIONS: If the user asks about something NOT in the car data above (e.g. engine type, tire type, GPS, mileage, insurance, car color, interior, etc.), do NOT guess. Instead say: "I don't have that specific detail. You can check the full car details here: [car detail page link from the data above]" and provide the link as a clickable markdown link like [View full details](/cars/${lastShownCars[0].id}).`;
+      recentCarsContext += `\nRULE 8 - OUT OF SCOPE QUESTIONS: If the user asks about something NOT in the car data above (e.g. engine type, tire type, GPS, mileage, insurance, car color, interior, etc.), do NOT guess. Instead say: "I don't have that specific detail. You can check the full car details here: [View full details](/cars/${lastShownCars[0].id})" and provide the link as a clickable markdown link.`;
+      recentCarsContext += `\n`;
+      recentCarsContext += `\nRULE 9 - RESPONSE LENGTH: Maximum 1-2 sentences for simple questions. NEVER combine multiple topics in one response. If the user asks one thing, give one answer.`;
+      recentCarsContext += `\n`;
+      recentCarsContext += `\nRULE 10 - DISTANCE QUESTIONS: The "Distance from user's location" field shows how far each car's garage is from the user. Use this to answer "how far" questions. Example: "The ${lastShownCars[0].name} is ${lastShownCars[0].distanceText} from your location."`;
     }
 
     const fullSystemPrompt = SYSTEM_PROMPT + carsContext + locationContext + recentCarsContext;
 
+    // Limit to last 4 messages (2 exchanges). The system prompt has all car data,
+    // so long history just causes the AI to repeat old answers.
+    const recentMessages = messages.slice(-4);
     const groqMessages = [
       { role: 'system', content: fullSystemPrompt },
-      ...messages.map((m: { role: string; content: string }) => ({
+      ...recentMessages.map((m: { role: string; content: string }) => ({
         role: m.role,
         content: m.content,
       })),
     ];
 
-    // Try primary model, fallback on 429 rate limit
+    // Try primary model, fallback on any error
     const modelsToTry = [GROQ_MODEL, ...(GROQ_FALLBACK_MODEL ? [GROQ_FALLBACK_MODEL] : [])];
     let rawReply = '';
 
     for (let i = 0; i < modelsToTry.length; i++) {
       const model = modelsToTry[i];
-      const response = await fetch(GROQ_API_URL, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model,
-          messages: groqMessages,
-          temperature: 0.7,
-          max_tokens: 512,
-        }),
-      });
+      try {
+        // Reasoning models use max_completion_tokens; standard models use max_tokens
+        const isReasoningModel = model.includes('gpt-oss') || model.includes('o1') || model.includes('o3');
+        const tokenParam = isReasoningModel
+          ? { max_completion_tokens: 1024 }
+          : { max_tokens: 1024 };
 
-      if (response.ok) {
-        const data = await response.json();
-        rawReply = data.choices?.[0]?.message?.content || 'Sorry, I could not generate a response.';
-        break;
+        const response = await fetch(GROQ_API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${GROQ_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model,
+            messages: groqMessages,
+            temperature: 0.7,
+            ...tokenParam,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          rawReply = data.choices?.[0]?.message?.content || '';
+          if (rawReply) break;
+          // Content was empty — log and try fallback
+          console.warn(`Groq model ${model} returned empty content, response:`, JSON.stringify(data.choices?.[0]));
+          if (i < modelsToTry.length - 1) continue;
+        } else {
+          const errorData = await response.text();
+          console.warn(`Groq model ${model} error (${response.status}):`, errorData);
+          if (i < modelsToTry.length - 1) continue;
+          return NextResponse.json(
+            { success: false, message: 'AI service error' },
+            { status: 502 }
+          );
+        }
+      } catch (fetchErr) {
+        console.warn(`Groq model ${model} fetch failed:`, fetchErr);
+        if (i < modelsToTry.length - 1) continue;
+        throw fetchErr;
       }
+    }
 
-      // If rate limited (429) and we have a fallback, try next model
-      if (response.status === 429 && i < modelsToTry.length - 1) {
-        console.warn(`Groq model ${model} rate limited, trying fallback: ${modelsToTry[i + 1]}`);
-        continue;
-      }
-
-      // No fallback or non-429 error
-      const errorData = await response.text();
-      console.error(`Groq API error (${model}):`, errorData);
-      return NextResponse.json(
-        { success: false, message: 'AI service error' },
-        { status: 502 }
-      );
+    if (!rawReply) {
+      rawReply = 'Sorry, I could not generate a response. Please try again.';
     }
     const reply = markdownToHtml(rawReply);
 

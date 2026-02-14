@@ -493,7 +493,7 @@ export function MobileCarDetailsPageContent() {
         </Button>
       </div>
 
-      {car?.garageLocation.coordinates && (
+      {car?.garageLocation?.coordinates && (
         <MapLinkModal
           data-testid="map-modal"
           isOpen={showMapModal}
