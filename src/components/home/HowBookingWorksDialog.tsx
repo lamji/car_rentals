@@ -105,21 +105,21 @@ export function HowBookingWorksDialog() {
       {/* Floating Chat Button */}
       <button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-15 right-2 z-9999 flex items-center justify-center w-14 h-14 rounded-full  hover:scale-110 transition-all duration-200 active:scale-95 overflow-hidden "
+        className="fixed bottom-15 right-2 z-9999 flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full hover:scale-110 transition-all duration-200 active:scale-95 overflow-hidden"
         aria-label="Chat with Renty"
       >
         <Image
           src={AVATAR_URL}
           alt="Renty AI Assistant"
-          width={70}
-          height={70}
+          width={96}
+          height={96}
           className="object-cover"
         />
       </button>
 
       {/* Chat Panel */}
       {open && (
-        <div className="fixed bottom-32 right-2 z-9999 w-[340px] sm:w-[380px] max-h-[70vh] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-200">
+        <div className="fixed inset-0 z-9999 w-screen h-screen max-h-screen bg-white rounded-none border-0 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-200 sm:inset-auto sm:bottom-32 sm:right-2 sm:w-[380px] sm:h-auto sm:max-h-[70vh] sm:rounded-2xl sm:border sm:border-gray-200 sm:shadow-2xl">
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 bg-linear-to-r from-blue-600 to-blue-700 text-white">
             <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/30 shrink-0">
@@ -155,7 +155,7 @@ export function HowBookingWorksDialog() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-[200px] max-h-[calc(70vh-140px)]">
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0 sm:min-h-[200px] sm:max-h-[calc(70vh-140px)]">
             {/* Welcome message */}
             {messages.length === 0 && (
               <div className="space-y-3">
