@@ -12,9 +12,12 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/npm-ready-stack/paymongoService';
+import { useAppDispatch } from '@/lib/store';
+import { clearBooking } from '@/lib/slices/bookingSlice';
 
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
+  const dispatch = useAppDispatch();
   const [paymentDetails, setPaymentDetails] = useState<{
     paymentIntentId?: string;
     amount?: string;
@@ -31,6 +34,10 @@ export default function PaymentSuccessPage() {
       bookingId: searchParams.get('booking_id') || undefined,
     });
   }, [searchParams]);
+
+  useEffect(() => {
+    dispatch(clearBooking());
+  }, [dispatch]);
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4">
@@ -87,7 +94,7 @@ export default function PaymentSuccessPage() {
               <div className="flex justify-between">
                 <span className="text-gray-600">Amount Paid:</span>
                 <span className="font-semibold">
-                  {formatCurrency(parseInt(paymentDetails.amount), 'PHP')}
+                  {formatCurrency(parseInt(paymentDetails.amount) / 100, 'PHP')}
                 </span>
               </div>
             )}

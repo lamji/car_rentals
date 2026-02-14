@@ -42,6 +42,15 @@ export function LayoutContent({ children }: LayoutContentProps) {
   const { getGuestToken } = useGuestToken();
 
   useEffect(() => {
+    // If Redux has a token but localStorage doesn't, sync it back
+    // (localStorage can be cleared independently of redux-persist)
+    if (guestToken && !localStorage.getItem("token")) {
+      localStorage.setItem("token", guestToken);
+      window.dispatchEvent(new Event("token-updated"));
+      console.log("debug:auth - synced guest token from Redux to localStorage");
+      return;
+    }
+
     if (guestToken) return; // Already have a token
     const fetchToken = async () => {
       try {
