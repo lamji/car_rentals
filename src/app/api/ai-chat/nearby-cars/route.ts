@@ -54,6 +54,9 @@ interface DbCar {
 interface CarWithDistance extends DbCar {
   distance: number;
   distanceText: string;
+  resolvedAddress?: string;
+  resolvedCity?: string;
+  resolvedProvince?: string;
 }
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -68,7 +71,13 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
-async function geocodeLocation(locationString: string): Promise<Coordinates | null> {
+interface GeocodeResult {
+  coords: Coordinates;
+  placeName: string;
+  relevance: number;
+}
+
+async function geocodeLocation(locationString: string): Promise<GeocodeResult | null> {
   try {
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(locationString)}.json`;
     const params = new URLSearchParams({
@@ -82,10 +91,60 @@ async function geocodeLocation(locationString: string): Promise<Coordinates | nu
 
     const data = await response.json();
     if (data.features && data.features.length > 0) {
-      const [lng, lat] = data.features[0].center;
-      return { lat, lng };
+      const feature = data.features[0];
+      const [lng, lat] = feature.center;
+      return {
+        coords: { lat, lng },
+        placeName: feature.place_name || locationString,
+        relevance: feature.relevance || 0,
+      };
     }
     return null;
+  } catch {
+    return null;
+  }
+}
+
+interface ReverseGeoResult {
+  address: string;
+  city: string;
+  province: string;
+}
+
+async function reverseGeocode(lat: number, lng: number): Promise<ReverseGeoResult | null> {
+  try {
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json`;
+    const params = new URLSearchParams({
+      access_token: MAPBOX_TOKEN,
+      types: 'address,place,locality,neighborhood',
+      limit: '1',
+      country: 'PH',
+    });
+
+    const response = await fetch(`${url}?${params}`);
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    if (!data.features || data.features.length === 0) return null;
+
+    const feature = data.features[0];
+    const placeName = feature.place_name || '';
+    const context = feature.context || [];
+
+    // Extract city and province from context
+    let city = '';
+    let province = '';
+    for (const c of context) {
+      const id = c.id || '';
+      if (id.startsWith('place.')) city = c.text || '';
+      if (id.startsWith('region.')) province = c.text || '';
+    }
+
+    return {
+      address: placeName,
+      city: city || feature.text || '',
+      province,
+    };
   } catch {
     return null;
   }
@@ -145,7 +204,7 @@ function isCarAvailableForDates(car: DbCar, startDate?: string, endDate?: string
   );
 }
 
-function findNearbyCars(cars: DbCar[], coords: Coordinates, radiusKm: number = 50): CarWithDistance[] {
+function findNearbyCars(cars: DbCar[], coords: Coordinates, radiusKm: number = 25): CarWithDistance[] {
   return cars
     .filter(car => {
       const gCoords = car.garageLocation?.coordinates;
@@ -223,7 +282,7 @@ function formatNearbyCarsHtml(cars: CarWithDistance[], locationName: string, fil
         <div style="font-size:11px;color:#374151;margin-bottom:4px;">
           <span style="font-weight:600;">P${price12}</span> /12hr | <span style="font-weight:600;">P${price24}</span> /24hr
         </div>
-        <div style="font-size:10px;color:#6b7280;margin-bottom:8px;">${car.garageLocation?.address || car.garageAddress || ''} (${car.garageLocation?.city || ''})</div>
+        <div style="font-size:10px;color:#6b7280;margin-bottom:8px;">${car.resolvedCity || car.garageLocation?.city || ''}${(car.resolvedProvince || car.garageLocation?.province) ? ', ' + (car.resolvedProvince || car.garageLocation?.province) : ''}</div>
         <a href="/cars/${carId}" style="display:block;text-align:center;padding:8px 0;background:#2563eb;color:#fff;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">Book Now</a>
       </div>
     </div>`;
@@ -262,8 +321,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Geocode the location string to coordinates
-    const coords = await geocodeLocation(location);
-    if (!coords) {
+    const geoResult = await geocodeLocation(location);
+    if (!geoResult) {
       return NextResponse.json({
         success: true,
         html: `<div style="text-align:center;padding:12px;">
@@ -273,17 +332,45 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const { coords, placeName, relevance } = geoResult;
+
+    // If Mapbox returned a low-confidence match, ask user to be more specific
+    if (relevance < 0.7) {
+      return NextResponse.json({
+        success: true,
+        html: `<div style="text-align:center;padding:12px;">
+          <p style="font-size:13px;color:#374151;">I found "<strong>${placeName}</strong>" but I'm not sure that's the right place.</p>
+          <p style="font-size:12px;color:#6b7280;margin-top:6px;">Could you add the province or city? For example:</p>
+          <p style="font-size:12px;color:#2563eb;margin-top:4px;"><strong>"${location}, Cebu"</strong> or <strong>"${location}, Bulacan"</strong></p>
+        </div>`,
+      });
+    }
+
     // Fetch all cars from DB
     const allCars = await fetchAllCars();
 
     // Find nearby cars sorted by distance
-    const nearbyCars = findNearbyCars(allCars, coords, 50);
+    const nearbyCars = findNearbyCars(allCars, coords, 25);
 
-    // Format as HTML with Book Now buttons
-    const html = formatNearbyCarsHtml(nearbyCars, location, carType, startDate, endDate);
+    // Reverse-geocode each nearby car's garage coordinates to get accurate address
+    const carsToShow = nearbyCars.slice(0, 10);
+    await Promise.all(carsToShow.map(async (car) => {
+      const gCoords = car.garageLocation?.coordinates;
+      if (gCoords?.lat && gCoords?.lng) {
+        const resolved = await reverseGeocode(gCoords.lat, gCoords.lng);
+        if (resolved) {
+          car.resolvedAddress = resolved.address;
+          car.resolvedCity = resolved.city;
+          car.resolvedProvince = resolved.province;
+        }
+      }
+    }));
+
+    // Format as HTML with Book Now buttons — use resolved placeName for display
+    const html = formatNearbyCarsHtml(carsToShow, placeName, carType, startDate, endDate);
 
     // Return simplified car data for follow-up context
-    const carsContext = nearbyCars.slice(0, 10).map(car => ({
+    const carsContext = carsToShow.map(car => ({
       id: car.id || car._id,
       name: car.name,
       type: car.type,
@@ -302,9 +389,9 @@ export async function POST(request: NextRequest) {
       rentedCount: car.rentedCount,
       distance: car.distance,
       distanceText: car.distanceText,
-      garageAddress: car.garageLocation?.address || car.garageAddress,
-      garageCity: car.garageLocation?.city,
-      garageProvince: car.garageLocation?.province,
+      garageAddress: car.resolvedAddress || car.garageLocation?.address || car.garageAddress,
+      garageCity: car.resolvedCity || car.garageLocation?.city,
+      garageProvince: car.resolvedProvince || car.garageLocation?.province,
       ownerName: car.owner?.name,
       ownerContact: car.owner?.contactNumber,
       isOnHold: car.isOnHold,
@@ -315,7 +402,13 @@ export async function POST(request: NextRequest) {
       imageUrls: car.imageUrls,
     }));
 
-    return NextResponse.json({ success: true, html, carsContext });
+    // Return raw car data so frontend can merge into Redux for /cars/[id] page
+    const rawCars = carsToShow.map(car => {
+      const { distance, distanceText, resolvedAddress, resolvedCity, resolvedProvince, ...rawCar } = car;
+      return { ...rawCar, id: rawCar.id || rawCar._id };
+    });
+
+    return NextResponse.json({ success: true, html, carsContext, rawCars });
   } catch (error) {
     console.error('Nearby cars lookup error:', error);
     return NextResponse.json(

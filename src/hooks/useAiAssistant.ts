@@ -15,188 +15,45 @@ interface LocationContext {
 interface AiAssistantOptions {
   location?: LocationContext;
   token?: string | null;
+  onCarsFound?: (rawCars: Record<string, unknown>[]) => void;
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const BOOKING_INTENT_KEYWORDS = [
-  'check my booking', 'check booking', 'my booking', 'my bookings',
-  'booking status', 'find my booking', 'look up booking', 'track booking',
-  'where is my booking', 'check reservation',
-];
 
-const LOCATION_CAR_KEYWORDS = [
-  'available car near', 'available cars near', 'cars near', 'car near',
-  'available car in', 'available cars in', 'cars in', 'car in',
-  'available car around', 'cars around', 'car around',
-  'near me', 'available near', 'available in', 'available around',
-  'cars available in', 'car available in', 'cars available near', 'car available near',
-  'available sedan', 'available suv', 'available van', 'available pickup',
-  'available hatchback', 'available coupe', 'available sports car',
-  'sedan near', 'suv near', 'van near', 'pickup near',
-  'sedan in', 'suv in', 'van in', 'pickup in',
-];
-
-const CAR_TYPES = ['sedan', 'suv', 'van', 'pickup truck', 'pickup', 'sports car', 'coupe', 'hatchback'];
-
-function isBookingIntent(message: string): boolean {
-  const lower = message.toLowerCase();
-  return BOOKING_INTENT_KEYWORDS.some(kw => lower.includes(kw));
+// AI-powered intent classifier — replaces all keyword matching
+interface ClassifyResult {
+  intent: 'location_search' | 'follow_up' | 'booking_lookup' | 'book_car' | 'general';
+  location: string | null;
+  carType: string | null;
+  startDate: string | null;
+  endDate: string | null;
 }
 
-function isLocationCarIntent(message: string): boolean {
-  const lower = message.toLowerCase();
-  return LOCATION_CAR_KEYWORDS.some(kw => lower.includes(kw));
-}
-
-// Phrases that mean "use my current GPS location" — return null so we fall back to Redux location
-const MY_LOCATION_PHRASES = [
-  'my location', 'my area', 'my place', 'my city', 'my address',
-  'my current location', 'my current area', 'my current place',
-  'here', 'where i am', 'my position',
-];
-
-function extractLocationFromMessage(message: string): string | null {
-  const lower = message.toLowerCase();
-
-  // Check if user means "my location" — return null to trigger fallback to GPS
-  if (MY_LOCATION_PHRASES.some(p => lower.includes(p))) {
-    return null;
-  }
-
-  // Patterns: "near <location>", "in <location>", "around <location>"
-  const patterns = [
-    /(?:near|in|around)\s+(.+?)(?:\?|$|,\s*(?:what|any|are|do|can))/i,
-    /(?:near|in|around)\s+(.+?)$/i,
-  ];
-
-  for (const pattern of patterns) {
-    const match = lower.match(pattern);
-    if (match && match[1]) {
-      // Clean up the extracted location
-      let loc = match[1].trim();
-      // Remove trailing question marks and common suffixes
-      loc = loc.replace(/[?!.]+$/, '').trim();
-      // Remove car type words from location
-      CAR_TYPES.forEach(t => {
-        loc = loc.replace(new RegExp(`\\b${t}\\b`, 'gi'), '').trim();
-      });
-      // Remove date phrases (e.g. "this coming feb 25 to 30", "from feb 25-30", "today", "tomorrow", "this weekend")
-      loc = loc.replace(/\b(?:this\s+coming|from|for|on|during)\s+(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}\s*(?:to|-|through|until|til)\s*(?:(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+)?\d{1,2}\b/gi, '').trim();
-      loc = loc.replace(/\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}\s*(?:to|-|through|until|til)\s*(?:(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+)?\d{1,2}\b/gi, '').trim();
-      // Remove filler words
-      loc = loc.replace(/\b(available|today|tomorrow|this\s+coming|this\s+weekend|this|that|the|any|some|a|an|coming|from|for|on|during)\b/gi, '').trim();
-      if (loc.length > 2) return loc;
-    }
-  }
-
-  return null;
-}
-
-function extractCarType(message: string): string | undefined {
-  const lower = message.toLowerCase();
-  for (const type of CAR_TYPES) {
-    if (lower.includes(type)) return type;
-  }
-  return undefined;
-}
-
-const MONTH_MAP: Record<string, string> = {
-  jan: '01', january: '01', feb: '02', february: '02', mar: '03', march: '03',
-  apr: '04', april: '04', may: '05', jun: '06', june: '06',
-  jul: '07', july: '07', aug: '08', august: '08', sep: '09', september: '09',
-  oct: '10', october: '10', nov: '11', november: '11', dec: '12', december: '12',
-};
-
-function extractDateRange(message: string): { startDate?: string; endDate?: string } {
-  const lower = message.toLowerCase();
-  const currentYear = new Date().getFullYear();
-
-  // Pattern: "feb 25 to 30", "february 25 - 28", "feb 25-30"
-  const rangePattern = /\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{1,2})\s*(?:to|-|through|until|til)\s*(\d{1,2})\b/i;
-  const rangeMatch = lower.match(rangePattern);
-  if (rangeMatch) {
-    const month = MONTH_MAP[rangeMatch[1].toLowerCase()];
-    if (month) {
-      const startDay = rangeMatch[2].padStart(2, '0');
-      const endDay = rangeMatch[3].padStart(2, '0');
+async function classifyIntent(message: string, hasShownCars: boolean, awaitingBookingConfirm: boolean): Promise<ClassifyResult> {
+  try {
+    const response = await fetch('/api/ai-chat/classify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, hasShownCars, awaitingBookingConfirm }),
+    });
+    const data = await response.json();
+    if (data.success) {
       return {
-        startDate: `${currentYear}-${month}-${startDay}`,
-        endDate: `${currentYear}-${month}-${endDay}`,
+        intent: data.intent || 'general',
+        location: data.location || null,
+        carType: data.carType || null,
+        startDate: data.startDate || null,
+        endDate: data.endDate || null,
       };
     }
+  } catch (err) {
+    console.error('Intent classification failed:', err);
   }
-
-  // Pattern: "feb 25 to march 2"
-  const crossMonthPattern = /\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{1,2})\s*(?:to|-|through|until|til)\s*(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{1,2})\b/i;
-  const crossMatch = lower.match(crossMonthPattern);
-  if (crossMatch) {
-    const m1 = MONTH_MAP[crossMatch[1].toLowerCase()];
-    const m2 = MONTH_MAP[crossMatch[3].toLowerCase()];
-    if (m1 && m2) {
-      return {
-        startDate: `${currentYear}-${m1}-${crossMatch[2].padStart(2, '0')}`,
-        endDate: `${currentYear}-${m2}-${crossMatch[4].padStart(2, '0')}`,
-      };
-    }
-  }
-
-  // "today"
-  if (lower.includes('today')) {
-    const today = new Date().toISOString().split('T')[0];
-    return { startDate: today, endDate: today };
-  }
-
-  // "tomorrow"
-  if (lower.includes('tomorrow')) {
-    const tmr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-    return { startDate: tmr, endDate: tmr };
-  }
-
-  // "this weekend" (next Sat-Sun)
-  if (lower.includes('this weekend')) {
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    const daysToSat = (6 - dayOfWeek + 7) % 7 || 7;
-    const sat = new Date(now.getTime() + daysToSat * 86400000);
-    const sun = new Date(sat.getTime() + 86400000);
-    return {
-      startDate: sat.toISOString().split('T')[0],
-      endDate: sun.toISOString().split('T')[0],
-    };
-  }
-
-  return {};
+  // Fallback: treat as general
+  return { intent: 'general', location: null, carType: null, startDate: null, endDate: null };
 }
 
 const CANCEL_KEYWORDS = ['cancel', 'wrong email', 'wrong', 'nevermind', 'never mind', 'go back', 'stop', 'start over', 'different email', 'change email'];
-
-const BOOK_THIS_KEYWORDS = [
-  'i want to book', 'book this', 'book that', 'book it', 'book now',
-  'i\'ll book', 'ill book', 'let me book', 'proceed with booking',
-  'yes book', 'yes, book', 'yes i want to book', 'reserve this',
-  'reserve that', 'i\'ll take it', 'ill take it', 'i want this car',
-  'i want that car', 'book the car', 'yes proceed',
-  'i want to rent', 'rent this car', 'book this for me',
-  'confirm booking', 'schedule rental', 'lock this car',
-  'i want to confirm', 'let\'s book', 'lets book',
-];
-
-const AFFIRMATIVE_KEYWORDS = [
-  'yes', 'yeah', 'yep', 'yup', 'sure', 'ok', 'okay', 'okey',
-  'proceed', 'go ahead', 'confirm', 'alright', 'aight',
-  'absolutely', 'definitely', 'of course', 'sige', 'oo', 'opo',
-  'g', 'go', 'lets go', 'let\'s go', 'do it', 'i do', 'affirmative',
-];
-
-function isAffirmativeReply(message: string): boolean {
-  const lower = message.toLowerCase().trim();
-  return AFFIRMATIVE_KEYWORDS.some(kw => lower === kw || lower === kw + '!' || lower === kw + '.');
-}
-
-function isBookThisCarIntent(message: string): boolean {
-  const lower = message.toLowerCase();
-  return BOOK_THIS_KEYWORDS.some(kw => lower.includes(kw));
-}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function buildSingleCarCardHtml(car: any): string {
@@ -249,7 +106,7 @@ function isSecurityThreat(message: string): boolean {
   return SECURITY_BLOCK_KEYWORDS.some(kw => lower.includes(kw));
 }
 
-export function useAiAssistant({ location, token }: AiAssistantOptions = {}) {
+export function useAiAssistant({ location, token, onCarsFound }: AiAssistantOptions = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [bookingFlow, setBookingFlow] = useState<BookingFlowState>('idle');
@@ -262,6 +119,9 @@ export function useAiAssistant({ location, token }: AiAssistantOptions = {}) {
   const awaitingBookingConfirmRef = useRef<boolean>(false);
 
   const waitingForEmail = bookingFlow === 'waiting_email';
+
+  const onCarsFoundRef = useRef(onCarsFound);
+  onCarsFoundRef.current = onCarsFound;
 
   const lookupNearbyCars = useCallback(async (locationStr: string, carType?: string, startDate?: string, endDate?: string) => {
     setIsLoading(true);
@@ -277,6 +137,10 @@ export function useAiAssistant({ location, token }: AiAssistantOptions = {}) {
         if (data.carsContext) {
           lastShownCarsRef.current = data.carsContext;
           lastSearchLocationRef.current = locationStr;
+        }
+        // Merge raw car data into Redux so /cars/[id] page can find them
+        if (data.rawCars && onCarsFoundRef.current) {
+          onCarsFoundRef.current(data.rawCars);
         }
         setMessages(prev => [...prev, { role: 'assistant', content: data.html, isHtml: true }]);
       } else {
@@ -478,13 +342,16 @@ export function useAiAssistant({ location, token }: AiAssistantOptions = {}) {
       }
     }
 
-    // Check if user wants to book a previously shown car
-    // Triggers on: explicit booking phrases OR short affirmative replies when AI just asked "would you like to book?"
-    const wantsToBook = lastShownCarsRef.current.length > 0 && (
-      isBookThisCarIntent(trimmed) ||
-      (awaitingBookingConfirmRef.current && isAffirmativeReply(trimmed))
+    // AI-powered intent classification — understands what the user means, not just keywords
+    setIsLoading(true);
+    const classified = await classifyIntent(
+      trimmed,
+      lastShownCarsRef.current.length > 0,
+      awaitingBookingConfirmRef.current,
     );
-    if (wantsToBook) {
+
+    // --- BOOK CAR intent ---
+    if (classified.intent === 'book_car' && lastShownCarsRef.current.length > 0) {
       awaitingBookingConfirmRef.current = false;
       const availableCar = lastShownCarsRef.current.find((c: { availableForDates?: boolean }) => c.availableForDates !== false) || lastShownCarsRef.current[0];
       const cardHtml = buildSingleCarCardHtml(availableCar);
@@ -492,50 +359,74 @@ export function useAiAssistant({ location, token }: AiAssistantOptions = {}) {
         ...prev,
         { role: 'assistant', content: cardHtml, isHtml: true },
       ]);
+      setIsLoading(false);
       return;
     }
-    // Reset awaiting flag if user says something else
     awaitingBookingConfirmRef.current = false;
 
-    // Check if user wants to look up bookings
-    if (isBookingIntent(trimmed)) {
+    // --- BOOKING LOOKUP intent ---
+    if (classified.intent === 'booking_lookup') {
       setBookingFlow('waiting_email');
       setMessages(prev => [
         ...prev,
         { role: 'assistant', content: 'Sure! For security, I\'ll need to verify your identity first.\n\nPlease enter the **email address** you used when booking. I\'ll send a verification code to that email.' },
       ]);
+      setIsLoading(false);
       return;
     }
 
-    // Check if user is asking for cars near a specific location
-    if (isLocationCarIntent(trimmed)) {
-      const extractedLocation = extractLocationFromMessage(trimmed);
-      const carType = extractCarType(trimmed);
-      const { startDate, endDate } = extractDateRange(trimmed);
+    // --- LOCATION SEARCH intent ---
+    if (classified.intent === 'location_search') {
+      const extractedLocation = classified.location;
+      const carType = classified.carType || undefined;
+      const startDate = classified.startDate || undefined;
+      const endDate = classified.endDate || undefined;
       const dateInfo = startDate && endDate ? ` (${startDate} to ${endDate})` : '';
 
-      if (extractedLocation) {
+      if (extractedLocation && extractedLocation !== 'GPS') {
+        // Single-word locations are ambiguous in the Philippines
+        const locationWords = extractedLocation.trim().split(/[\s,]+/).filter((w: string) => w.length > 1);
+        if (locationWords.length === 1) {
+          setMessages(prev => [
+            ...prev,
+            { role: 'assistant', content: `"**${extractedLocation}**" exists in multiple provinces. Could you specify which one?\n\nFor example: **"${extractedLocation}, Cebu"** or **"${extractedLocation}, Bulacan"**` },
+          ]);
+          setIsLoading(false);
+          return;
+        }
+
         setMessages(prev => [
           ...prev,
           { role: 'assistant', content: `Searching for ${carType ? carType + ' ' : ''}cars near **${extractedLocation}**${dateInfo}...` },
         ]);
         await lookupNearbyCars(extractedLocation, carType, startDate, endDate);
+        setIsLoading(false);
         return;
       }
-      if (location?.address) {
+
+      // "GPS" or null location — use device GPS
+      if (extractedLocation === 'GPS' && location?.address) {
         const locationStr = [location.city, location.province].filter(Boolean).join(', ') || location.address;
         setMessages(prev => [
           ...prev,
           { role: 'assistant', content: `Searching for ${carType ? carType + ' ' : ''}cars near **${locationStr}**${dateInfo}...` },
         ]);
         await lookupNearbyCars(locationStr, carType, startDate, endDate);
+        setIsLoading(false);
         return;
       }
+
+      // No location extracted and no GPS
+      setMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: 'I\'d love to help you find a car! Could you tell me the **location** you\'re looking for?\n\nFor example: **"cars near Catmon, Cebu"** or **"available car in Mandaue, Cebu"**' },
+      ]);
+      setIsLoading(false);
+      return;
     }
 
-    // Normal AI chat flow
+    // --- FOLLOW UP and GENERAL intents → send to AI chat ---
     const updatedMessages = [...messages, newUserMessage];
-    setIsLoading(true);
 
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();

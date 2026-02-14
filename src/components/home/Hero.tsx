@@ -32,7 +32,7 @@ export function Hero({
         {/* Hero background image */}
         <div className="absolute inset-0 -z-10 bg-[#f5f3fa]">
           <Image
-            src="https://res.cloudinary.com/dlax3esau/image/upload/v1770448817/ChatGPT_Image_Feb_7_2026_03_17_57_PM_mo3tg5.png"
+            src="https://res.cloudinary.com/dlax3esau/image/upload/v1770200700/autiGiHero_gzlqjb.png"
             alt="Car rental"
             fill
             className="object-contain"

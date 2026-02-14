@@ -1,7 +1,8 @@
 "use client";
 
 import { useAiAssistant } from "@/hooks/useAiAssistant";
-import { RootState } from "@/lib/store";
+import { RootState, useAppDispatch } from "@/lib/store";
+import { setCars, setAllCars } from "@/lib/slices/data";
 import { Send, X, Trash2, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -29,9 +30,9 @@ export function HowBookingWorksDialog() {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+  const dispatch = useAppDispatch();
   const mapbox = useSelector((state: RootState) => state.mapBox?.current);
   const guestToken = useSelector((state: RootState) => state.auth?.guestToken);
-
   const locationContext = useMemo(() => {
     if (!mapbox?.address) return undefined;
     return {
@@ -41,9 +42,23 @@ export function HowBookingWorksDialog() {
     };
   }, [mapbox?.address, mapbox?.city, mapbox?.province]);
 
+  const allCars = useSelector((state: RootState) => (state.data as { allCars: Record<string, unknown>[] })?.allCars || []);
+
+  const handleCarsFound = useCallback((rawCars: Record<string, unknown>[]) => {
+    if (rawCars.length > 0) {
+      // Merge into allCars so useCar(id) can find any car from AI results
+      const existingIds = new Set(allCars.map((c: Record<string, unknown>) => c.id));
+      const newCars = rawCars.filter((c: Record<string, unknown>) => !existingIds.has(c.id));
+      if (newCars.length > 0) {
+        dispatch(setAllCars([...allCars, ...newCars]));
+      }
+    }
+  }, [dispatch, allCars]);
+
   const { messages, isLoading, sendMessage, clearChat, waitingForEmail, waitingForOtp } = useAiAssistant({
     location: locationContext,
     token: guestToken,
+    onCarsFound: handleCarsFound,
   });
 
   const scrollToBottom = useCallback(() => {
@@ -211,10 +226,20 @@ export function HowBookingWorksDialog() {
                       onClick={(e) => {
                         const target = e.target as HTMLElement;
                         const anchor = target.closest('a');
-                        if (anchor && anchor.getAttribute('href')?.startsWith('/')) {
+                        const href = anchor?.getAttribute('href');
+                        if (anchor && href?.startsWith('/')) {
                           e.preventDefault();
+                          // If navigating to /cars/[id], dispatch car data to Redux first
+                          const carMatch = href.match(/^\/cars\/([^/]+)$/);
+                          if (carMatch) {
+                            const carId = carMatch[1];
+                            const carData = allCars.find((c: Record<string, unknown>) => c.id === carId || c._id === carId);
+                            if (carData) {
+                              dispatch(setCars(carData));
+                            }
+                          }
                           setOpen(false);
-                          router.push(anchor.getAttribute('href')!);
+                          router.push(href);
                         }
                       }}
                     />
