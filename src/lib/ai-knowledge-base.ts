@@ -6,6 +6,18 @@
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
+// In-memory cache for rules prompt with invalidation support
+let rulesCache: { prompt: string; timestamp: number } | null = null;
+const RULES_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
+/**
+ * Invalidate the rules cache (called when Socket.IO notifies of rule changes)
+ */
+export function invalidateRulesCache() {
+  rulesCache = null;
+  console.log('🔄 AI rules cache invalidated');
+}
+
 interface KBEntry {
   question: string;
   answer: string;
@@ -61,13 +73,23 @@ export async function saveCorrection(question: string, correctedAnswer: string, 
 /**
  * Fetch all active rules from the DB, formatted for the system prompt.
  * Cached in Redis on the backend for speed.
+ * Also uses client-side in-memory cache with TTL.
  */
 export async function fetchRulesForPrompt(): Promise<string> {
   try {
+    // Check client-side cache first
+    if (rulesCache && Date.now() - rulesCache.timestamp < RULES_CACHE_TTL) {
+      return rulesCache.prompt;
+    }
+
     const res = await fetch(`${API_URL}/api/ai/rules/prompt`);
     if (!res.ok) return '';
     const { success, prompt } = await res.json();
     if (!success || !prompt) return '';
+    
+    // Update client-side cache
+    rulesCache = { prompt, timestamp: Date.now() };
+    
     return prompt;
   } catch (err) {
     console.error('Failed to fetch AI rules:', err);
