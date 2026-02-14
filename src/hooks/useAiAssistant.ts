@@ -289,7 +289,6 @@ export function useAiAssistant({ location, token, onCarsFound }: AiAssistantOpti
 
     // Booking flow: waiting for OTP input
     if (bookingFlow === 'waiting_otp') {
-      // Allow cancel/wrong email
       if (isCancelIntent(trimmed)) {
         setBookingFlow('idle');
         bookingEmailRef.current = '';
@@ -307,13 +306,11 @@ export function useAiAssistant({ location, token, onCarsFound }: AiAssistantOpti
         ]);
         await verifyOtpAndFetchBookings(cleanedOtp);
         return;
-      } else {
-        setMessages(prev => [
-          ...prev,
-          { role: 'assistant', content: 'Please enter the **6-digit code** sent to your email (numbers only, e.g. 123456).\n\nType **"cancel"** if you entered the wrong email.' },
-        ]);
-        return;
       }
+      // Not a valid OTP and not cancel — user likely changed their mind.
+      // Auto-cancel booking flow and let the message fall through to intent classification.
+      setBookingFlow('idle');
+      bookingEmailRef.current = '';
     }
 
     // Booking flow: waiting for email input
@@ -333,13 +330,10 @@ export function useAiAssistant({ location, token, onCarsFound }: AiAssistantOpti
         ]);
         await checkEmailAndSendOtp(trimmed);
         return;
-      } else {
-        setMessages(prev => [
-          ...prev,
-          { role: 'assistant', content: 'That doesn\'t look like a valid email address. Please enter a valid email (e.g. juan@gmail.com).' },
-        ]);
-        return;
       }
+      // Not a valid email and not cancel — user likely changed their mind.
+      // Auto-cancel booking flow and let the message fall through to intent classification.
+      setBookingFlow('idle');
     }
 
     // AI-powered intent classification — understands what the user means, not just keywords
@@ -351,7 +345,11 @@ export function useAiAssistant({ location, token, onCarsFound }: AiAssistantOpti
     );
 
     // --- BOOK CAR intent ---
-    if (classified.intent === 'book_car' && lastShownCarsRef.current.length > 0) {
+    // Only show booking card for pure confirmations. If the message mentions a date
+    // (e.g. "can I book today?", "book on March 10"), treat as follow_up so the AI
+    // checks availability first.
+    const hasDateRef = classified.startDate || /today|tomorrow|tonight|this week|next week|\d{1,2}\/\d|march|april|may|june|july|august|september|october|november|december|january|february/i.test(trimmed);
+    if (classified.intent === 'book_car' && lastShownCarsRef.current.length > 0 && !hasDateRef) {
       awaitingBookingConfirmRef.current = false;
       const availableCar = lastShownCarsRef.current.find((c: { availableForDates?: boolean }) => c.availableForDates !== false) || lastShownCarsRef.current[0];
       const cardHtml = buildSingleCarCardHtml(availableCar);
@@ -365,14 +363,20 @@ export function useAiAssistant({ location, token, onCarsFound }: AiAssistantOpti
     awaitingBookingConfirmRef.current = false;
 
     // --- BOOKING LOOKUP intent ---
+    // Safety guard: only enter email flow if user is clearly asking about THEIR personal booking.
+    // "booked dates" / "unavailable dates" about a car should NOT trigger this.
     if (classified.intent === 'booking_lookup') {
-      setBookingFlow('waiting_email');
-      setMessages(prev => [
-        ...prev,
-        { role: 'assistant', content: 'Sure! For security, I\'ll need to verify your identity first.\n\nPlease enter the **email address** you used when booking. I\'ll send a verification code to that email.' },
-      ]);
-      setIsLoading(false);
-      return;
+      const personalBookingPattern = /\b(my booking|my reservation|check booking|booking status|track booking|where.?s my|find my booking)\b/i;
+      if (personalBookingPattern.test(trimmed)) {
+        setBookingFlow('waiting_email');
+        setMessages(prev => [
+          ...prev,
+          { role: 'assistant', content: 'Sure! For security, I\'ll need to verify your identity first.\n\nPlease enter the **email address** you used when booking. I\'ll send a verification code to that email.' },
+        ]);
+        setIsLoading(false);
+        return;
+      }
+      // Not a personal booking query — fall through to AI chat as follow_up
     }
 
     // --- LOCATION SEARCH intent ---

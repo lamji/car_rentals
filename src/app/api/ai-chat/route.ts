@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { saveQAPair, saveCorrection, searchRelevantKnowledge, fetchRulesForPrompt, createRule, updateRuleByNumber } from '@/lib/ai-knowledge-base';
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 const GROQ_FALLBACK_MODEL = process.env.GROQ_FALLBACK_MODEL || '';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const TRAINING_MODE = process.env.TRAINING_MODE === 'true';
 
 // Load knowledge base at module level
 let knowledgeBase = '';
@@ -236,12 +238,26 @@ export async function POST(request: NextRequest) {
       locationContext += '.';
     }
 
+    // Helper: format number with comma separators (e.g. 1500 -> "1,500")
+    const fmt = (n: unknown) => {
+      const num = Number(n) || 0;
+      return num.toLocaleString('en-PH');
+    };
+
+    // Helper: format date string to readable format (e.g. "2026-02-14" -> "February 14, 2026")
+    const fmtDate = (dateStr: unknown) => {
+      if (!dateStr || typeof dateStr !== 'string') return String(dateStr || '');
+      const d = new Date(dateStr + 'T00:00:00');
+      if (isNaN(d.getTime())) return String(dateStr);
+      return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    };
+
     // Build context for recently shown cars (for follow-up questions)
     let recentCarsContext = '';
     if (lastShownCars && Array.isArray(lastShownCars) && lastShownCars.length > 0) {
       const carCount = lastShownCars.length;
       const todayStr = new Date().toISOString().split('T')[0];
-      recentCarsContext += `\n\nTODAY'S DATE: ${todayStr}`;
+      recentCarsContext += `\n\nTODAY'S DATE: ${fmtDate(todayStr)} (${todayStr})`;
       recentCarsContext += `\n\n=== SEARCH RESULTS: EXACTLY ${carCount} CAR${carCount > 1 ? 'S' : ''} FOUND (from search near "${lastSearchLocation || 'user location'}") ===`;
       recentCarsContext += `\nThe search returned EXACTLY ${carCount} car${carCount > 1 ? 's' : ''}. These are the ONLY cars from this search. Do NOT invent, add, or mention any other cars.`;
       lastShownCars.forEach((car: Record<string, unknown>, i: number) => {
@@ -250,10 +266,15 @@ export async function POST(request: NextRequest) {
         recentCarsContext += `\n   Name: ${car.name} (${car.year} ${car.type})`;
         recentCarsContext += `\n   Distance from user's location: ${car.distanceText}`;
         recentCarsContext += `\n   Transmission: ${car.transmission} | Fuel: ${car.fuel} | Seats: ${car.seats}`;
-        recentCarsContext += `\n   Pricing: Per day: P${car.pricePerDay} | 12hr: P${car.pricePer12Hours} | 24hr: P${car.pricePer24Hours} | Hourly: P${car.pricePerHour}`;
+        recentCarsContext += `\n   Pricing:`;
+        recentCarsContext += `\n     - 12-hour package: P${fmt(car.pricePer12Hours)}`;
+        recentCarsContext += `\n     - 24-hour package: P${fmt(car.pricePer24Hours)}`;
+        recentCarsContext += `\n     - Per day: P${fmt(car.pricePerDay)}`;
+        recentCarsContext += `\n     - Hourly rate (for excess hours): P${fmt(car.pricePerHour)}/hr`;
         recentCarsContext += `\n   Self-drive: ${car.selfDrive ? 'Yes (customer drives themselves)' : 'No (comes with a driver)'}`;
-        recentCarsContext += `\n   Driver charge: P${car.driverCharge || 0}/day`;
-        recentCarsContext += `\n   Delivery fee: P${car.deliveryFee || 0}`;
+        recentCarsContext += `\n   Driver charge: P${fmt(car.driverCharge || 0)}/day`;
+        recentCarsContext += `\n   Delivery fee: P${fmt(car.deliveryFee || 0)}`;
+        recentCarsContext += `\n   Cutoff time: ${car.cutoff || '11:30 PM (default)'}`;
         recentCarsContext += `\n   Garage: ${car.garageAddress} (${car.garageCity}, ${car.garageProvince || ''})`;
         recentCarsContext += `\n   Owner: ${car.ownerName || 'N/A'} | Contact: ${car.ownerContact || 'N/A'}`;
         recentCarsContext += `\n   Rating: ${car.rating}/5 | Rented: ${car.rentedCount} times`;
@@ -262,79 +283,69 @@ export async function POST(request: NextRequest) {
         if (unavail.length > 0) {
           recentCarsContext += `\n   Unavailable dates:`;
           unavail.forEach((d: {startDate?: string; endDate?: string; startTime?: string; endTime?: string}) => {
-            recentCarsContext += `\n     - ${d.startDate} to ${d.endDate} (${d.startTime || '00:00'}-${d.endTime || '23:59'})`;
+            recentCarsContext += `\n     - ${fmtDate(d.startDate)} to ${fmtDate(d.endDate)} (${d.startTime || '00:00'}-${d.endTime || '23:59'})`;
           });
         } else {
           recentCarsContext += `\n   Unavailable dates: NONE - available anytime`;
         }
       });
       recentCarsContext += `\n=== END SEARCH RESULTS ===`;
-
-      recentCarsContext += `\n\nFOLLOW-UP RULES (CRITICAL - VIOLATING THESE IS FORBIDDEN):`;
-      recentCarsContext += `\n`;
-      recentCarsContext += `\nRULE 0 - SINGLE SOURCE OF TRUTH: The car data above is your ONLY source of information. You have NO other car data. Every answer MUST come from the fields listed above. If a field is not listed, say you don't have that information.`;
-      recentCarsContext += `\n`;
-      recentCarsContext += `\nRULE 1 - CAR COUNT: The search found EXACTLY ${carCount} car${carCount > 1 ? 's' : ''}. NEVER mention, invent, or imply additional cars exist. Only reference the car${carCount > 1 ? 's' : ''} listed above.`;
-      recentCarsContext += `\n`;
-
-      if (carCount === 1) {
-        recentCarsContext += `\nRULE 2 - SINGLE CAR MODE: Since only 1 car was found, ALL follow-up questions ("that car", "it", "is it self-drive?", etc.) refer to this ONE car: ${lastShownCars[0].name} (${lastShownCars[0].year}). Answer directly using its data. Do NOT say "the cars I found" (plural) - there is only ONE car.`;
-      } else {
-        recentCarsContext += `\nRULE 2 - MULTIPLE CARS MODE: ${carCount} cars were found. If the user says "that car" or "it" ambiguously, ask which car they mean (e.g. "Which car are you asking about - the [name1] or the [name2]?"). Once the user picks a car (by name, type, or description), all subsequent follow-ups are about THAT car until they ask about a different one.`;
-      }
-
-      recentCarsContext += `\n`;
-      recentCarsContext += `\nRULE 3 - ANSWER CURRENT QUESTION ONLY (CRITICAL):`;
-      recentCarsContext += `\n  - Read ONLY the user's LAST message. Answer ONLY that question.`;
-      recentCarsContext += `\n  - Do NOT repeat, summarize, or reference ANY previous answers or topics.`;
-      recentCarsContext += `\n  - If user asks "how much is 12 hours?", ONLY give the 12-hour price. Do NOT mention self-drive, driver fees, or anything else.`;
-      recentCarsContext += `\n  - If user asks "is it self-drive?", ONLY answer about self-drive. Do NOT mention prices, availability, or anything else.`;
-      recentCarsContext += `\n  - Each response must be about ONE topic only — the topic of the user's last message.`;
-      recentCarsContext += `\n`;
-      recentCarsContext += `\nRULE 4 - AVAILABILITY CHECK (MUST FOLLOW EXACTLY):`;
-      recentCarsContext += `\n  STEP 1: Look at the "Unavailable dates" field for the car.`;
-      recentCarsContext += `\n  STEP 2: If user says "today" or "now", use TODAY'S DATE (${new Date().toISOString().split('T')[0]}) as both start and end date.`;
-      recentCarsContext += `\n  STEP 3: Check if the requested date range overlaps with ANY unavailable range. Overlap means: unavailableStart <= requestedEnd AND unavailableEnd >= requestedStart.`;
-      recentCarsContext += `\n  STEP 4: If there IS an overlap, the car is NOT available. If there is NO overlap, the car IS available.`;
-      recentCarsContext += `\n  STEP 5: Give the result in ONE sentence. No explanation of how you checked.`;
-      recentCarsContext += `\n  - AVAILABLE: "Yes, the [name] is available [date]. Would you like to book it?"`;
-      recentCarsContext += `\n  - NOT AVAILABLE: "Sorry, the [name] is booked from [conflicting start] to [conflicting end]. Would you like to check other dates?"`;
-      recentCarsContext += `\n  NEVER say "let me check" or narrate your thinking. Just give the final answer.`;
-      recentCarsContext += `\n`;
-      recentCarsContext += `\nRULE 5 - DIRECT ANSWERS: You are a professional call center agent. Give instant, confident answers. 1 sentence max for simple questions. Examples:`;
-      recentCarsContext += `\n  Q: "Is it self-drive?" -> "Yes, the ${lastShownCars[0].name} is self-drive."`;
-      recentCarsContext += `\n  Q: "Available March 10 to 12?" -> "Yes, the ${lastShownCars[0].name} is available March 10-12. Would you like to book it?"`;
-      recentCarsContext += `\n  Q: "How much?" -> "The ${lastShownCars[0].name} is P${lastShownCars[0].pricePer12Hours}/12hr or P${lastShownCars[0].pricePer24Hours}/24hr."`;
-      recentCarsContext += `\n  Q: "prices?" -> "P${lastShownCars[0].pricePerHour}/hr, P${lastShownCars[0].pricePer12Hours}/12hr, P${lastShownCars[0].pricePer24Hours}/24hr, P${lastShownCars[0].pricePerDay}/day."`;
-      recentCarsContext += `\n  NEVER add filler words like "Sure!", "Of course!", "Let me check", "Great question". Just answer.`;
-      recentCarsContext += `\n`;
-      recentCarsContext += `\nRULE 6 - BANNED PHRASES (NEVER use these):`;
-      recentCarsContext += `\n  - "I'm Renty" / "I found a car" / "The car I found near you"`;
-      recentCarsContext += `\n  - "Let me check" / "Let me see" / "According to the data"`;
-      recentCarsContext += `\n  - "I need to verify" / "Based on the information"`;
-      recentCarsContext += `\n  - Any re-summary of the car unless the user asks for it`;
-      recentCarsContext += `\n  Just answer the question. Nothing else.`;
-      recentCarsContext += `\n`;
-      recentCarsContext += `\nRULE 7 - AMBIGUOUS DATES: If user says a day number without a month (e.g. "this coming 30"), ask which month.`;
-      recentCarsContext += `\n`;
-      recentCarsContext += `\nRULE 8 - OUT OF SCOPE QUESTIONS: If the user asks about something NOT in the car data above (e.g. engine type, tire type, GPS, mileage, insurance, car color, interior, etc.), do NOT guess. Instead say: "I don't have that specific detail. You can check the full car details here: [View full details](/cars/${lastShownCars[0].id})" and provide the link as a clickable markdown link.`;
-      recentCarsContext += `\n`;
-      recentCarsContext += `\nRULE 9 - RESPONSE LENGTH: Maximum 1-2 sentences for simple questions. NEVER combine multiple topics in one response. If the user asks one thing, give one answer.`;
-      recentCarsContext += `\n`;
-      recentCarsContext += `\nRULE 10 - DISTANCE QUESTIONS: The "Distance from user's location" field shows how far each car's garage is from the user. Use this to answer "how far" questions. Example: "The ${lastShownCars[0].name} is ${lastShownCars[0].distanceText} from your location."`;
     }
 
-    const fullSystemPrompt = SYSTEM_PROMPT + carsContext + locationContext + recentCarsContext;
+    // Load rules from DB (cached in Redis)
+    const dbRules = await fetchRulesForPrompt();
 
-    // Limit to last 4 messages (2 exchanges). The system prompt has all car data,
-    // so long history just causes the AI to repeat old answers.
-    const recentMessages = messages.slice(-4);
+    // Get the last user message
+    const lastUserMessage = [...messages].reverse().find((m: { role: string }) => m.role === 'user');
+    const userQuestion = lastUserMessage?.content || messages[messages.length - 1]?.content || '';
+
+    // Search knowledge base for relevant past Q&A
+    const learnedKnowledge = await searchRelevantKnowledge(userQuestion);
+
+    // Training mode: full conversation context + rule management
+    let trainingContext = '';
+    let isCorrection = false;
+    let isRuleCommand = false;
+    if (TRAINING_MODE) {
+      // Always send full conversation in training mode so AI can re-check its answers
+      trainingContext = '\n\n=== TRAINING MODE ACTIVE ===';
+      trainingContext += '\nYou are in training mode. The admin is teaching you how to respond correctly.';
+      trainingContext += '\nIMPORTANT TRAINING BEHAVIORS:';
+      trainingContext += '\n1. If the admin says your answer is wrong, acknowledge the error and re-examine the car data above to give the CORRECT answer.';
+      trainingContext += '\n2. If the admin says "check the db" or "check the data", carefully re-read ALL the car data fields above and answer based on that data.';
+      trainingContext += '\n3. If the admin gives you a correction (e.g. "the correct answer should be X"), acknowledge it and confirm you understand.';
+      trainingContext += '\n4. If the admin says "add rule: [description]" or "new rule: [description]", confirm you will add it. Respond with: "Rule added: [summary of the rule]"';
+      trainingContext += '\n5. If the admin says "update rule [number]: [new content]", confirm the update. Respond with: "Rule [number] updated: [summary]"';
+      trainingContext += '\n6. If the admin says "delete rule [number]" or "remove rule [number]", confirm. Respond with: "Rule [number] removed."';
+      trainingContext += '\n7. Be conversational and helpful. This is a teaching session.';
+      trainingContext += '\n=== END TRAINING MODE ===';
+
+      // Send recent conversation so AI has context of what it got wrong
+      trainingContext += '\n\nRecent conversation:';
+      const recentMsgs = messages.slice(-8);
+      recentMsgs.forEach((m: { role: string; content: string }) => {
+        trainingContext += `\n  ${m.role === 'user' ? 'Admin' : 'You'}: ${m.content}`;
+      });
+
+      // Detect correction
+      const correctionPatterns = /\b(wrong|incorrect|no that'?s|that'?s not right|you'?re wrong|not correct|the (?:correct|right) answer|should be|it should|you should|the question is|check the db|check the data|i said|i meant|that is wrong|fix that|correct that|update that)\b/i;
+      if (correctionPatterns.test(userQuestion)) {
+        isCorrection = true;
+      }
+
+      // Detect rule commands
+      const addRuleMatch = userQuestion.match(/^(?:add rule|new rule)[:\s]+(.+)/i);
+      const updateRuleMatch = userQuestion.match(/^(?:update rule|change rule|edit rule)\s*(\d+)[:\s]+(.+)/i);
+      if (addRuleMatch || updateRuleMatch) {
+        isRuleCommand = true;
+      }
+    }
+
+    const fullSystemPrompt = SYSTEM_PROMPT + carsContext + locationContext + recentCarsContext + dbRules + learnedKnowledge + trainingContext;
+
     const groqMessages = [
-      { role: 'system', content: fullSystemPrompt },
-      ...recentMessages.map((m: { role: string; content: string }) => ({
-        role: m.role,
-        content: m.content,
-      })),
+      { role: 'system' as const, content: fullSystemPrompt },
+      { role: 'user' as const, content: userQuestion },
     ];
 
     // Try primary model, fallback on any error
@@ -359,7 +370,7 @@ export async function POST(request: NextRequest) {
           body: JSON.stringify({
             model,
             messages: groqMessages,
-            temperature: 0.7,
+            temperature: 0.3,
             ...tokenParam,
           }),
         });
@@ -391,6 +402,33 @@ export async function POST(request: NextRequest) {
       rawReply = 'Sorry, I could not generate a response. Please try again.';
     }
     const reply = markdownToHtml(rawReply);
+
+    // Save to knowledge base (non-blocking)
+    if (userQuestion && rawReply) {
+      if (TRAINING_MODE && isCorrection) {
+        // Save the corrected answer as verified knowledge
+        const userMsgs = messages.filter((m: { role: string }) => m.role === 'user');
+        const originalQuestion = userMsgs.length >= 2 ? userMsgs[userMsgs.length - 2]?.content : userQuestion;
+        saveCorrection(originalQuestion || userQuestion, rawReply).catch(() => {});
+      } else if (TRAINING_MODE && isRuleCommand) {
+        // Handle rule add/update commands
+        const addRuleMatch = userQuestion.match(/^(?:add rule|new rule)[:\s]+(.+)/i);
+        const updateRuleMatch = userQuestion.match(/^(?:update rule|change rule|edit rule)\s*(\d+)[:\s]+(.+)/i);
+        if (addRuleMatch) {
+          const ruleContent = addRuleMatch[1].trim();
+          // Extract a short title from the first sentence or first 50 chars
+          const title = ruleContent.length > 50 ? ruleContent.substring(0, 50).trim() + '...' : ruleContent;
+          createRule(title, ruleContent).catch(() => {});
+        } else if (updateRuleMatch) {
+          const ruleNum = parseInt(updateRuleMatch[1]);
+          const newContent = updateRuleMatch[2].trim();
+          updateRuleByNumber(ruleNum, newContent).catch(() => {});
+        }
+      } else if (!TRAINING_MODE) {
+        // Only auto-save Q&A in non-training mode
+        saveQAPair(userQuestion, rawReply).catch(() => {});
+      }
+    }
 
     return NextResponse.json({ success: true, reply, isHtml: true });
   } catch (error) {
