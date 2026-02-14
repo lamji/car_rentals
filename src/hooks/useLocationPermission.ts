@@ -124,6 +124,16 @@ export function useLocationPermission() {
     }
   }, [stateRadius, checkLocationPermission, carsFromRedux]);
 
+  // When both cars data AND position become available, recalculate nearest garages.
+  // This handles the race condition where GPS resolves before or after API data loads.
+  const didRecalcRef = useRef(false);
+  useEffect(() => {
+    if (carsFromRedux.length > 0 && currentPosition && locationCheckRef.current && !didRecalcRef.current) {
+      didRecalcRef.current = true;
+      recalculateNearestGarages();
+    }
+  }, [carsFromRedux, currentPosition, recalculateNearestGarages]);
+
   const checkLocationOnce = useCallback(() => {
     // Only run if not loading and not already checked
     if (!loading && !locationCheckRef.current) {

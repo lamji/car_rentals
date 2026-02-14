@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import Image from "next/image";
@@ -11,7 +10,6 @@ import { Toast } from "@/components/ui/toast";
 import { useCarDetailsPage } from "@/hooks/useCarDetailsPage";
 import { formatCurrency } from "@/lib/currency";
 import { MapBoxService } from "@/lib/npm-ready-stack/mapboxService/ui";
-import { useAppSelector } from "@/lib/store";
 import { getFutureBookings,  isCarAvailableToday } from "@/utils/validateBlockedDates";
 import { Calendar, Copy, MoveLeft, Phone, User } from "lucide-react";
 
@@ -40,7 +38,6 @@ export function MobileCarDetailsPageContent() {
   // Memoize map points to prevent unnecessary re-renders
   const memoPointA = useMemo(() => pointA, [pointA]);
   const memoPointB = useMemo(() => pointB, [pointB]);
-  const mapBoxState = useAppSelector((state: any) => state.mapBox);
 
   if (!car) {
     return (
@@ -66,7 +63,7 @@ export function MobileCarDetailsPageContent() {
       <div className="h-[60vh] bg-gray-200 relative">
         {/* Map as background */}
         <MapBoxService
-          pointA={mapBoxState.current.position || memoPointA}
+          pointA={memoPointA}
           pointB={memoPointB}
           className="w-full h-full"
           distanceText={mapBoxDistanceText}

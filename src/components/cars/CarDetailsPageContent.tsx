@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import Link from "next/link";
@@ -8,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { useCarDetailsPage } from "@/hooks/useCarDetailsPage";
 import { formatCurrency } from "@/lib/currency";
 import { MapBoxService } from "@/lib/npm-ready-stack/mapboxService/ui";
-import { useAppSelector } from "@/lib/store";
 import { Calendar, Car, Copy, CreditCard, MapPin, Navigation, Phone, Settings, Users } from "lucide-react";
 import { useMemo } from "react";
 import { CarImages } from "./CarImages";
@@ -35,8 +33,6 @@ export function CarDetailsPageContent() {
   // Memoize map points to prevent unnecessary re-renders
   const memoPointA = useMemo(() => pointA, [pointA]);
   const memoPointB = useMemo(() => pointB, [pointB]);
-  const mapBoxState = useAppSelector((state: any) => state.mapBox);
-  console.log("test:car",{car});
 
   if (!car) {
     return (
@@ -58,7 +54,7 @@ export function CarDetailsPageContent() {
       <div className="flex p-5 gap-10">
         <div className="h-[80vh] bg-gray-200 relative w-1/2 rounded-lg p-2 overflow-hidden">
           <MapBoxService
-            pointA={mapBoxState.current.position || memoPointA}
+            pointA={memoPointA}
             pointB={memoPointB}
             className="w-full h-full rounded-lg"
             distanceText={mapBoxDistanceText}
