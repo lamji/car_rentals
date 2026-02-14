@@ -19,6 +19,7 @@ export default function useGuestToken() {
     // Save token to localStorage so plug-and-play Providers can consume it
     if (response?.token) {
       localStorage.setItem("token", response.token);
+      console.log("token:response", response.token, response);
       window.dispatchEvent(new Event("token-updated"));
     }
     return response;

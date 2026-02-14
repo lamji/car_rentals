@@ -3,7 +3,7 @@ import { useCallback, useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAppSelector, useAppDispatch } from "@/lib/store";
 import { showLoader, hideLoader } from "@/lib/slices/globalLoaderSlice";
-import { clearHoldData, setRetryPayload, clearRetryPayload } from "@/lib/slices/bookingSlice";
+import { clearHoldData, setRetryPayload, clearRetryPayload, clearBooking } from "@/lib/slices/bookingSlice";
 import { showAlert } from "@/lib/slices/alertSlice";
 import useSaveBooking from "@/lib/api/useSaveBooking";
 import useGcashPayment from "@/lib/api/useGcashPayment";
@@ -182,6 +182,7 @@ export function usePaymentModal() {
 
       // Step 5: Track active booking and open fullscreen checkout
       activeBookingIdRef.current = payload.bookingId;
+      dispatch(clearBooking())
       openCheckout(paymentResponse.data.checkoutUrl);
     } catch (error: any) {
       console.error("debug:payment - error in payment flow:", error);

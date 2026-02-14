@@ -28,6 +28,8 @@ export default function ReactProvider({
     const token = localStorage.getItem("token");
     setInitialToken(token);
 
+    console.log("token", token);
+
     // Listen for token updates from useGuestToken (custom event)
     const handleTokenUpdate = () => {
       const updatedToken = localStorage.getItem("token");

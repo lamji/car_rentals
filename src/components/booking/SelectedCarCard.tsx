@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
@@ -127,7 +128,7 @@ export function SelectedCarCard() {
                   <div
                     key={booking._id}
                     data-testid={`booking-${booking._id}`}
-                    className="relative bg-linear-to-r from-red-50 to-orange-50 border border-red-200 rounded-lg p-2 shadow-sm"
+                    className="relative bg-linear-to-r from-red-50 to-orange-50 border border-red-200 rounded-lg p-2 shadow-sm w-full lg:w-[30%]"
                   >
                     <div className="flex items-center justify-center">
                       <div className="text-left">
@@ -172,11 +173,13 @@ export function SelectedCarCard() {
                     </div>
                   </div>
                 ))}
-                {futureBookings.length > 3 && (
+               
+              </div>
+               {futureBookings.length > 3 && (
                   <Badge
                     data-testid="bookings-more"
                     variant="outline"
-                    className="text-[10px] font-normal px-2 py-0.5 border-destructive/30 text-destructive cursor-pointer hover:bg-destructive/10 flex items-center gap-1 w-fit"
+                    className="mt-3 text-[10px] font-normal px-2 py-0.5 border-destructive/30 text-destructive cursor-pointer hover:bg-destructive/10 flex items-center gap-1 w-fit"
                     onClick={() => setShowAllDates(!showAllDates)}
                   >
                     {showAllDates ? (
@@ -192,7 +195,6 @@ export function SelectedCarCard() {
                     )}
                   </Badge>
                 )}
-              </div>
             </div>
           </>
         )}
