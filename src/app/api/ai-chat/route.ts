@@ -327,7 +327,11 @@ export async function POST(request: NextRequest) {
 
     // Handle sudo login flow (email and password)
     const isSudoLoginFlow = messages.some((m: { role: string; content: string }) => 
-      m.role === 'assistant' && m.content.includes('sudo login')
+      m.role === 'assistant' && (
+        m.content.includes('sudo login') || 
+        m.content.includes('email address** to begin sudo') ||
+        m.content.includes('Now please provide your **password**')
+      )
     );
     
     if (isSudoLoginFlow) {

@@ -17,6 +17,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Don't generate follow-ups for sudo login/logout flows
+    if (
+      aiResponse.includes('sudo login') ||
+      aiResponse.includes('provide your **password**') ||
+      aiResponse.includes('Sudo login successful') ||
+      aiResponse.includes('Logging out')
+    ) {
+      return NextResponse.json({ success: true, followUps: [] });
+    }
+
     const prompt = `You are a car rental assistant. Based on the user's last question and your response, generate 2 short, contextual follow-up questions the user might want to ask next.
 
 User asked: "${userQuery}"
