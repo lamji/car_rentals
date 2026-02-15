@@ -77,25 +77,26 @@ export function HowBookingWorksDialog() {
     }
   }, [open]);
 
-  // Handle mobile keyboard: resize chat panel when virtual keyboard opens/closes
+  // Handle mobile keyboard: use visualViewport height to resize chat panel
   const chatPanelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
     const vv = window.visualViewport;
     if (!vv) return;
-    const onResize = () => {
+    const updateHeight = () => {
       if (chatPanelRef.current) {
         chatPanelRef.current.style.height = `${vv.height}px`;
+        chatPanelRef.current.style.top = `${vv.offsetTop}px`;
       }
-      scrollToBottom();
     };
-    vv.addEventListener('resize', onResize);
-    vv.addEventListener('scroll', onResize);
+    updateHeight();
+    vv.addEventListener('resize', updateHeight);
+    vv.addEventListener('scroll', updateHeight);
     return () => {
-      vv.removeEventListener('resize', onResize);
-      vv.removeEventListener('scroll', onResize);
+      vv.removeEventListener('resize', updateHeight);
+      vv.removeEventListener('scroll', updateHeight);
     };
-  }, [open, scrollToBottom]);
+  }, [open]);
 
   const handleSend = useCallback(() => {
     if (!input.trim() || isLoading) return;
@@ -177,7 +178,7 @@ export function HowBookingWorksDialog() {
 
       {/* Chat Panel */}
       {open && (
-        <div ref={chatPanelRef} className="fixed inset-0 z-9999 w-screen h-screen max-h-screen bg-white rounded-none border-0 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-200 sm:inset-auto sm:bottom-32 sm:right-2 sm:w-[380px] sm:h-auto sm:max-h-[70vh] sm:rounded-2xl sm:border sm:border-gray-200 sm:shadow-2xl">
+        <div ref={chatPanelRef} className="fixed left-0 top-0 z-9999 w-screen h-[100dvh] bg-white flex flex-col overflow-hidden sm:inset-auto sm:bottom-32 sm:right-2 sm:left-auto sm:top-auto sm:w-[380px] sm:h-auto sm:max-h-[70vh] sm:rounded-2xl sm:border sm:border-gray-200 sm:shadow-2xl sm:animate-in sm:slide-in-from-bottom-4 sm:duration-200">
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 bg-linear-to-r from-blue-600 to-blue-700 text-white">
             <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/30 shrink-0">
@@ -212,9 +213,8 @@ export function HowBookingWorksDialog() {
             </button>
           </div>
 
-          {/* Messages — flex-col with reverse for bottom stacking like messenger */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col min-h-0">
-            <div className="mt-auto" />
+          {/* Messages — flex-col-reverse anchors scroll to bottom like messenger */}
+          <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col-reverse min-h-0">
             <div className="space-y-3">
               {/* Welcome message */}
               {messages.length === 0 && (
