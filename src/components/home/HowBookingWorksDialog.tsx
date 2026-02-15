@@ -77,6 +77,29 @@ export function HowBookingWorksDialog() {
     }
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => {
+      // Only apply on mobile where keyboard affects viewport
+      if (window.innerWidth <= 768 && chatPanelRef.current) {
+        // Calculate keyboard height and add as bottom padding
+        const keyboardHeight = window.innerHeight - vv.height;
+        chatPanelRef.current.style.paddingBottom = `${Math.max(8, keyboardHeight)}px`;
+      }
+      scrollToBottom();
+    };
+    vv.addEventListener('resize', onResize);
+    vv.addEventListener('scroll', onResize);
+    // Initial check in case keyboard is already open
+    onResize();
+    return () => {
+      vv.removeEventListener('resize', onResize);
+      vv.removeEventListener('scroll', onResize);
+    };
+  }, [open, scrollToBottom]);
+
   const handleSend = useCallback(() => {
     if (!input.trim() || isLoading) return;
     sendMessage(input);
