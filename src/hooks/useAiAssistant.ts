@@ -410,12 +410,15 @@ export function useAiAssistant({ location, token, onCarsFound }: AiAssistantOpti
 
       // "GPS" or null location — use device GPS
       if (extractedLocation === 'GPS' && location?.address) {
-        const locationStr = [location.city, location.province].filter(Boolean).join(', ') || location.address;
+        // Use city+province for geocoding (more accurate than full GPS address)
+        const geocodeStr = [location.city, location.province].filter(Boolean).join(', ');
+        const displayStr = location.address;
+        const searchStr = geocodeStr || location.address;
         setMessages(prev => [
           ...prev,
-          { role: 'assistant', content: `Searching for ${carType ? carType + ' ' : ''}cars near **${locationStr}**${dateInfo}...` },
+          { role: 'assistant', content: `Searching for ${carType ? carType + ' ' : ''}cars near **${displayStr}**${dateInfo}...` },
         ]);
-        await lookupNearbyCars(locationStr, carType, startDate, endDate);
+        await lookupNearbyCars(searchStr, carType, startDate, endDate);
         setIsLoading(false);
         return;
       }

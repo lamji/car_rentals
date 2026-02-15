@@ -64,7 +64,7 @@ export async function saveCorrection(question: string, correctedAnswer: string, 
  */
 export async function fetchRulesForPrompt(): Promise<string> {
   try {
-    const res = await fetch(`${API_URL}/api/ai/rules/prompt`);
+    const res = await fetch(`${API_URL}/api/ai/rules/prompt`, { cache: 'no-store' });
     if (!res.ok) return '';
     const { success, prompt } = await res.json();
     if (!success || !prompt) return '';

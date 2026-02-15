@@ -227,19 +227,68 @@ function findNearbyCars(cars: DbCar[], coords: Coordinates, radiusKm: number = 2
     .sort((a, b) => a.distance - b.distance);
 }
 
-function formatNearbyCarsHtml(cars: CarWithDistance[], locationName: string, filterType?: string, startDate?: string, endDate?: string): string {
+function formatCasualCarsHtml(cars: CarWithDistance[], locationName: string, filterType?: string, startDate?: string, endDate?: string): string {
   let filtered = cars;
   if (filterType) {
     filtered = cars.filter(c => c.type?.toLowerCase() === filterType.toLowerCase());
   }
 
-  // Check availability for each car against requested dates
   const carsWithAvail = filtered.map(car => ({
     ...car,
     availableForDates: isCarAvailableForDates(car, startDate, endDate),
   }));
 
-  // Sort: available first, then by distance
+  carsWithAvail.sort((a, b) => {
+    if (a.availableForDates !== b.availableForDates) return a.availableForDates ? -1 : 1;
+    return a.distance - b.distance;
+  });
+
+  if (carsWithAvail.length === 0) {
+    return `<div style="font-size:13px;color:#374151;padding:4px 0;">
+      No cars found near <strong>${locationName}</strong>${filterType ? ` (${filterType})` : ''}. Try a different location or remove filters.
+    </div>`;
+  }
+
+  const availCount = carsWithAvail.filter(c => c.availableForDates).length;
+
+  const carItems = carsWithAvail.slice(0, 5).map(car => {
+    const imgUrl = car.imageUrls?.[0] || car.image || '';
+    const price12 = car.pricePer12Hours?.toLocaleString() || '0';
+    const price24 = car.pricePer24Hours?.toLocaleString() || '0';
+    const available = car.availableForDates;
+    const statusText = available
+      ? '<span style="color:#059669;font-weight:600;">Available</span>'
+      : '<span style="color:#dc2626;font-weight:600;">Unavailable</span>';
+    const city = car.resolvedCity || car.garageLocation?.city || '';
+
+    return `<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f3f4f6;">
+      ${imgUrl ? `<img src="${imgUrl}" alt="${car.name || 'Car'}" style="width:70px;height:52px;object-fit:cover;border-radius:8px;flex-shrink:0;" />` : ''}
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;color:#111827;">${car.name || 'Unknown'} ${car.year || ''}</div>
+        <div style="font-size:11px;color:#6b7280;">${car.type || ''} | ${car.distanceText}${city ? ' | ' + city : ''}</div>
+        <div style="font-size:11px;color:#374151;">P${price12}/12hr | P${price24}/24hr - ${statusText}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div style="font-size:13px;color:#374151;">
+    I found <strong>${carsWithAvail.length}</strong> car${carsWithAvail.length > 1 ? 's' : ''} near your area (<strong>${availCount}</strong> available). Here's what I found:
+    <div style="margin-top:6px;">${carItems}</div>
+    <div style="font-size:11px;color:#6b7280;margin-top:8px;">Want to book any of these? Just say <strong>"book [car name]"</strong> or ask me more about a specific car.</div>
+  </div>`;
+}
+
+function formatBookingCarsHtml(cars: CarWithDistance[], locationName: string, filterType?: string, startDate?: string, endDate?: string): string {
+  let filtered = cars;
+  if (filterType) {
+    filtered = cars.filter(c => c.type?.toLowerCase() === filterType.toLowerCase());
+  }
+
+  const carsWithAvail = filtered.map(car => ({
+    ...car,
+    availableForDates: isCarAvailableForDates(car, startDate, endDate),
+  }));
+
   carsWithAvail.sort((a, b) => {
     if (a.availableForDates !== b.availableForDates) return a.availableForDates ? -1 : 1;
     return a.distance - b.distance;
@@ -366,8 +415,8 @@ export async function POST(request: NextRequest) {
       }
     }));
 
-    // Format as HTML with Book Now buttons — use resolved placeName for display
-    const html = formatNearbyCarsHtml(carsToShow, placeName, carType, startDate, endDate);
+    // Format as casual HTML (compact list with images) — booking cards shown only when user confirms
+    const html = formatCasualCarsHtml(carsToShow, placeName, carType, startDate, endDate);
 
     // Return simplified car data for follow-up context
     const carsContext = carsToShow.map(car => ({
