@@ -6,16 +6,12 @@
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-// In-memory cache for rules prompt with invalidation support
-let rulesCache: { prompt: string; timestamp: number } | null = null;
-const RULES_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
-
 /**
  * Invalidate the rules cache (called when Socket.IO notifies of rule changes)
+ * Note: Client-side caching disabled - using cache: 'no-store' to always fetch fresh rules
  */
 export function invalidateRulesCache() {
-  rulesCache = null;
-  console.log('🔄 AI rules cache invalidated');
+  console.log(' AI rules cache invalidated (backend Redis cache cleared by Socket.IO)');
 }
 
 interface KBEntry {
@@ -73,7 +69,7 @@ export async function saveCorrection(question: string, correctedAnswer: string, 
 /**
  * Fetch all active rules from the DB, formatted for the system prompt.
  * Cached in Redis on the backend for speed.
- * Also uses client-side in-memory cache with TTL.
+ * Uses cache: 'no-store' to bypass Next.js fetch caching and ensure fresh rules.
  */
 export async function fetchRulesForPrompt(): Promise<string> {
   try {

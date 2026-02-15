@@ -311,7 +311,6 @@ export async function POST(request: NextRequest) {
     let isCorrection = false;
     let isRuleCommand = false;
     if (TRAINING_MODE) {
-<<<<<<< HEAD
       // Check if trainer 'lamji' is mentioned in current or recent messages
       const allText = messages.map((m: { content: string }) => m.content).join(' ') + ' ' + userQuestion;
       const isTrainerLamji = /\b(lamji|my code name is lamji|i am lamji|trainer lamji)\b/i.test(allText);
