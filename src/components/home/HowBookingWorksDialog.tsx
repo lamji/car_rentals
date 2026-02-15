@@ -112,7 +112,6 @@ export function HowBookingWorksDialog() {
     if (!lastUserMessage) return [];
     
     const userText = lastUserMessage.content.toLowerCase();
-    const assistantText = lastMessage.content.toLowerCase();
     
     // Contextual follow-up questions
     const followUps = [];
