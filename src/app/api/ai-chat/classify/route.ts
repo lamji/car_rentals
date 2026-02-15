@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit } from '@/lib/rateLimitCache';
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
@@ -42,6 +43,20 @@ export async function POST(request: NextRequest) {
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json({ success: false, message: 'Message is required' }, { status: 400 });
+    }
+
+    // Check rate limit
+    const rateLimitCheck = checkRateLimit();
+    if (rateLimitCheck) {
+      // Return general intent to let main route handle the coffee break message
+      return NextResponse.json({
+        success: true,
+        intent: 'general',
+        location: null,
+        carType: null,
+        startDate: null,
+        endDate: null,
+      });
     }
 
     const today = new Date().toISOString().split('T')[0];

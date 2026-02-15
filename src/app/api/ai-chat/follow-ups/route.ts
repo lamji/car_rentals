@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit } from '@/lib/rateLimitCacheEdge';
 
 export const runtime = 'edge';
 
@@ -15,6 +16,13 @@ export async function POST(request: NextRequest) {
         { success: false, message: 'Missing userQuery or aiResponse' },
         { status: 400 }
       );
+    }
+
+    // Check rate limit
+    const rateLimitCheck = checkRateLimit();
+    if (rateLimitCheck) {
+      // Return empty follow-ups during rate limit
+      return NextResponse.json({ success: true, followUps: [] });
     }
 
     // Don't generate follow-ups for sudo login/logout flows

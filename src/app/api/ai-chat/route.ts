@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { saveQAPair, saveCorrection, searchRelevantKnowledge, fetchRulesForPrompt, createRule, updateRuleByNumber } from '@/lib/ai-knowledge-base';
+import { checkRateLimit, setRateLimit, formatRemainingTime, parseGroqRateLimitError } from '@/lib/rateLimitCache';
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
@@ -303,6 +304,17 @@ export async function POST(request: NextRequest) {
     const lastUserMessage = [...messages].reverse().find((m: { role: string }) => m.role === 'user');
     const userQuestion = lastUserMessage?.content || messages[messages.length - 1]?.content || '';
 
+    // Check rate limit before making API calls
+    const rateLimitCheck = checkRateLimit();
+    if (rateLimitCheck) {
+      const timeRemaining = formatRemainingTime(rateLimitCheck.remainingMs);
+      return NextResponse.json({
+        success: true,
+        reply: `☕ **Coffee break time!** I'm out of credits right now.\n\nI'll be back in **${timeRemaining}**. Grab a coffee and check back soon! ☕`,
+        isHtml: true,
+      });
+    }
+
     // Search knowledge base for relevant past Q&A
     const learnedKnowledge = await searchRelevantKnowledge(userQuestion);
 
@@ -560,6 +572,28 @@ export async function POST(request: NextRequest) {
           // Content was empty — log and try fallback
           console.warn(`Groq model ${model} returned empty content, response:`, JSON.stringify(data.choices?.[0]));
           if (i < modelsToTry.length - 1) continue;
+        } else if (response.status === 429) {
+          // Rate limit error - parse and store reset time
+          const errorData = await response.text();
+          console.warn(`Groq rate limit hit:`, errorData);
+          
+          const resetSeconds = parseGroqRateLimitError(errorData);
+          if (resetSeconds) {
+            setRateLimit(resetSeconds, errorData);
+            const timeRemaining = formatRemainingTime(resetSeconds * 1000);
+            return NextResponse.json({
+              success: true,
+              reply: `☕ **Coffee break time!** I'm out of credits right now.\n\nI'll be back in **${timeRemaining}**. Grab a coffee and check back soon! ☕`,
+              isHtml: true,
+            });
+          }
+          
+          // Fallback if we couldn't parse the reset time
+          return NextResponse.json({
+            success: true,
+            reply: `☕ **Coffee break time!** I'm out of credits right now.\n\nPlease check back in a bit. Thanks for your patience! ☕`,
+            isHtml: true,
+          });
         } else {
           const errorData = await response.text();
           console.warn(`Groq model ${model} error (${response.status}):`, errorData);
