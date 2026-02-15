@@ -26,6 +26,7 @@ const QUICK_QUESTIONS = [
 export function HowBookingWorksDialog() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
+  const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -105,43 +106,50 @@ export function HowBookingWorksDialog() {
     setInput("");
   }, [input, isLoading, sendMessage]);
 
-  // Generate follow-up questions based on conversation context
-  const getFollowUpQuestions = useCallback(() => {
+  // Generate AI-powered follow-up questions based on conversation context
+  const generateFollowUps = useCallback(async () => {
     const lastMessage = messages[messages.length - 1];
-    if (!lastMessage || lastMessage.role !== 'assistant') return [];
+    if (!lastMessage || lastMessage.role !== 'assistant') {
+      setFollowUpQuestions([]);
+      return;
+    }
     
     const lastUserMessage = messages.filter(m => m.role === 'user').pop();
-    if (!lastUserMessage) return [];
-    
-    const userText = lastUserMessage.content.toLowerCase();
-    
-    // Contextual follow-up questions
-    const followUps = [];
-    
-    // If user asked about location/cars
-    if (userText.includes('car') || userText.includes('near') || userText.includes('available')) {
-      followUps.push('What are your rental rates?', 'Do you offer delivery?', 'What documents do I need?');
-    }
-    // If user asked about pricing
-    else if (userText.includes('price') || userText.includes('cost') || userText.includes('rate')) {
-      followUps.push('Are there any hidden fees?', 'Can I negotiate the price?', 'What payment methods do you accept?');
-    }
-    // If user asked about booking
-    else if (userText.includes('book') || userText.includes('reserve') || userText.includes('rent')) {
-      followUps.push('What is your cancellation policy?', 'Can I modify my booking?', 'Do I need to pay in advance?');
-    }
-    // If user asked about requirements
-    else if (userText.includes('require') || userText.includes('need') || userText.includes('document')) {
-      followUps.push('What if I don\'t have a license?', 'Can foreigners rent cars?', 'Is there an age requirement?');
-    }
-    // Default follow-ups
-    else {
-      followUps.push('What cars do you have available?', 'How does the booking process work?', 'What are your operating hours?');
+    if (!lastUserMessage) {
+      setFollowUpQuestions([]);
+      return;
     }
     
-    // Return only 2 follow-ups
-    return followUps.slice(0, 2);
+    try {
+      const response = await fetch('/api/ai-chat/follow-ups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userQuery: lastUserMessage.content,
+          aiResponse: lastMessage.content,
+        }),
+      });
+      
+      const data = await response.json();
+      if (data.success && data.followUps) {
+        setFollowUpQuestions(data.followUps);
+      } else {
+        setFollowUpQuestions([]);
+      }
+    } catch (error) {
+      console.error('Failed to generate follow-ups:', error);
+      setFollowUpQuestions([]);
+    }
   }, [messages]);
+  
+  // Generate follow-ups when messages change
+  useEffect(() => {
+    if (!isLoading && messages.length > 0 && messages[messages.length - 1]?.role === 'assistant') {
+      generateFollowUps();
+    } else {
+      setFollowUpQuestions([]);
+    }
+  }, [messages, isLoading, generateFollowUps]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -331,28 +339,28 @@ export function HowBookingWorksDialog() {
                 </div>
               )}
 
-              {/* Recommended follow-up questions */}
-              {!isLoading && messages.length > 0 && messages[messages.length - 1]?.role === 'assistant' && (
-                <div className="pl-9 space-y-1.5">
-                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                    Follow up
-                  </p>
-                  {getFollowUpQuestions().map((q, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleQuickQuestion(q)}
-                      className="block w-full text-left text-xs px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg transition-colors border border-gray-200"
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
-              )}
 
               <div ref={messagesEndRef} />
             </div>
             </div>
           </div>
+
+          {/* Follow-up questions row — horizontal above input */}
+          {followUpQuestions.length > 0 && (
+            <div className="px-3 py-1.5 border-t border-gray-100 bg-white shrink-0">
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+                {followUpQuestions.map((q, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleQuickQuestion(q)}
+                    className="shrink-0 text-[11px] px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-full transition-colors border border-blue-100 whitespace-nowrap"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Input — pinned to bottom, safe from keyboard on mobile */}
           <div className="px-3 py-2 border-t border-gray-100 bg-gray-50 shrink-0 pb-[env(safe-area-inset-bottom,8px)]">
