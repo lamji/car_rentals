@@ -412,7 +412,26 @@ export function useAiAssistant({ location, token, onCarsFound }: AiAssistantOpti
       // "GPS" or null location — use device GPS
       if (extractedLocation === 'GPS' && location?.address) {
         // Use barangay+city+province for geocoding (most accurate for nearby garage search)
-        const geocodeStr = [location.barangay, location.city, location.province].filter(Boolean).join(', ');
+        // If structured fields are empty (GPS only sets address string), parse from address
+        let barangay = location.barangay || '';
+        let city = location.city || '';
+        let province = location.province || '';
+        
+        if (!city && !province && location.address) {
+          // Parse "Street, Barangay, City, Province, Country" format
+          const parts = location.address.split(',').map(p => p.trim()).filter(Boolean);
+          // Typical Philippine address: [street, barangay, city, province, Philippines]
+          if (parts.length >= 3) {
+            const hasCountry = parts[parts.length - 1].toLowerCase().includes('philippines');
+            const meaningful = hasCountry ? parts.slice(0, -1) : parts;
+            // Last part = province, second to last = city, third to last = barangay
+            province = meaningful[meaningful.length - 1] || '';
+            city = meaningful[meaningful.length - 2] || '';
+            barangay = meaningful.length >= 3 ? meaningful[meaningful.length - 3] : '';
+          }
+        }
+        
+        const geocodeStr = [barangay, city, province].filter(Boolean).join(', ');
         const displayStr = location.address;
         const searchStr = geocodeStr || location.address;
         setMessages(prev => [

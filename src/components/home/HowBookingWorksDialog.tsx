@@ -214,8 +214,10 @@ export function HowBookingWorksDialog() {
             </button>
           </div>
 
-          {/* Messages — flex-col + justify-end pushes content to bottom like messenger */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col justify-end min-h-0">
+          {/* Messages — spacer pushes content to bottom like messenger apps */}
+          <div className="flex-1 overflow-y-auto px-4 py-3 min-h-0">
+            <div className="flex flex-col min-h-full">
+            <div className="flex-1" />
             <div className="space-y-3">
               {/* Welcome message */}
               {messages.length === 0 && (
@@ -348,6 +350,7 @@ export function HowBookingWorksDialog() {
               )}
 
               <div ref={messagesEndRef} />
+            </div>
             </div>
           </div>
 
