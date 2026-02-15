@@ -39,8 +39,9 @@ export function HowBookingWorksDialog() {
       address: mapbox.address,
       city: mapbox.city,
       province: mapbox.province,
+      barangay: mapbox.barangay,
     };
-  }, [mapbox?.address, mapbox?.city, mapbox?.province]);
+  }, [mapbox?.address, mapbox?.city, mapbox?.province, mapbox?.barangay]);
 
   const allCars = useSelector((state: RootState) => (state.data as { allCars: Record<string, unknown>[] })?.allCars || []);
 
@@ -178,7 +179,7 @@ export function HowBookingWorksDialog() {
 
       {/* Chat Panel */}
       {open && (
-        <div ref={chatPanelRef} className="fixed left-0 top-0 z-9999 w-screen h-[100dvh] bg-white flex flex-col overflow-hidden sm:inset-auto sm:bottom-32 sm:right-2 sm:left-auto sm:top-auto sm:w-[380px] sm:h-auto sm:max-h-[70vh] sm:rounded-2xl sm:border sm:border-gray-200 sm:shadow-2xl sm:animate-in sm:slide-in-from-bottom-4 sm:duration-200">
+        <div ref={chatPanelRef} className="fixed left-0 top-0 z-9999 w-screen bg-white flex flex-col overflow-hidden sm:inset-auto sm:bottom-32 sm:right-2 sm:left-auto sm:top-auto sm:w-[380px] sm:h-auto sm:max-h-[70vh] sm:rounded-2xl sm:border sm:border-gray-200 sm:shadow-2xl sm:animate-in sm:slide-in-from-bottom-4 sm:duration-200" style={{ height: '100dvh' }}>
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 bg-linear-to-r from-blue-600 to-blue-700 text-white">
             <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/30 shrink-0">
@@ -213,8 +214,8 @@ export function HowBookingWorksDialog() {
             </button>
           </div>
 
-          {/* Messages — flex-col-reverse anchors scroll to bottom like messenger */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col-reverse min-h-0">
+          {/* Messages — flex-col + justify-end pushes content to bottom like messenger */}
+          <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col justify-end min-h-0">
             <div className="space-y-3">
               {/* Welcome message */}
               {messages.length === 0 && (
