@@ -313,6 +313,7 @@ function formatCasualCarsHtml(cars: CarWithDistance[], locationName: string, fil
   </div>`;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function formatBookingCarsHtml(cars: CarWithDistance[], locationName: string, filterType?: string, startDate?: string, endDate?: string): string {
   let filtered = cars;
   if (filterType) {
@@ -488,6 +489,7 @@ export async function POST(request: NextRequest) {
 
     // Return raw car data so frontend can merge into Redux for /cars/[id] page
     const rawCars = carsToShow.map(car => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { distance, distanceText, resolvedAddress, resolvedCity, resolvedProvince, ...rawCar } = car;
       return { ...rawCar, id: rawCar.id || rawCar._id };
     });

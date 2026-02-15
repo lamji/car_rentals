@@ -406,13 +406,7 @@ export async function POST(request: NextRequest) {
       for (const [phrase, endpoint] of Object.entries(apiCallPatterns)) {
         if (userQuestion.toLowerCase().includes(phrase)) {
           try {
-            // Get token from the login success message
-            const loginSuccessMsg = messages.find((m: { role: string; content: string }) => 
-              m.role === 'assistant' && m.content.includes('Sudo login successful!')
-            );
-            
-            // Extract token (this would be stored in client state in real implementation)
-            // For now, we'll need to ask the client to include it in headers
+            // Extract token from client Authorization header
             const token = request.headers.get('authorization')?.replace('Bearer ', '');
             
             const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -428,12 +422,12 @@ export async function POST(request: NextRequest) {
             const apiData = await apiRes.json();
             
             // Sort by createdAt or _id to get latest first (common MongoDB pattern)
-            let sortedData = apiData.data || apiData;
+            const sortedData = apiData.data || apiData;
             if (Array.isArray(sortedData)) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               sortedData.sort((a: any, b: any) => {
-                // Try different timestamp fields
-                const aTime = new Date(a.createdAt || a._id?.getTimestamp?.() || 0).getTime();
-                const bTime = new Date(b.createdAt || b._id?.getTimestamp?.() || 0).getTime();
+                const aTime = new Date(a.createdAt || a.updatedAt || 0).getTime();
+                const bTime = new Date(b.createdAt || b.updatedAt || 0).getTime();
                 return bTime - aTime; // Latest first
               });
             }
