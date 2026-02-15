@@ -79,19 +79,54 @@ interface GeocodeResult {
 
 async function geocodeLocation(locationString: string): Promise<GeocodeResult | null> {
   try {
+    // Step 1: Extract city/municipality from the location string for proximity bias.
+    // Long address strings like "Cebu North Road Corazon, Catmon, Cebu" can confuse
+    // Mapbox into matching a road in a different city. We first geocode the
+    // city/province portion to get a proximity anchor point.
+    const parts = locationString.split(',').map(p => p.trim());
+    let proximity = '';
+    if (parts.length >= 2) {
+      // Use the last 2-3 parts as the city/province (e.g. "Catmon, Cebu, Philippines")
+      const cityParts = parts.slice(-3).join(', ');
+      const cityUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(cityParts)}.json`;
+      const cityParams = new URLSearchParams({
+        access_token: MAPBOX_TOKEN,
+        limit: '1',
+        country: 'PH',
+        types: 'place,locality',
+      });
+      const cityRes = await fetch(`${cityUrl}?${cityParams}`);
+      if (cityRes.ok) {
+        const cityData = await cityRes.json();
+        if (cityData.features?.length > 0) {
+          const [cLng, cLat] = cityData.features[0].center;
+          proximity = `${cLng},${cLat}`;
+        }
+      }
+    }
+
+    // Step 2: Geocode the full location string with proximity bias
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(locationString)}.json`;
     const params = new URLSearchParams({
       access_token: MAPBOX_TOKEN,
-      limit: '1',
+      limit: '3',
       country: 'PH',
+      types: 'place,locality,neighborhood,address',
     });
+    if (proximity) {
+      params.set('proximity', proximity);
+    }
 
     const response = await fetch(`${url}?${params}`);
     if (!response.ok) return null;
 
     const data = await response.json();
     if (data.features && data.features.length > 0) {
-      const feature = data.features[0];
+      // Prefer place/locality matches (municipalities) over address matches
+      const placeMatch = data.features.find((f: { place_type?: string[] }) =>
+        f.place_type?.includes('place') || f.place_type?.includes('locality')
+      );
+      const feature = placeMatch || data.features[0];
       const [lng, lat] = feature.center;
       return {
         coords: { lat, lng },

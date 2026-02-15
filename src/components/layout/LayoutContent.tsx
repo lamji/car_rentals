@@ -25,6 +25,7 @@ import { setAllCars } from "@/lib/slices/data";
 import { useRootHoldExpiry } from "@/hooks/useRootHoldExpiry";
 import useGuestToken from "@/lib/api/useGuestToken";
 import { setGuestAuth } from "@/lib/slices/authSlice";
+import { useAiRulesSync } from "@/lib/useAiRulesSync";
 
 interface LayoutContentProps {
   children: React.ReactNode;
@@ -36,6 +37,7 @@ export function LayoutContent({ children }: LayoutContentProps) {
   const { init: initializedCloudinary } = useInitCloudenary()
   const { checkLocationOnce } = useLocationPermission();
   useRootHoldExpiry();
+  useAiRulesSync(); // Listen for AI rules updates via Socket.IO
 
   // Fetch guest token on app load if not logged in and no token exists
   const guestToken = useSelector((state: RootState) => state.auth.guestToken);
