@@ -437,19 +437,8 @@ export async function POST(request: NextRequest) {
     // Find nearby cars sorted by distance
     const nearbyCars = findNearbyCars(allCars, coords, 25);
 
-    // Reverse-geocode each nearby car's garage coordinates to get accurate address
+    // Use garage address from database (don't reverse-geocode, Mapbox returns wrong addresses)
     const carsToShow = nearbyCars.slice(0, 10);
-    await Promise.all(carsToShow.map(async (car) => {
-      const gCoords = car.garageLocation?.coordinates;
-      if (gCoords?.lat && gCoords?.lng) {
-        const resolved = await reverseGeocode(gCoords.lat, gCoords.lng);
-        if (resolved) {
-          car.resolvedAddress = resolved.address;
-          car.resolvedCity = resolved.city;
-          car.resolvedProvince = resolved.province;
-        }
-      }
-    }));
 
     // Format as casual HTML (compact list with images) — booking cards shown only when user confirms
     const html = formatCasualCarsHtml(carsToShow, placeName, carType, startDate, endDate);
@@ -474,9 +463,9 @@ export async function POST(request: NextRequest) {
       rentedCount: car.rentedCount,
       distance: car.distance,
       distanceText: car.distanceText,
-      garageAddress: car.resolvedAddress || car.garageLocation?.address || car.garageAddress,
-      garageCity: car.resolvedCity || car.garageLocation?.city,
-      garageProvince: car.resolvedProvince || car.garageLocation?.province,
+      garageAddress: car.garageLocation?.address || car.garageAddress,
+      garageCity: car.garageLocation?.city,
+      garageProvince: car.garageLocation?.province,
       ownerName: car.owner?.name,
       ownerContact: car.owner?.contactNumber,
       isOnHold: car.isOnHold,
