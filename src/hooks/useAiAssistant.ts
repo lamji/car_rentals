@@ -10,6 +10,7 @@ interface LocationContext {
   address: string | null;
   city?: string;
   province?: string;
+  barangay?: string;
 }
 
 interface AiAssistantOptions {
@@ -410,8 +411,8 @@ export function useAiAssistant({ location, token, onCarsFound }: AiAssistantOpti
 
       // "GPS" or null location — use device GPS
       if (extractedLocation === 'GPS' && location?.address) {
-        // Use city+province for geocoding (more accurate than full GPS address)
-        const geocodeStr = [location.city, location.province].filter(Boolean).join(', ');
+        // Use barangay+city+province for geocoding (most accurate for nearby garage search)
+        const geocodeStr = [location.barangay, location.city, location.province].filter(Boolean).join(', ');
         const displayStr = location.address;
         const searchStr = geocodeStr || location.address;
         setMessages(prev => [
@@ -441,9 +442,15 @@ export function useAiAssistant({ location, token, onCarsFound }: AiAssistantOpti
     abortControllerRef.current = new AbortController();
 
     try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch('/api/ai-chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           messages: updatedMessages.filter(m => !m.isHtml),
           location,
@@ -457,6 +464,34 @@ export function useAiAssistant({ location, token, onCarsFound }: AiAssistantOpti
 
       if (data.success && data.reply) {
         setMessages(prev => [...prev, { role: 'assistant', content: data.reply, isHtml: !!data.isHtml }]);
+        
+        // Handle special actions
+        if (data.action) {
+          switch (data.action) {
+            case 'logout':
+              // Clear localStorage token and get new guest token
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              // Trigger guest token refresh
+              fetch('/api/auth/guest-token', { method: 'POST' })
+                .then(res => res.json())
+                .then(({ token, guestId }) => {
+                  localStorage.setItem('token', token);
+                  localStorage.setItem('guestId', guestId);
+                })
+                .catch(console.error);
+              break;
+              
+            case 'sudo_login_success':
+              // Store admin token and user info
+              if (data.data?.token) {
+                localStorage.setItem('token', data.data.token);
+                localStorage.setItem('user', JSON.stringify(data.data.user));
+              }
+              break;
+          }
+        }
+        
         // Detect if AI is asking user to confirm booking
         const replyLower = (data.reply as string).toLowerCase();
         const bookingPromptPhrases = ['would you like to book', 'want to book', 'like to book it', 'want to reserve', 'like to reserve', 'shall i book', 'ready to book'];

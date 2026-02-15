@@ -306,6 +306,160 @@ export async function POST(request: NextRequest) {
     // Search knowledge base for relevant past Q&A
     const learnedKnowledge = await searchRelevantKnowledge(userQuestion);
 
+    // Handle sudo login/logout commands (bypass AI processing)
+    if (userQuestion.toLowerCase().trim() === 'sudo login') {
+      return NextResponse.json({ 
+        success: true, 
+        reply: 'Please provide your **email address** to begin sudo login.',
+        isHtml: true,
+        action: 'sudo_login_request_email'
+      });
+    }
+    
+    if (userQuestion.toLowerCase().trim() === 'logout') {
+      return NextResponse.json({ 
+        success: true, 
+        reply: '🔓 Logging out... Clearing authentication and returning to guest mode.',
+        isHtml: true,
+        action: 'logout'
+      });
+    }
+
+    // Handle sudo login flow (email and password)
+    const isSudoLoginFlow = messages.some((m: { role: string; content: string }) => 
+      m.role === 'assistant' && m.content.includes('sudo login')
+    );
+    
+    if (isSudoLoginFlow) {
+      // Check if this looks like an email address
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (emailRegex.test(userQuestion.trim())) {
+        // Store email and request password
+        return NextResponse.json({ 
+          success: true, 
+          reply: `Email received: **${userQuestion.trim()}**\n\nNow please provide your **password** to complete authentication.`,
+          isHtml: true,
+          action: 'sudo_login_request_password',
+          data: { email: userQuestion.trim() }
+        });
+      }
+      
+      // If not email and we're in login flow, treat as password
+      if (messages.length > 0) {
+        const lastAssistantMsg = [...messages].reverse().find((m: { role: string }) => m.role === 'assistant');
+        if (lastAssistantMsg?.content.includes('Now please provide your **password**')) {
+          // Extract email from previous message
+          const emailMatch = lastAssistantMsg.content.match(/Email received: \*\*([^*]+)\*\*/);
+          const email = emailMatch ? emailMatch[1] : '';
+          
+          // Call login API
+          try {
+            const loginRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/auth/login`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, password: userQuestion.trim() })
+            });
+            
+            const loginData = await loginRes.json();
+            
+            if (loginData.success && loginData.token) {
+              return NextResponse.json({ 
+                success: true, 
+                reply: `🔐 **Sudo login successful!**\n\nWelcome back, admin. You now have full API access.\n\nYou can ask me to:\n- Get all cars: "get all cars"\n- Get all knowledge: "get all knowledge"\n- Get all rules: "get all rules"\n- Call any API endpoint\n\nAll responses will be returned as JSON (latest to oldest).`,
+                isHtml: true,
+                action: 'sudo_login_success',
+                data: { token: loginData.token, user: loginData.user }
+              });
+            } else {
+              return NextResponse.json({ 
+                success: true, 
+                reply: `❌ **Login failed**: ${loginData.message || 'Invalid credentials'}\n\nPlease try again with "sudo login"`,
+                isHtml: true,
+                action: 'sudo_login_failed'
+              });
+            }
+          } catch (error) {
+            console.error('Sudo login error:', error);
+            return NextResponse.json({ 
+              success: true, 
+              reply: `❌ **Login error**: Could not connect to authentication server\n\nPlease try again with "sudo login"`,
+              isHtml: true,
+              action: 'sudo_login_error'
+            });
+          }
+        }
+      }
+    }
+
+    // Handle API calls for authenticated sudo users
+    const isAdminAuthenticated = messages.some((m: { role: string; content: string }) => 
+      m.role === 'assistant' && m.content.includes('Sudo login successful!')
+    );
+    
+    if (isAdminAuthenticated) {
+      const apiCallPatterns = {
+        'get all cars': '/api/cars',
+        'get all knowledge': '/api/ai/knowledge',
+        'get all rules': '/api/ai/rules',
+      };
+      
+      for (const [phrase, endpoint] of Object.entries(apiCallPatterns)) {
+        if (userQuestion.toLowerCase().includes(phrase)) {
+          try {
+            // Get token from the login success message
+            const loginSuccessMsg = messages.find((m: { role: string; content: string }) => 
+              m.role === 'assistant' && m.content.includes('Sudo login successful!')
+            );
+            
+            // Extract token (this would be stored in client state in real implementation)
+            // For now, we'll need to ask the client to include it in headers
+            const token = request.headers.get('authorization')?.replace('Bearer ', '');
+            
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (token) {
+              headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            const apiRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}${endpoint}`, {
+              method: 'GET',
+              headers
+            });
+            
+            const apiData = await apiRes.json();
+            
+            // Sort by createdAt or _id to get latest first (common MongoDB pattern)
+            let sortedData = apiData.data || apiData;
+            if (Array.isArray(sortedData)) {
+              sortedData.sort((a: any, b: any) => {
+                // Try different timestamp fields
+                const aTime = new Date(a.createdAt || a._id?.getTimestamp?.() || 0).getTime();
+                const bTime = new Date(b.createdAt || b._id?.getTimestamp?.() || 0).getTime();
+                return bTime - aTime; // Latest first
+              });
+            }
+            
+            const jsonOutput = JSON.stringify(sortedData, null, 2);
+            
+            return NextResponse.json({ 
+              success: true, 
+              reply: `📊 **API Response from ${endpoint}**\n\n\`\`\`json\n${jsonOutput}\n\`\`\``,
+              isHtml: true,
+              action: 'api_call_success',
+              data: { endpoint, response: sortedData }
+            });
+          } catch (error) {
+            console.error(`API call error for ${endpoint}:`, error);
+            return NextResponse.json({ 
+              success: true, 
+              reply: `❌ **API Error**: Failed to fetch from ${endpoint}\n\nError: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              isHtml: true,
+              action: 'api_call_error'
+            });
+          }
+        }
+      }
+    }
+
     // Training mode: full conversation context + rule management
     let trainingContext = '';
     let isCorrection = false;
