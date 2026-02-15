@@ -314,8 +314,17 @@ export function useAiAssistant({ location, token, onCarsFound }: AiAssistantOpti
       bookingEmailRef.current = '';
     }
 
-    // Booking flow: waiting for email input
-    if (bookingFlow === 'waiting_email') {
+    // Check if user is in sudo login flow (don't intercept with booking flow)
+    const isSudoLoginFlow = messages.some(m => 
+      m.role === 'assistant' && (
+        m.content.includes('sudo login') ||
+        m.content.includes('email address** to begin sudo') ||
+        m.content.includes('provide your **password**')
+      )
+    );
+
+    // Booking flow: waiting for email input (skip if in sudo login flow)
+    if (bookingFlow === 'waiting_email' && !isSudoLoginFlow) {
       if (isCancelIntent(trimmed)) {
         setBookingFlow('idle');
         setMessages(prev => [
@@ -499,6 +508,13 @@ export function useAiAssistant({ location, token, onCarsFound }: AiAssistantOpti
                   localStorage.setItem('guestId', guestId);
                 })
                 .catch(console.error);
+              break;
+              
+            case 'sudo_login_request_email':
+            case 'sudo_login_request_password':
+              // Clear booking flow state to prevent OTP interception
+              setBookingFlow('idle');
+              bookingEmailRef.current = '';
               break;
               
             case 'sudo_login_success':
