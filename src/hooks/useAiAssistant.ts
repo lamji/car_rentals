@@ -314,17 +314,64 @@ export function useAiAssistant({ location, token, onCarsFound }: AiAssistantOpti
       bookingEmailRef.current = '';
     }
 
-    // Check if user is in sudo login flow (don't intercept with booking flow)
+    // Check if user is in sudo login flow — bypass ALL frontend flows, send directly to backend
     const isSudoLoginFlow = messages.some(m => 
       m.role === 'assistant' && (
-        m.content.includes('sudo login') ||
         m.content.includes('email address** to begin sudo') ||
-        m.content.includes('provide your **password**')
+        m.content.includes('provide your **password**') ||
+        m.content.includes('Email received:')
       )
     );
 
-    // Booking flow: waiting for email input (skip if in sudo login flow)
-    if (bookingFlow === 'waiting_email' && !isSudoLoginFlow) {
+    if (isSudoLoginFlow) {
+      // Reset any booking flow state
+      setBookingFlow('idle');
+      bookingEmailRef.current = '';
+      // Send directly to backend — skip classifier, skip all frontend interception
+      setIsLoading(true);
+      try {
+        const authToken = localStorage.getItem('token');
+        const hdrs: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (authToken) hdrs['Authorization'] = `Bearer ${authToken}`;
+
+        const res = await fetch('/api/ai-chat', {
+          method: 'POST',
+          headers: hdrs,
+          body: JSON.stringify({
+            messages: [...messages, newUserMessage].filter(m => !m.isHtml),
+            location,
+          }),
+        });
+        const data = await res.json();
+        if (data.success && data.reply) {
+          setMessages(prev => [...prev, { role: 'assistant', content: data.reply, isHtml: !!data.isHtml }]);
+          if (data.action === 'sudo_login_success' && data.data?.token) {
+            localStorage.setItem('token', data.data.token);
+            localStorage.setItem('user', JSON.stringify(data.data.user));
+          }
+          if (data.action === 'logout') {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            fetch('/api/auth/guest-token', { method: 'POST' })
+              .then(r => r.json())
+              .then(({ token: t, guestId }) => {
+                localStorage.setItem('token', t);
+                localStorage.setItem('guestId', guestId);
+              })
+              .catch(console.error);
+          }
+        }
+      } catch (err) {
+        console.error('Sudo login flow error:', err);
+        setMessages(prev => [...prev, { role: 'assistant', content: 'Something went wrong. Please try again with "sudo login".' }]);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // Booking flow: waiting for email input
+    if (bookingFlow === 'waiting_email') {
       if (isCancelIntent(trimmed)) {
         setBookingFlow('idle');
         setMessages(prev => [
