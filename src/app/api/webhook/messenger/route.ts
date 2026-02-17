@@ -28,6 +28,12 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
+        
+        // Log the full raw payload for debugging
+        console.log("--- New Messenger Webhook Event ---");
+        console.log(JSON.stringify(body, null, 2));
+        console.log("------------------------------------");
+
         const success = await messengerService.processIncomingEvent(body);
 
         if (success) {

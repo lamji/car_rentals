@@ -24,7 +24,7 @@ export const messengerService = {
     /**
      * Handles incoming message events from the webhook
      */
-    processIncomingEvent: async (body: any) => {
+    processIncomingEvent: async (body: { object: string; entry: any[] }) => {
         if (body.object === "page") {
             for (const entry of body.entry) {
                 const webhookEvent = entry.messaging[0];
@@ -44,7 +44,7 @@ export const messengerService = {
     /**
      * Logic for handling text messages
      */
-    handleMessage: async (senderId: string, receivedMessage: any) => {
+    handleMessage: async (senderId: string, receivedMessage: { text?: string }) => {
         console.log(`[MessengerService] Message received from ${senderId}:`, receivedMessage.text);
         
         // Example: Automated Greeting 
@@ -56,7 +56,7 @@ export const messengerService = {
     /**
      * Logic for handling button postbacks
      */
-    handlePostback: async (senderId: string, receivedPostback: any) => {
+    handlePostback: async (senderId: string, receivedPostback: { payload?: string }) => {
         console.log(`[MessengerService] Postback received from ${senderId}:`, receivedPostback.payload);
         // Handle specific button clicks here
     },
