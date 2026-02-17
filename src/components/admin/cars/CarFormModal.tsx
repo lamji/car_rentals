@@ -58,6 +58,7 @@ export function CarFormModal({ open, onClose, car, onSuccess }: CarFormModalProp
         if (car) {
             reset({
                 ...car,
+                image: car?.imageUrls?.[0] || car?.image || '',
                 // Ensure imageUrls is an array with at least 4 slots or fill with empty strings
                 imageUrls: [
                     car?.imageUrls?.[0] || car?.image || '', // Primary image
@@ -78,6 +79,7 @@ export function CarFormModal({ open, onClose, car, onSuccess }: CarFormModalProp
                 type: "sedan",
                 transmission: "automatic",
                 fuel: "gasoline",
+                image: '',
                 imageUrls: ['', '', '', ''],
                 imagePublicIds: ['', '', '', '']
             });
@@ -86,6 +88,7 @@ export function CarFormModal({ open, onClose, car, onSuccess }: CarFormModalProp
 
     const { mutateAsync: postCar } = usePostCar();
     const { mutateAsync: putCar } = usePutCar(car?.id || "");
+    const primaryPreview = watch("imageUrls.0") || watch("image") || "";
 
     const onSubmit = async (data: Partial<Car>) => {
         setIsSubmitting(true);
@@ -216,8 +219,8 @@ export function CarFormModal({ open, onClose, car, onSuccess }: CarFormModalProp
                                                 {/* Image Preview Card */}
                                                 <div className="md:col-span-4 space-y-4">
                                                     <div className="bg-white/90 p-3 rounded-2xl shadow-sm aspect-[4/3] max-w-[240px] flex items-center justify-center overflow-hidden relative group">
-                                                        {watch("image") ? (
-                                                            <img src={watch("image")} alt="Preview" className="w-full h-full object-cover rounded-xl" />
+                                                        {primaryPreview ? (
+                                                            <img src={primaryPreview} alt="Preview" className="w-full h-full object-cover rounded-xl" />
                                                         ) : (
                                                             <div className="text-center text-slate-400">
                                                                 <p className="text-xs font-bold uppercase tracking-widest">No Image</p>
@@ -311,11 +314,13 @@ export function CarFormModal({ open, onClose, car, onSuccess }: CarFormModalProp
                                                                         compact
                                                                         onChange={(url) => {
                                                                             setValue("imageUrls.0", url || "");
+                                                                            setValue("image", url || "");
                                                                             if (!url) setValue("imagePublicIds.0", "");
                                                                         }}
                                                                         onUploadSuccess={(data) => {
                                                                             setValue("imageUrls.0", data.url);
                                                                             setValue("imagePublicIds.0", data.publicId);
+                                                                            setValue("image", data.url);
                                                                         }}
                                                                     />
                                                                 </div>

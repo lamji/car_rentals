@@ -18,6 +18,9 @@ All notable changes to the `car_rentals` project will be documented in this file
 - **Geolocation**: Hardened `useNearestGarage` hook to handle edge cases where car coordinates might be missing, preventing haversine calculation errors.
 - **Environment**: Fixed `EPERM` lock issues during `next build` by identifying and clearing locked `.next` trace files.
 
+### Changed
+- **Login UI**: Refactored the login page to a "Pure Input" focus. Removed logo, marketing features, and external links to create a distraction-free authentication interface with simplified sample credential buttons.
+
 
 - Changed: Car Management modal now uses borderless thumbnail styling for a more premium look.
 
