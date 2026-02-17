@@ -90,11 +90,12 @@ export function calculatePaymentSummary(
     pricingType = 'daily'
     
     // Full days at daily rate
-    const daysPrice = (fullDays * (selectedCar.pricePerDay || 0))
+    const dailyRate = selectedCar.pricePer24Hours || selectedCar.pricePerDay || 0
+    const daysPrice = fullDays * dailyRate
     pricingBreakdown.push({
       label: `${fullDays} day(s)`,
       hours: fullDays * 24,
-      rate: selectedCar.pricePerDay || 0,
+      rate: dailyRate,
       amount: daysPrice
     })
     

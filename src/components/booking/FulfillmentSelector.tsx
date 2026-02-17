@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import type { FulfillmentState } from "@/lib/types";
 
 export function FulfillmentSelector(props: {
-  garageAddress: string;
+  garageAddress?: string;
   value?: FulfillmentState;
   onChange: (next: FulfillmentState) => void;
 }) {
@@ -29,7 +29,7 @@ export function FulfillmentSelector(props: {
               <RadioGroupItem value="pickup" id="pickup" />
               <div className="space-y-2">
                 <div className="font-semibold">Pickup at Garage</div>
-                <div className="text-sm text-muted-foreground">{props.garageAddress}</div>
+                <div className="text-sm text-muted-foreground">{props.garageAddress || "Garage address unavailable"}</div>
                 <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">Map preview placeholder</div>
                 <div className="text-sm">Bring valid ID. Arrive 15 mins early.</div>
               </div>

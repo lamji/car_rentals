@@ -100,14 +100,7 @@ export function Header({
                 3
               </Badge>
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => router.push("/login")}
-            >
-              <User className="h-4 w-4" />
-            </Button>
+
           </div>
         </div>
       </div>
@@ -131,7 +124,7 @@ export function Header({
           <div className="flex items-center gap-2">
             {!isProfilePage && !pathname.includes("admin") && (
               <>
-                {isAuthenticated && user ? (
+                {isAuthenticated && user && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -152,14 +145,6 @@ export function Header({
                       </div>
                     )}
                     <span>{user.name}</span>
-                  </Button>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => router.push("/login")}
-                  >
-                    Login
                   </Button>
                 )}
               </>

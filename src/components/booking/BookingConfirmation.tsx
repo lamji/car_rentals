@@ -93,7 +93,7 @@ export function BookingConfirmation() {
 
           <PickupOption
             pickupType={bookingDetails.pickupType}
-            garageAddress={selectedCar?.garageAddress}
+            garageAddress={selectedCar?.garageLocation?.address || selectedCar?.garageAddress}
           />
         </CardContent>
       </Card>

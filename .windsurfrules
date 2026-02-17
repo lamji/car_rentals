@@ -1,3 +1,6 @@
+# 🧠 Master Brain Sentinel (HARD RULE)
+**CRITICAL**: ALWAYS defer to and verify against the Master Rules located in `C:\Users\AkhieAndArie\Documents\project\.agent\rules`. The architecture, coding structure, and logging protocols defined there take precedence over all local patterns. Before any major change, "Look Up" to the main brain.
+
 # Component Usage Rules
 
 ## 1. ALWAYS Use shadcn/ui Components

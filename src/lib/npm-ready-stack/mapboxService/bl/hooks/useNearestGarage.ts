@@ -49,8 +49,9 @@ export default function useNearestGarage() {
       
       // Calculate distances for all cars and filter by radius
       const garagesWithDistance = data
+        .filter(car => car.garageLocation.coordinates)
         .map(car => {
-          const garagePos = car.garageLocation.coordinates;
+          const garagePos = car.garageLocation.coordinates!;
           const distance = calculateDistance(position, garagePos);
           
           // Check if today is in unavailable dates
@@ -60,7 +61,7 @@ export default function useNearestGarage() {
           return {
             id: car.id,
             name: car.name,
-            address: car.garageLocation.address,
+            address: car.garageLocation.address || 'Address not available',
             distance: Math.round(distance * 10) / 10, // Round to 1 decimal
             distanceText: `${Math.round(distance * 10) / 10} km away`, // Human readable distance text
             lat: garagePos.lat,

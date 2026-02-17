@@ -10,11 +10,9 @@ export interface User {
 }
 
 export function useAuth() {
-  // Check if user is logged in (you can adjust this based on your auth state structure)
   const user = useSelector((state: RootState) => state.auth?.user) || null;
-  
-  const isAuthenticated = !!user;
-  const isLoading = useSelector((state: RootState) => state.auth?.loading) || false;
+  const isAuthenticated = useSelector((state: RootState) => state.auth?.isAuthenticated) || false;
+  const isLoading = false;
   
   // Development override - simulate logged in user (set to false for real auth)
   const simulateAuth = false;

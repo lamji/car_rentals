@@ -32,6 +32,10 @@ interface ImageUploadProps {
   error?: string;
   /** Whether the field is disabled */
   disabled?: boolean;
+  /** Callback on upload success with full metadata */
+  onUploadSuccess?: (data: { url: string; publicId: string }) => void;
+  /** Compact UI variant for dense form layouts */
+  compact?: boolean;
 }
 
 export function ImageUpload({
@@ -48,6 +52,8 @@ export function ImageUpload({
   inputTestId = 'image-input',
   error,
   disabled = false,
+  onUploadSuccess,
+  compact = false,
 }: ImageUploadProps) {
   const { uploadImage, deleteImage, isLoading: isUploading, error: uploadError } = useUploadImage();
   const [preview, setPreview] = React.useState<string | null>(value || null);
@@ -71,13 +77,14 @@ export function ImageUpload({
       reader.readAsDataURL(file);
 
       // Upload to Cloudinary
-      const uploadedUrl = await uploadImage(file);
+      const { url, publicId } = await uploadImage(file);
 
       // Update preview with Cloudinary URL
-      setPreview(uploadedUrl);
+      setPreview(url);
 
       // Notify parent component
-      onChange(uploadedUrl);
+      onChange(url);
+      onUploadSuccess?.({ url, publicId });
     } catch (error) {
       console.error('Upload failed:', error);
       // Reset preview on error
@@ -122,8 +129,8 @@ export function ImageUpload({
 
       {preview ? (
         // Image Preview
-        <div className="relative border-2 border-primary rounded-lg p-2">
-          <div className="relative w-full h-48 bg-gray-50 rounded-md overflow-hidden">
+        <div className={`relative rounded-lg ${compact ? "p-1.5 bg-slate-50/70 shadow-sm" : "border-2 border-primary p-2"}`}>
+          <div className={`relative w-full bg-gray-50 rounded-md overflow-hidden ${compact ? "h-28" : "h-48"}`}>
             <Image
               src={preview}
               alt={`${label} Preview`}
@@ -138,14 +145,14 @@ export function ImageUpload({
             size="sm"
             onClick={handleImageRemove}
             disabled={isUploading || disabled}
-            className="mt-2 w-full"
+            className={`w-full ${compact ? "mt-1 h-7 text-[10px]" : "mt-2"}`}
           >
             Remove Image
           </Button>
         </div>
       ) : (
         // Upload Area
-        <div className="border-2 border-dashed border-primary/30 rounded-lg p-4 text-center hover:border-primary/50 transition-colors">
+        <div className={`rounded-lg text-center transition-colors ${compact ? "p-2.5 bg-slate-50/70 hover:bg-slate-100/70" : "border-2 border-dashed border-primary/30 p-4 hover:border-primary/50"}`}>
           <input
             id={inputTestId}
             type="file"
@@ -160,7 +167,7 @@ export function ImageUpload({
               }
             }}
           />
-          <div className="flex flex-col items-center gap-2">
+          <div className={`flex flex-col items-center ${compact ? "gap-1.5" : "gap-2"}`}>
             {isUploading ? (
               <div className="flex flex-col items-center gap-2">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
@@ -168,19 +175,19 @@ export function ImageUpload({
               </div>
             ) : (
               <>
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                  <FileText className="h-6 w-6 text-primary" />
+                <div className={`${compact ? "w-9 h-9" : "w-12 h-12"} bg-primary/10 rounded-full flex items-center justify-center`}>
+                  <FileText className={`${compact ? "h-4 w-4" : "h-6 w-6"} text-primary`} />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{placeholder}</p>
-                  <p className="text-xs text-gray-500">{helpText}</p>
+                  <p className={`${compact ? "text-xs" : "text-sm"} font-medium text-gray-900`}>{placeholder}</p>
+                  {!compact && <p className="text-xs text-gray-500">{helpText}</p>}
                 </div>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => document.getElementById(inputTestId)?.click()}
-                  className="mt-2"
+                  className={compact ? "mt-1 h-7 text-[10px]" : "mt-2"}
                   disabled={isUploading || disabled}
                 >
                   Choose File

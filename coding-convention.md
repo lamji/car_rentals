@@ -165,3 +165,7 @@ If a change touches only a few files, it is acceptable to lint targeted paths:
 - **Effects**: dependencies correct; no redundant effects
 - **UX**: loading/error states handled
 - **Tooling**: lint/build pass
+
+## Communication Standards
+
+- **Explain Technical Terminology**: When using specific engineering terms (e.g., "Backward Compatibility", "Atomic Commit", "Race Condition"), briefly explain what it means in plain English and how it applies to the current context. For example: *"I maintained backward compatibility (ensuring old data works with the new system) by..."*

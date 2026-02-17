@@ -9,27 +9,29 @@ export type User = {
 };
 
 export type GarageLocation = {
-  address: string;
-  city: string;
-  province: string;
-  coordinates: {
+  address?: string;
+  city?: string;
+  province?: string;
+  coordinates?: {
     lat: number;
     lng: number;
   };
 };
 
 export type Car = {
-  id: string
+  id: string;
+  _id?: string;
   name: string
   type: string
   image: string
   imageUrls: string[]
+  imagePublicIds?: string[]
   seats: number
   transmission: string
   fuel: string
   year: number
   distanceText?: string
-  pricePerDay: number
+  pricePerDay?: number
   pricePer12Hours: number
   pricePer24Hours: number
   pricePerHour: number
@@ -38,12 +40,18 @@ export type Car = {
   owner: {
     name: string
     contactNumber: string
+    email?: string
+    userId?: string
+    notificationId?: string
   }
-  garageAddress: string;
+  garageAddress?: string;
   garageLocation: GarageLocation;
   rentedCount: number;
   rating: number;
   selfDrive: boolean;
+  isOnHold: boolean;
+  holdReason?: string;
+  isActive: boolean;
   availability: {
     isAvailableToday: boolean;
     unavailableDates: string[]; // ISO yyyy-mm-dd dates when car is unavailable

@@ -42,7 +42,7 @@ const mapBoxPersistConfig = {
 const authPersistConfig = {
   key: 'auth',
   storage,
-  whitelist: ['guestToken', 'guestId']
+  whitelist: ['guestToken', 'guestId', 'authToken', 'user', 'role', 'isAuthenticated']
 };
 
 // Persist config for data slice (to save nearest garages and cars)

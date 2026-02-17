@@ -40,7 +40,7 @@ export function useCars(params: {
     }
 
     if (filters?.priceMax != null) {
-      cars = cars.filter((c) => c.pricePerDay <= filters.priceMax!);
+      cars = cars.filter((c) => (c.pricePer24Hours ?? c.pricePerDay ?? 0) <= filters.priceMax!);
     }
 
     if (filters?.seats != null) {

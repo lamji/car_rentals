@@ -2,7 +2,7 @@ import { useState } from 'react';
 import useInitCloudenary from './useInitCloudenary';
 
 interface UseUploadImageReturn {
-  uploadImage: (file: File) => Promise<string>;
+  uploadImage: (file: File) => Promise<{ url: string; publicId: string }>;
   deleteImage: (imageUrl: string) => Promise<void>;
   isLoading: boolean;
   error: string | null;
@@ -52,7 +52,7 @@ export default function useUploadImage(): UseUploadImageReturn {
     useSigned 
   } = useInitCloudenary()
 
-  const uploadImage = async (file: File): Promise<string> => {
+  const uploadImage = async (file: File): Promise<{ url: string; publicId: string }> => {
     if (!cloudNameFromInit || !presetFromInit) {
       throw new Error('Cloudinary not initialized. Call init() first with cloudName and preset.');
     }
@@ -67,7 +67,7 @@ export default function useUploadImage(): UseUploadImageReturn {
 
       if (useSigned) {
         // Fetch signature from API route
-        const signResponse = await fetch('/api/cloudinary/sign', {
+        const signResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cloudinary/sign`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -123,7 +123,7 @@ export default function useUploadImage(): UseUploadImageReturn {
     try {
       const publicId = extractPublicId(imageUrl);
 
-      const response = await fetch('/api/cloudinary/delete', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cloudinary/delete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

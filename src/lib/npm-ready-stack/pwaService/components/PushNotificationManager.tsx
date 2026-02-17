@@ -20,8 +20,8 @@ export function PushNotificationManager() {
   const [isLoading, setIsLoading] = useState(false)
 
   // Generate a simple ID from subscription endpoint for display
-  const currentDeviceId = subscription ? 
-    subscription.endpoint.split('/').pop()?.substring(0, 8) || 'unknown' : 
+  const currentDeviceId = subscription ?
+    subscription.endpoint.split('/').pop()?.substring(0, 8) || 'unknown' :
     'not-subscribed'
 
   useEffect(() => {
@@ -62,23 +62,22 @@ export function PushNotificationManager() {
         ) as BufferSource,
       })
       setSubscription(sub)
-      
+
       // Serialize subscription for server storage
       const serializedSub: SerializedPushSubscription = JSON.parse(JSON.stringify(sub))
-      
+
       // Subscribe with the current device ID via API
-      const response = await fetch('/api/pwa/subscribe', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/pwa/subscribe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           subscription: serializedSub,
-          subscriptionId: currentDeviceId,
-          userId: undefined // Can be set later for user association
+          userAgent: navigator.userAgent
         })
       })
-      
+
       const result = await response.json()
-      
+
       if (result.success && result.subscriptionId) {
         console.log(`✅ Subscribed with ID: ${result.subscriptionId}`)
       }
@@ -97,16 +96,16 @@ export function PushNotificationManager() {
     try {
       await subscription?.unsubscribe()
       setSubscription(null)
-      
+
       // Unsubscribe using the current device ID via API
-      const response = await fetch('/api/pwa/unsubscribe', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/pwa/unsubscribe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           subscriptionId: currentDeviceId
         })
       })
-      
+
       const result = await response.json()
       if (result.success) {
         console.log(`✅ Unsubscribed: ${currentDeviceId}`)
@@ -123,16 +122,16 @@ export function PushNotificationManager() {
    */
   async function sendTestNotification() {
     if (!subscription || !message.trim()) return
-    
+
     setIsLoading(true)
     try {
       // Pass the subscription ID for experimentation
       const targetId = subscriberId || currentDeviceId
       console.log('🔔 Sending notification to subscriber ID:', targetId)
       console.log('📱 Message:', message)
-      
+
       // Send notification via API
-      const response = await fetch('/api/pwa/send-notification', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/pwa/send-notification`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -140,7 +139,7 @@ export function PushNotificationManager() {
           subscriptionId: targetId
         })
       })
-      
+
       const result = await response.json()
       if (result.success) {
         console.log(`✅ Notification sent successfully`)
@@ -179,7 +178,7 @@ export function PushNotificationManager() {
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             You are subscribed to push notifications.
           </p>
-          
+
           <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
             <p className="text-xs text-gray-600 mb-1">Current Device ID:</p>
             <p className="text-sm font-mono text-gray-900 break-all">
@@ -189,7 +188,7 @@ export function PushNotificationManager() {
               Full endpoint: {subscription.endpoint.substring(0, 50)}...
             </p>
           </div>
-          
+
           <div className="space-y-2">
             <Input
               type="text"

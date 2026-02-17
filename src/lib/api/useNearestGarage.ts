@@ -91,7 +91,7 @@ export function useNearestGarage() {
           transmission: car.transmission,
           selfDrive: car.selfDrive,
           distance: Math.round(distance * 10) / 10,
-          garageAddress: car.garageAddress,
+          garageAddress: car.garageLocation?.address || car.garageAddress || "",
           available: car.availability.isAvailableToday,
           ownerName: car.owner.name,
           ownerContact: car.owner.contactNumber

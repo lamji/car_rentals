@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { saveQAPair, saveCorrection, searchRelevantKnowledge, fetchRulesForPrompt, createRule, updateRuleByNumber } from '@/lib/ai-knowledge-base';
+import { retrieveRelevantCars } from '@/lib/rag-car-search';
 import { checkRateLimit, setRateLimit, formatRemainingTime, parseGroqRateLimitError } from '@/lib/rateLimitCache';
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
@@ -33,7 +34,7 @@ interface DbCar {
   selfDrive?: boolean;
   driverCharge?: number;
   garageAddress?: string;
-  garageLocation?: { city?: string; province?: string };
+  garageLocation?: { address?: string; city?: string; province?: string };
   rating?: number;
   rentedCount?: number;
   isOnHold?: boolean;
@@ -52,7 +53,7 @@ async function fetchCarsFromDb(): Promise<DbCar[]> {
   try {
     const res = await fetch(`${API_URL}/api/cars?limit=100`, {
       headers: { 'Content-Type': 'application/json' },
-      next: { revalidate: 60 },
+      cache: 'no-store', // RAG Update: Always fetch fresh data on every request
     });
     if (!res.ok) return [];
     const data = await res.json();
@@ -82,7 +83,7 @@ function buildCarsContext(dbCars: DbCar[]): string {
     ctx += `\n   12hr: P${car.pricePer12Hours} | 24hr: P${car.pricePer24Hours} | Hourly: P${car.pricePerHour}`;
     ctx += `\n   Self-drive: ${car.selfDrive ? 'Yes' : 'No (with driver)'}`;
     if (car.driverCharge) ctx += ` | Driver charge: P${car.driverCharge}/day`;
-    ctx += `\n   Garage: ${car.garageAddress} (${car.garageLocation?.city}, ${car.garageLocation?.province})`;
+    ctx += `\n   Garage: ${car.garageLocation?.address || car.garageAddress || 'N/A'}`;
     ctx += `\n   Rating: ${car.rating}/5 | Rented: ${car.rentedCount} times`;
     ctx += `\n   Available today: ${isAvailToday ? 'YES' : 'NO'}`;
     if (car.isOnHold) ctx += ' (currently on hold)';
@@ -104,6 +105,7 @@ function buildCarsContext(dbCars: DbCar[]): string {
   ctx += '\n- Date overlap check: a car is unavailable if unavailableStart <= requestedEnd AND unavailableEnd >= requestedStart.';
   ctx += '\n- Filter by type (sedan, suv, van, etc.), transmission, fuel, seats, or any criteria the user mentions.';
   ctx += '\n- Always mention: car name, type, price, garage location, and availability status for the requested dates.';
+  ctx += '\n- PRICING RULE: Always check for an exact package match FIRST. If the user asks for "24 hours" and the car has a "24-hour package" price, USE THAT EXACT PRICE (e.g. P2,000). Do NOT manually calculate "12 hours + 12 hours excess" (e.g. P1,500 + P1,200 = P2,700). Only use hourly excess for time BEYOND the standard packages.';
   ctx += '\n- If a car has unavailable dates that overlap with the user\'s requested dates, clearly mark it as NOT AVAILABLE for those dates.';
   ctx += '\n- Prioritize cars with higher ratings and that are available.';
   ctx += '\n- If the user asks about cars near a specific location with dates, the system will automatically search the database and show results with availability. You do NOT need to list cars yourself in that case - the system handles it.';
@@ -224,14 +226,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch full car inventory from DB — but SKIP if we have recent search results
-    // to prevent the AI from mixing two data sources
-    const hasRecentSearchResults = lastShownCars && Array.isArray(lastShownCars) && lastShownCars.length > 0;
-    let carsContext = '';
-    if (!hasRecentSearchResults) {
-      const dbCars = await fetchCarsFromDb();
-      carsContext = buildCarsContext(dbCars);
-    }
+    // Get the last user message early for RAG
+    const lastUserMessage = [...messages].reverse().find((m: { role: string }) => m.role === 'user');
+    const userQuestion = lastUserMessage?.content || messages[messages.length - 1]?.content || '';
+
+    // Fetch full car inventory from DB
+    const dbCars = await fetchCarsFromDb();
+
+    // RAG: Filter relevant cars based on user query
+    // We cast to any to bypass strict type mismatch on 'unavailableDates' between types.ts and local DbCar
+    const relevantCars = retrieveRelevantCars(userQuestion, dbCars as any[], 10);
+    
+    // Fallback: If no specific relevance found (or very generic query), retrieveRelevantCars returns top popular cars
+    // We only inject these 10 cars into the context to keep it focused
+    const carsContext = buildCarsContext(relevantCars as unknown as DbCar[]);
 
     // Build location context
     let locationContext = '';
@@ -274,13 +282,13 @@ export async function POST(request: NextRequest) {
         recentCarsContext += `\n   Pricing:`;
         recentCarsContext += `\n     - 12-hour package: P${fmt(car.pricePer12Hours)}`;
         recentCarsContext += `\n     - 24-hour package: P${fmt(car.pricePer24Hours)}`;
-        recentCarsContext += `\n     - Per day: P${fmt(car.pricePerDay)}`;
+        recentCarsContext += `\n     - Per day: P${fmt(car.pricePer24Hours)}`;
         recentCarsContext += `\n     - Hourly rate (for excess hours): P${fmt(car.pricePerHour)}/hr`;
         recentCarsContext += `\n   Self-drive: ${car.selfDrive ? 'Yes (customer drives themselves)' : 'No (comes with a driver)'}`;
         recentCarsContext += `\n   Driver charge: P${fmt(car.driverCharge || 0)}/day`;
         recentCarsContext += `\n   Delivery fee: P${fmt(car.deliveryFee || 0)}`;
         recentCarsContext += `\n   Cutoff time: ${car.cutoff || '11:30 PM (default)'}`;
-        recentCarsContext += `\n   Garage: ${car.garageAddress} (${car.garageCity}, ${car.garageProvince || ''})`;
+        recentCarsContext += `\n   Garage: ${car.garageAddress || 'N/A'}`;
         recentCarsContext += `\n   Owner: ${car.ownerName || 'N/A'} | Contact: ${car.ownerContact || 'N/A'}`;
         recentCarsContext += `\n   Rating: ${car.rating}/5 | Rented: ${car.rentedCount} times`;
         recentCarsContext += `\n   On hold: ${car.isOnHold ? 'Yes' : 'No'}`;
@@ -299,10 +307,6 @@ export async function POST(request: NextRequest) {
 
     // Load rules from DB (cached in Redis)
     const dbRules = await fetchRulesForPrompt();
-
-    // Get the last user message
-    const lastUserMessage = [...messages].reverse().find((m: { role: string }) => m.role === 'user');
-    const userQuestion = lastUserMessage?.content || messages[messages.length - 1]?.content || '';
 
     // Check rate limit before making API calls
     const rateLimitCheck = checkRateLimit();

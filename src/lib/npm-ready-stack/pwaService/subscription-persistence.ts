@@ -13,7 +13,7 @@
 async function validateSubscription(subscriptionId: string): Promise<boolean> {
   try {
     // Send a silent test notification to validate subscription
-    const response = await fetch('/api/subscriptions/validate', {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/validate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -75,7 +75,7 @@ async function subscribeWithPersistence(): Promise<string | null> {
       return null;
     }
 
-    // Get service worker registration
+    // Send service worker registration
     const registration = await navigator.serviceWorker.ready;
 
     // Subscribe to push notifications
@@ -85,7 +85,7 @@ async function subscribeWithPersistence(): Promise<string | null> {
     });
 
     // Send subscription to server
-    const response = await fetch('/api/pwa/subscribe', {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/pwa/subscribe`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -162,7 +162,7 @@ async function refreshSubscriptionIfNeeded(): Promise<string | null> {
  */
 async function sendHeartbeat(subscriptionId: string): Promise<boolean> {
   try {
-    const response = await fetch('/api/subscriptions/heartbeat', {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/heartbeat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

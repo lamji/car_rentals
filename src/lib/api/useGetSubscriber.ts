@@ -30,7 +30,7 @@ interface SubscriptionResponse {
  */
 export default function useGetSubscriber() {
   return useGetData<SubscriptionResponse>({
-    baseUrl: '', // Empty since we're using relative URLs
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || '', 
     endpoint: '/api/subscriptions',
     options: {
       queryKey: ['subscriptions'],

@@ -19,7 +19,7 @@ export function RentalOptions({ car }: RentalOptionsProps) {
           <div className="relative">
             <div className="mb-4">
               <div className="text-sm font-medium text-blue-600 mb-1">DAILY</div>
-              <div className="text-2xl font-bold text-gray-900">{formatCurrency(car.pricePerDay)}</div>
+              <div className="text-2xl font-bold text-gray-900">{formatCurrency(car.pricePer24Hours ?? car.pricePerDay ?? 0)}</div>
               <div className="text-xs text-gray-500">per day</div>
             </div>
             <div className="space-y-2">

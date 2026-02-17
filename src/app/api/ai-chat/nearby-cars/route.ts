@@ -452,7 +452,7 @@ export async function POST(request: NextRequest) {
       seats: car.seats,
       transmission: car.transmission,
       fuel: car.fuel,
-      pricePerDay: car.pricePerDay,
+      pricePerDay: car.pricePer24Hours ?? car.pricePerDay,
       pricePer12Hours: car.pricePer12Hours,
       pricePer24Hours: car.pricePer24Hours,
       pricePerHour: car.pricePerHour,

@@ -6,7 +6,8 @@ import { parseIsoDate, diffDaysInclusive } from "@/lib/date";
 export function usePricing(params: {
   startDate: string;
   endDate: string;
-  pricePerDay: number;
+  pricePerDay?: number;
+  pricePer24Hours?: number;
   deliveryFee?: number;
 }) {
   return useMemo(() => {
@@ -14,7 +15,8 @@ export function usePricing(params: {
     const end = parseIsoDate(params.endDate);
 
     const days = start && end ? diffDaysInclusive(start, end) : 1;
-    const rentCost = days * params.pricePerDay;
+    const dailyRate = params.pricePer24Hours ?? params.pricePerDay ?? 0;
+    const rentCost = days * dailyRate;
     const deliveryFee = params.deliveryFee ?? 0;
 
     return {
@@ -23,5 +25,5 @@ export function usePricing(params: {
       deliveryFee,
       total: rentCost + deliveryFee,
     };
-  }, [params.deliveryFee, params.endDate, params.pricePerDay, params.startDate]);
+  }, [params.deliveryFee, params.endDate, params.pricePer24Hours, params.pricePerDay, params.startDate]);
 }

@@ -31,6 +31,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const { refetch } = useGetCars();
   const dispatch = useAppDispatch();
   const stateData = useAppSelector((state) => state.data);
+  const authUser = useAppSelector((state) => state.auth.user);
+  const authRole = useAppSelector((state) => state.auth.role);
 
   useEffect(() => {
     // Check if API is available before connecting
@@ -59,6 +61,17 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       const userAgentRoom = getUserAgentRoom(navigator.userAgent);
       socketInstance.emit("joinRoom", userAgentRoom);
       console.log(`Joined hold room: ${userAgentRoom}`);
+
+      if (authUser?.id && (authRole === "admin" || authRole === "owner")) {
+        socketInstance.emit("join", authUser.id);
+        console.log(`Joined user room: user:${authUser.id}`);
+      }
+
+      if (authRole === "owner" && authUser?.notificationId) {
+        const ownerRoom = `owner:${authUser.notificationId}`;
+        socketInstance.emit("joinRoom", ownerRoom);
+        console.log(`Joined owner room: ${ownerRoom}`);
+      }
     });
 
     socketInstance.on("disconnect", () => {
@@ -119,7 +132,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       console.log("Cleaning up Socket.IO connection");
       socketInstance.disconnect();
     };
-  }, [queryClient, refetch, dispatch, stateData]);
+  }, [queryClient, refetch, dispatch, stateData, authUser, authRole]);
 
   return (
     <SocketContext.Provider value={{ socket, isConnected }}>

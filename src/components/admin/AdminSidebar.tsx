@@ -1,16 +1,20 @@
 'use client'
 
 import { Badge } from '@/components/ui/badge'
+import { restoreGuestToken, clearAuthenticatedSession } from '@/lib/auth/session'
+import { clearAuthSession } from '@/lib/slices/authSlice'
+import { useAppDispatch, useAppSelector } from '@/lib/store'
 import {
-    BarChart3,
-    Bell,
-    Car,
-    Database,
-    Settings,
-    Users
+  BarChart3,
+  Bell,
+  Car,
+  Database,
+  LogOut,
+  Settings,
+  Users
 } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 /**
@@ -18,16 +22,32 @@ import { useEffect, useState } from 'react'
  * Provides navigation for admin dashboard with active state management
  */
 export function AdminSidebar() {
+  const dispatch = useAppDispatch()
+  const router = useRouter()
   const pathname = usePathname()
   const [subscriptionCount, setSubscriptionCount] = useState(0)
+  const { role, user, guestToken } = useAppSelector((state) => state.auth)
+  const isOwner = role === 'owner'
 
   /**
    * Load subscription count for display in sidebar
    */
   useEffect(() => {
+    if (isOwner) {
+      setSubscriptionCount(0)
+      return
+    }
+
     async function loadCount() {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      if (!token) return
+
       try {
-        const response = await fetch('/api/subscriptions')
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
         const result = await response.json()
         if (result.success && result.data) {
           setSubscriptionCount(result.data.filter((sub: { isActive: boolean }) => sub.isActive).length)
@@ -37,14 +57,28 @@ export function AdminSidebar() {
       }
     }
     loadCount()
-  }, [])
+  }, [isOwner, role])
 
-  const navigation = [
+  type NavigationItem = {
+    name: string
+    href: string
+    icon: typeof BarChart3
+    current: boolean
+    badge?: number
+  }
+
+  const adminNavigation: NavigationItem[] = [
     {
       name: 'Dashboard',
       href: '/admin',
       icon: BarChart3,
       current: pathname === '/admin'
+    },
+    {
+      name: 'Bookings',
+      href: '/admin/bookings',
+      icon: Database,
+      current: pathname === '/admin/bookings'
     },
     {
       name: 'Notifications',
@@ -66,10 +100,10 @@ export function AdminSidebar() {
       current: pathname === '/admin/users'
     },
     {
-      name: 'Car Rentals',
-      href: '/',
+      name: 'Car Management',
+      href: '/admin/cars',
       icon: Car,
-      current: false
+      current: pathname.startsWith('/admin/cars')
     },
     {
       name: 'Settings',
@@ -78,6 +112,36 @@ export function AdminSidebar() {
       current: pathname === '/admin/settings'
     }
   ]
+
+  const ownerNavigation: NavigationItem[] = [
+    {
+      name: 'Car Management',
+      href: '/admin/cars',
+      icon: Car,
+      current: pathname.startsWith('/admin/cars')
+    },
+    {
+      name: 'Bookings',
+      href: '/admin/bookings',
+      icon: Database,
+      current: pathname === '/admin/bookings'
+    },
+    {
+      name: 'Inquiries',
+      href: '/admin/notifications',
+      icon: Bell,
+      current: pathname === '/admin/notifications'
+    }
+  ]
+
+  const navigation = isOwner ? ownerNavigation : adminNavigation
+
+  const handleLogout = () => {
+    dispatch(clearAuthSession())
+    clearAuthenticatedSession()
+    restoreGuestToken(guestToken)
+    router.replace('/login')
+  }
 
   return (
     <div className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg border-r border-gray-200">
@@ -88,7 +152,7 @@ export function AdminSidebar() {
             <Car className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-gray-900">Admin</h1>
+            <h1 className="text-lg font-semibold text-gray-900">{isOwner ? 'Owner' : 'Admin'}</h1>
             <p className="text-xs text-gray-500">Car Rentals</p>
           </div>
         </div>
@@ -133,10 +197,18 @@ export function AdminSidebar() {
             <Users className="w-4 h-4 text-gray-600" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">Admin User</p>
-            <p className="text-xs text-gray-500 truncate">admin@carrentals.com</p>
+            <p className="text-sm font-medium text-gray-900 truncate">{user?.name || 'User'}</p>
+            <p className="text-xs text-gray-500 truncate">{user?.email || 'N/A'}</p>
           </div>
         </div>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="mt-2 w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-red-600 hover:bg-red-50 rounded-md transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+          Logout
+        </button>
       </div>
     </div>
   )

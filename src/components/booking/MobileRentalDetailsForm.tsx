@@ -164,9 +164,9 @@ export function MobileRentalDetailsForm({ onDataChange, pricingDetails }: Mobile
               <div className="flex-1">
                 <div className="font-medium text-gray-900">Pickup from Garage</div>
                 <div className="text-sm text-gray-500">Come to our garage to pick up the car</div>
-                {selectedCar && selectedCar.garageAddress && (
+                {selectedCar && (selectedCar.garageLocation?.address || selectedCar.garageAddress) && (
                   <div className="text-xs text-gray-400 mt-1 flex items-center">
-                    {selectedCar.garageAddress}
+                    {selectedCar.garageLocation?.address || selectedCar.garageAddress}
                   </div>
                 )}
               </div>

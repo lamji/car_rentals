@@ -42,6 +42,8 @@ export const MOCK_CARS: Car[] = [
     rentedCount: 0,
     rating: 4.5,
     selfDrive: true,
+    isOnHold: false,
+    isActive: true,
     availability: {
       isAvailableToday: true,
       unavailableDates: []

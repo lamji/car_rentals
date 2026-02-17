@@ -48,7 +48,7 @@ export function CarCard(props: { car: Car; href: string }) {
               <Badge variant="secondary">Available</Badge>
             </div>
             <div className="mt-3 text-sm">
-              <span className="text-lg font-semibold">${car.pricePerDay}</span>
+              <span className="text-lg font-semibold">${car.pricePer24Hours ?? car.pricePerDay ?? 0}</span>
               <span className="text-muted-foreground"> / day</span>
             </div>
           </div>

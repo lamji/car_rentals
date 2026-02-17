@@ -87,7 +87,7 @@ export function CarAvailabilityCard({ car, isAvailable, isOnHold, href }: Props)
 
             <div className="mt-1 text-[9px] sm:text-[10px] text-muted-foreground flex items-start gap-1 border-b pb-2">
               <MapPin className="h-3 w-3 mt-px shrink-0 text-primary" />
-              <span className="wrap-break-word">{car?.garageAddress}</span>
+              <span className="wrap-break-word">{car?.garageLocation?.address || car?.garageAddress}</span>
             </div>
           </div>
 
