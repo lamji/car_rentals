@@ -1,6 +1,5 @@
 "use client";
 
-import { useForm } from "react-hook-form";
 import {
     Dialog,
     DialogContent,
@@ -19,14 +18,12 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Car } from "@/lib/types";
-import { useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import { MapboxAutocomplete } from "@/components/ui/mapbox-autocomplete";
-import usePostCar from "@/lib/api/usePostCar";
-import usePutCar from "@/lib/api/usePutCar";
-import { useToast } from "@/components/providers/ToastProvider";
+import { GarageMapPicker } from "./GarageMapPicker";
+import { useCarFormHandlers } from "./hooks/useCarFormHandlers";
 
 interface CarFormModalProps {
     open: boolean;
@@ -35,157 +32,71 @@ interface CarFormModalProps {
     onSuccess: () => void;
 }
 
+/**
+ * Vehicle management modal for creating and editing car records.
+ * Presentation only - Logic extracted to useCarFormHandlers hook.
+ */
 export function CarFormModal({ open, onClose, car, onSuccess }: CarFormModalProps) {
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const { showToast } = useToast();
-    const debugLog = (...args: unknown[]) => {
-        if (process.env.NODE_ENV !== "production") {
-            console.log("[CarFormModal]", ...args);
-        }
-    };
-
     const {
-        register,
-        handleSubmit,
-        reset,
-        setValue,
-        watch
-    } = useForm<Partial<Car>>({
-        defaultValues: car || {
-            selfDrive: true,
-            type: "sedan",
-            transmission: "automatic",
-            fuel: "gasoline"
-        }
-    });
+        formMethods,
+        isSubmitting,
+        onSubmit,
+        handleRequestClose,
+        handlers
+    } = useCarFormHandlers({ car, onClose, onSuccess });
 
-    // Sync form with car prop when it changes
-    useEffect(() => {
-        if (car) {
-            reset({
-                ...car,
-                image: car?.imageUrls?.[0] || car?.image || '',
-                // Ensure imageUrls is an array with at least 4 slots or fill with empty strings
-                imageUrls: [
-                    car?.imageUrls?.[0] || car?.image || '', // Primary image
-                    car?.imageUrls?.[1] || '',
-                    car?.imageUrls?.[2] || '',
-                    car?.imageUrls?.[3] || '',
-                ],
-                imagePublicIds: [
-                    car?.imagePublicIds?.[0] || '',
-                    car?.imagePublicIds?.[1] || '',
-                    car?.imagePublicIds?.[2] || '',
-                    car?.imagePublicIds?.[3] || '',
-                ]
-            });
-        } else {
-            reset({
-                selfDrive: true,
-                type: "sedan",
-                transmission: "automatic",
-                fuel: "gasoline",
-                image: '',
-                imageUrls: ['', '', '', ''],
-                imagePublicIds: ['', '', '', '']
-            });
-        }
-    }, [car, reset]);
+    const { register, watch } = formMethods;
 
-    const { mutateAsync: postCar } = usePostCar();
-    const { mutateAsync: putCar } = usePutCar(car?.id || "");
+    // Pre-calculate derived values for JSX purity
     const watchedImage = watch("image");
     const watchedPrimaryUrl = watch("imageUrls.0");
     const primaryPreview = watchedPrimaryUrl || watchedImage || "";
-
-    useEffect(() => {
-        debugLog("preview-state", {
-            image: watchedImage,
-            primaryUrl: watchedPrimaryUrl,
-            primaryPreview,
-        });
-    }, [watchedImage, watchedPrimaryUrl, primaryPreview]);
-
-    const onSubmit = async (data: Partial<Car>) => {
-        setIsSubmitting(true);
-        try {
-            const isNew = !car;
-
-            const rawUrls = data.imageUrls || [];
-            const rawIds = data.imagePublicIds || [];
-
-            // Filter sets based on URL presence
-            const validImages = rawUrls
-                .map((url, idx) => ({ url: url?.trim(), id: rawIds[idx] }))
-                .filter(img => img.url && img.url !== "");
-
-            const cleanImageUrls = validImages.map(img => img.url as string);
-            const cleanPublicIds = validImages.map(img => img.id || "");
-
-            // Ensure primary image is set
-            const primaryImage = cleanImageUrls[0] || "";
-
-            const payload = {
-                ...data,
-                id: data.id || `car-${Date.now()}`,
-                image: primaryImage, // Set primary image
-                imageUrls: cleanImageUrls, // Use the cleaned array
-                imagePublicIds: cleanPublicIds,
-                owner: data.owner ? {
-                    ...data.owner,
-                    email: data.owner.email?.trim(),
-                } : undefined,
-                garageLocation: data.garageLocation,
-                driverCharge: data.driverCharge || 0,
-                rating: data.rating || 5,
-                rentedCount: data.rentedCount || 0,
-                isActive: true,
-                isOnHold: data.isOnHold || false,
-            };
-
-            const result = isNew
-                ? await postCar(payload)
-                : await putCar(payload);
-
-            if (result.success) {
-                onSuccess();
-            }
-        } catch (error: unknown) {
-            console.error("Failed to save car:", error);
-            const message: string =
-                typeof error === "object" &&
-                    error !== null &&
-                    "response" in error &&
-                    typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === "string"
-                    ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to save car details."
-                    : "Failed to save car details.";
-            showToast(message, "error");
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+    const isEditing = !!car;
+    const refText = car ? `REF: ${car?.id || car?._id}` : 'NEW REGISTRATION';
+    const modeText = car ? 'EDIT MODE' : 'CREATE MODE';
+    const submitText = car ? "Save Changes" : "Register Vehicle";
+    const isOnHold = watch("isOnHold");
 
     return (
-        <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="!fixed !inset-0 !left-0 !top-0 !right-0 !bottom-0 !z-[120] !w-screen !h-screen !max-w-none !max-h-none !translate-x-0 !translate-y-0 rounded-none flex flex-col justify-between gap-0 p-0 overflow-hidden border-none shadow-2xl bg-slate-50" showCloseButton={false}>
-                <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full bg-slate-50">
+        <Dialog open={open} onOpenChange={(nextOpen) => {
+            if (!nextOpen) {
+                handleRequestClose();
+            }
+        }}>
+            <DialogContent
+                data-testid="car-form-modal-content"
+                className="!fixed !inset-0 !left-0 !top-0 !right-0 !bottom-0 !z-[120] !w-screen !h-screen !max-w-none !max-h-none !translate-x-0 !translate-y-0 rounded-none flex flex-col justify-between gap-0 p-0 overflow-hidden border-none shadow-2xl bg-slate-50"
+                showCloseButton={false}
+            >
+                <form onSubmit={onSubmit} className="flex flex-col h-full bg-slate-50" data-testid="car-registration-form">
                     {/* Header */}
                     <div className="bg-slate-900 text-white px-8 h-20 shrink-0 flex items-center justify-between z-20 shadow-md">
                         <div>
                             <div className="flex items-center gap-3 mb-1">
-                                <p className="text-slate-400 text-[10px] font-mono uppercase tracking-widest">{car ? `REF: ${car?.id || car?._id}` : 'NEW REGISTRATION'}</p>
+                                <p className="text-slate-400 text-[10px] font-mono uppercase tracking-widest">{refText}</p>
                                 <span className="w-1 h-1 rounded-full bg-emerald-500"></span>
-                                <p className="text-emerald-500 text-[10px] font-bold tracking-widest">{car ? 'EDIT MODE' : 'CREATE MODE'}</p>
+                                <p className="text-emerald-500 text-[10px] font-bold tracking-widest">{modeText}</p>
                             </div>
                             <DialogTitle className="text-2xl font-extrabold tracking-tight">Vehicle Management</DialogTitle>
                         </div>
                         <div className="flex gap-3">
-                            <Button type="button" variant="ghost" className="text-slate-400 hover:text-white hover:bg-white/10" onClick={onClose}>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                className="text-slate-400 hover:text-white hover:bg-white/10"
+                                onClick={handleRequestClose}
+                                data-testid="car-form-cancel-button"
+                            >
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={isSubmitting} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold uppercase tracking-widest px-8 shadow-lg shadow-emerald-900/20">
+                            <Button
+                                type="submit"
+                                disabled={isSubmitting}
+                                data-testid="car-form-submit-button"
+                                className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold uppercase tracking-widest px-8 shadow-lg shadow-emerald-900/20"
+                            >
                                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {car ? "Save Changes" : "Register Vehicle"}
+                                {submitText}
                             </Button>
                         </div>
                     </div>
@@ -230,7 +141,7 @@ export function CarFormModal({ open, onClose, car, onSuccess }: CarFormModalProp
                             <div className="flex-1 bg-slate-50/50 overflow-hidden flex flex-col">
                                 <ScrollArea className="flex-1 h-full w-full">
                                     <div className="p-8 max-w-5xl mx-auto pb-24">
-                                        <TabsContent value="basic" className="mt-0 space-y-8 animate-in fade-in slide-in-from-right-4 duration-500 focus-visible:outline-none">
+                                        <TabsContent value="basic" data-testid="tab-content-basic" className="mt-0 space-y-8 animate-in fade-in slide-in-from-right-4 duration-500 focus-visible:outline-none">
                                             <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                                                 {/* Image Preview Card */}
                                                 <div className="md:col-span-4 space-y-4">
@@ -252,22 +163,25 @@ export function CarFormModal({ open, onClose, car, onSuccess }: CarFormModalProp
                                                             <Switch
                                                                 id="selfDrive"
                                                                 checked={watch("selfDrive")}
-                                                                onCheckedChange={(val) => setValue("selfDrive", val)}
+                                                                onCheckedChange={handlers.handleSelfDriveChange}
+                                                                data-testid="car-switch-self-drive"
                                                             />
                                                         </div>
                                                         <div className="flex items-center justify-between">
                                                             <Label htmlFor="isOnHold" className="font-bold text-slate-700">Maintenance Hold</Label>
                                                             <Switch
                                                                 id="isOnHold"
-                                                                checked={watch("isOnHold")}
-                                                                onCheckedChange={(val) => setValue("isOnHold", val)}
+                                                                checked={isOnHold}
+                                                                onCheckedChange={handlers.handleOnHoldChange}
+                                                                data-testid="car-switch-on-hold"
                                                             />
                                                         </div>
-                                                        {watch("isOnHold") && (
+                                                        {isOnHold && (
                                                             <div className="pt-2 animate-in fade-in slide-in-from-top-1">
                                                                 <Label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Reason for Hold</Label>
                                                                 <Input
                                                                     {...register("holdReason")}
+                                                                    data-testid="car-input-hold-reason"
                                                                     className="h-9 text-xs bg-slate-50 border-slate-200"
                                                                     placeholder="e.g. Pending Maintenance..."
                                                                 />
@@ -281,19 +195,32 @@ export function CarFormModal({ open, onClose, car, onSuccess }: CarFormModalProp
                                                     <div className="grid grid-cols-2 gap-6">
                                                         <div className="space-y-2">
                                                             <Label className="uppercase text-[10px] tracking-widest font-black text-slate-400">Model Name</Label>
-                                                            <Input {...register("name", { required: true })} className="h-12 border-slate-200 bg-slate-50 focus:bg-white transition-all font-bold text-lg" placeholder="Toyota Vios 2024" />
+                                                            <Input
+                                                                {...register("name", { required: true })}
+                                                                data-testid="car-input-name"
+                                                                className="h-12 border-slate-200 bg-slate-50 focus:bg-white transition-all font-bold text-lg"
+                                                                placeholder="Toyota Vios 2024"
+                                                            />
                                                         </div>
                                                         <div className="space-y-2">
                                                             <Label className="uppercase text-[10px] tracking-widest font-black text-slate-400">Year Model</Label>
-                                                            <Input type="number" {...register("year", { valueAsNumber: true })} className="h-12 border-slate-200 bg-slate-50 focus:bg-white transition-all font-bold" />
+                                                            <Input
+                                                                type="number"
+                                                                {...register("year", { valueAsNumber: true })}
+                                                                data-testid="car-input-year"
+                                                                className="h-12 border-slate-200 bg-slate-50 focus:bg-white transition-all font-bold"
+                                                            />
                                                         </div>
                                                     </div>
 
                                                     <div className="grid grid-cols-3 gap-6">
                                                         <div className="space-y-2">
                                                             <Label className="uppercase text-[10px] tracking-widest font-black text-slate-400">Type</Label>
-                                                            <Select defaultValue={watch("type")} onValueChange={(val) => setValue("type", val)}>
-                                                                <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
+                                                            <Select
+                                                                value={watch("type")}
+                                                                onValueChange={handlers.handleTypeChange}
+                                                            >
+                                                                <SelectTrigger className="h-12" data-testid="car-select-type"><SelectValue /></SelectTrigger>
                                                                 <SelectContent>
                                                                     <SelectItem value="sedan">Sedan</SelectItem>
                                                                     <SelectItem value="suv">SUV</SelectItem>
@@ -304,8 +231,11 @@ export function CarFormModal({ open, onClose, car, onSuccess }: CarFormModalProp
                                                         </div>
                                                         <div className="space-y-2">
                                                             <Label className="uppercase text-[10px] tracking-widest font-black text-slate-400">Transmission</Label>
-                                                            <Select defaultValue={watch("transmission")} onValueChange={(val) => setValue("transmission", val)}>
-                                                                <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
+                                                            <Select
+                                                                value={watch("transmission")}
+                                                                onValueChange={handlers.handleTransmissionChange}
+                                                            >
+                                                                <SelectTrigger className="h-12" data-testid="car-select-transmission"><SelectValue /></SelectTrigger>
                                                                 <SelectContent>
                                                                     <SelectItem value="automatic">Automatic</SelectItem>
                                                                     <SelectItem value="manual">Manual</SelectItem>
@@ -314,7 +244,12 @@ export function CarFormModal({ open, onClose, car, onSuccess }: CarFormModalProp
                                                         </div>
                                                         <div className="space-y-2">
                                                             <Label className="uppercase text-[10px] tracking-widest font-black text-slate-400">Fuel</Label>
-                                                            <Input {...register("fuel")} className="h-12 border-slate-200" placeholder="Gasoline" />
+                                                            <Input
+                                                                {...register("fuel")}
+                                                                data-testid="car-input-fuel"
+                                                                className="h-12 border-slate-200"
+                                                                placeholder="Gasoline"
+                                                            />
                                                         </div>
                                                     </div>
 
@@ -328,82 +263,36 @@ export function CarFormModal({ open, onClose, car, onSuccess }: CarFormModalProp
                                                                     <ImageUpload
                                                                         value={watch("imageUrls.0")}
                                                                         compact
-                                                                        onChange={(url) => {
-                                                                            debugLog("main-thumbnail:onChange", { url });
-                                                                            setValue("imageUrls.0", url || "");
-                                                                            setValue("image", url || "");
-                                                                            if (!url) setValue("imagePublicIds.0", "");
-                                                                        }}
-                                                                        onUploadSuccess={(data) => {
-                                                                            debugLog("main-thumbnail:onUploadSuccess", data);
-                                                                            setValue("imageUrls.0", data.url);
-                                                                            setValue("imagePublicIds.0", data.publicId);
-                                                                            setValue("image", data.url);
-                                                                        }}
+                                                                        onChange={handlers.handleMainThumbnailChange}
+                                                                        onUploadSuccess={handlers.handleMainThumbnailUpload}
+                                                                        data-testid="car-upload-main"
                                                                     />
                                                                 </div>
                                                             </div>
-                                                            <div className="space-y-2">
-                                                                <Label className="text-[10px] font-bold text-slate-500 uppercase">Side View</Label>
-                                                                <div className="space-y-2">
-                                                                    <Input {...register("imageUrls.1")} className="h-9 font-mono text-[11px] bg-slate-50 border-slate-200" placeholder="Optional URL..." />
-                                                                    <ImageUpload
-                                                                        value={watch("imageUrls.1")}
-                                                                        compact
-                                                                        onChange={(url) => {
-                                                                            setValue("imageUrls.1", url || "");
-                                                                            if (!url) setValue("imagePublicIds.1", "");
-                                                                        }}
-                                                                        onUploadSuccess={(data) => {
-                                                                            setValue("imageUrls.1", data.url);
-                                                                            setValue("imagePublicIds.1", data.publicId);
-                                                                        }}
-                                                                    />
+                                                            {[1, 2, 3].map((idx) => (
+                                                                <div key={idx} className="space-y-2">
+                                                                    <Label className="text-[10px] font-bold text-slate-500 uppercase">
+                                                                        {idx === 1 ? "Side View" : idx === 2 ? "Interior View" : "Rear View"}
+                                                                    </Label>
+                                                                    <div className="space-y-2">
+                                                                        <Input {...register(`imageUrls.${idx}` as any)} className="h-9 font-mono text-[11px] bg-slate-50 border-slate-200" placeholder="Optional URL..." />
+                                                                        <ImageUpload
+                                                                            value={watch(`imageUrls.${idx}` as any)}
+                                                                            compact
+                                                                            onChange={(url) => handlers.handleGalleryImageChange(idx, url)}
+                                                                            onUploadSuccess={(data) => handlers.handleGalleryImageUpload(idx, data)}
+                                                                            data-testid={`car-upload-gallery-${idx}`}
+                                                                        />
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                            <div className="space-y-2">
-                                                                <Label className="text-[10px] font-bold text-slate-500 uppercase">Interior View</Label>
-                                                                <div className="space-y-2">
-                                                                    <Input {...register("imageUrls.2")} className="h-9 font-mono text-[11px] bg-slate-50 border-slate-200" placeholder="Optional URL..." />
-                                                                    <ImageUpload
-                                                                        value={watch("imageUrls.2")}
-                                                                        compact
-                                                                        onChange={(url) => {
-                                                                            setValue("imageUrls.2", url || "");
-                                                                            if (!url) setValue("imagePublicIds.2", "");
-                                                                        }}
-                                                                        onUploadSuccess={(data) => {
-                                                                            setValue("imageUrls.2", data.url);
-                                                                            setValue("imagePublicIds.2", data.publicId);
-                                                                        }}
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                            <div className="space-y-2">
-                                                                <Label className="text-[10px] font-bold text-slate-500 uppercase">Rear View</Label>
-                                                                <div className="space-y-2">
-                                                                    <Input {...register("imageUrls.3")} className="h-9 font-mono text-[11px] bg-slate-50 border-slate-200" placeholder="Optional URL..." />
-                                                                    <ImageUpload
-                                                                        value={watch("imageUrls.3")}
-                                                                        compact
-                                                                        onChange={(url) => {
-                                                                            setValue("imageUrls.3", url || "");
-                                                                            if (!url) setValue("imagePublicIds.3", "");
-                                                                        }}
-                                                                        onUploadSuccess={(data) => {
-                                                                            setValue("imageUrls.3", data.url);
-                                                                            setValue("imagePublicIds.3", data.publicId);
-                                                                        }}
-                                                                    />
-                                                                </div>
-                                                            </div>
+                                                            ))}
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </TabsContent>
 
-                                        <TabsContent value="pricing" className="mt-0 space-y-6 animate-in fade-in slide-in-from-right-4 duration-500 focus-visible:outline-none">
+                                        <TabsContent value="pricing" data-testid="tab-content-pricing" className="mt-0 space-y-6 animate-in fade-in slide-in-from-right-4 duration-500 focus-visible:outline-none">
                                             <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
                                                 <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
                                                     <span className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 mb-1">₱</span>
@@ -412,51 +301,44 @@ export function CarFormModal({ open, onClose, car, onSuccess }: CarFormModalProp
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                                     <div className="space-y-2 p-4 bg-slate-50 rounded-xl border border-slate-100">
                                                         <Label className="uppercase text-[10px] tracking-widest font-black text-slate-400">Hourly Excess</Label>
-                                                        <Input type="number" {...register("pricePerHour", { valueAsNumber: true })} className="h-10 border-slate-200 bg-white" />
+                                                        <Input type="number" {...register("pricePerHour", { valueAsNumber: true })} data-testid="car-input-price-hour" className="h-10 border-slate-200 bg-white" />
                                                     </div>
                                                     <div className="space-y-2 p-4 bg-slate-50 rounded-xl border border-slate-100">
                                                         <Label className="uppercase text-[10px] tracking-widest font-black text-slate-400">12-Hour Package</Label>
-                                                        <Input type="number" {...register("pricePer12Hours", { valueAsNumber: true })} className="h-10 border-slate-200 bg-white" />
+                                                        <Input type="number" {...register("pricePer12Hours", { valueAsNumber: true })} data-testid="car-input-price-12h" className="h-10 border-slate-200 bg-white" />
                                                     </div>
                                                     <div className="space-y-2 p-4 bg-slate-50 rounded-xl border border-slate-100">
                                                         <Label className="uppercase text-[10px] tracking-widest font-black text-slate-400">24-Hour Package</Label>
-                                                        <Input type="number" {...register("pricePer24Hours", { valueAsNumber: true })} className="h-10 border-slate-200 bg-white font-bold text-emerald-600" />
+                                                        <Input type="number" {...register("pricePer24Hours", { valueAsNumber: true })} data-testid="car-input-price-24h" className="h-10 border-slate-200 bg-white font-bold text-emerald-600" />
                                                     </div>
                                                 </div>
                                             </div>
                                         </TabsContent>
 
-                                        <TabsContent value="owner" className="mt-0 space-y-6 animate-in fade-in slide-in-from-right-4 duration-500 focus-visible:outline-none">
+                                        <TabsContent value="owner" data-testid="tab-content-owner" className="mt-0 space-y-6 animate-in fade-in slide-in-from-right-4 duration-500 focus-visible:outline-none">
                                             <div className="max-w-2xl bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
                                                 <div className="space-y-2">
                                                     <Label className="uppercase text-[10px] tracking-widest font-black text-slate-400">Owner Full Name</Label>
-                                                    <Input {...register("owner.name", { required: true })} className="h-12" />
+                                                    <Input {...register("owner.name", { required: true })} data-testid="car-input-owner-name" className="h-12" />
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label className="uppercase text-[10px] tracking-widest font-black text-slate-400">Owner Email</Label>
-                                                    <Input type="email" {...register("owner.email", { required: true })} className="h-12" placeholder="owner@email.com" />
+                                                    <Input type="email" {...register("owner.email", { required: true })} data-testid="car-input-owner-email" className="h-12" placeholder="owner@email.com" />
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label className="uppercase text-[10px] tracking-widest font-black text-slate-400">Contact Number</Label>
-                                                    <Input {...register("owner.contactNumber", { required: true })} className="h-12" />
+                                                    <Input {...register("owner.contactNumber", { required: true })} data-testid="car-input-owner-contact" className="h-12" />
                                                 </div>
                                             </div>
                                         </TabsContent>
 
-                                        <TabsContent value="location" className="mt-0 space-y-6 animate-in fade-in slide-in-from-right-4 duration-500 focus-visible:outline-none">
+                                        <TabsContent value="location" data-testid="tab-content-location" className="mt-0 space-y-6 animate-in fade-in slide-in-from-right-4 duration-500 focus-visible:outline-none">
                                             <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
-                                                <div className="space-y-2">
-                                                    <Label className="uppercase text-[10px] tracking-widest font-black text-slate-400">Garage Address</Label>
-                                                    <MapboxAutocomplete
-                                                        value={watch("garageLocation.address") || ""}
-                                                        onChange={(address, coords) => {
-                                                            setValue("garageLocation.address", address);
-                                                            setValue("garageAddress", address);
-                                                            if (coords) {
-                                                                setValue("garageLocation.coordinates", coords);
-                                                            }
-                                                        }}
-                                                        placeholder="Search for garage address..."
+                                                <div className="pt-4">
+                                                    <GarageMapPicker
+                                                        value={watch("garageLocation.coordinates")}
+                                                        onChange={handlers.handleMapPickerChange}
+                                                        data-testid="car-map-picker-garage"
                                                     />
                                                 </div>
                                             </div>
@@ -467,7 +349,7 @@ export function CarFormModal({ open, onClose, car, onSuccess }: CarFormModalProp
                         </div>
                     </Tabs>
                 </form>
-            </DialogContent>
-        </Dialog>
+            </DialogContent >
+        </Dialog >
     );
 }

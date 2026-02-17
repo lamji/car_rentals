@@ -7,6 +7,84 @@ import useUpdateBookingStatus from '@/lib/api/useUpdateBookingStatus'
 import { useToast } from '@/components/providers/ToastProvider'
 import { useAppSelector } from '@/lib/store'
 
+interface WebVisitPoint {
+    label: string
+    count: number
+}
+
+interface WebVisitAnalytics {
+    totalVisits7d: number
+    todayVisits: number
+    activeDevices: number
+    trendPercent: number
+    series: WebVisitPoint[]
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+function normalizeSubscriptions(raw: unknown): any[] {
+    if (Array.isArray(raw)) return raw
+    if (raw && typeof raw === 'object' && 'data' in (raw as any)) {
+        return (raw as any).data || []
+    }
+    return []
+}
+
+function formatDayLabel(date: Date): string {
+    return date.toLocaleDateString('en-US', { weekday: 'short' })
+}
+
+function buildWebVisitAnalytics(subscriptions: any[]): WebVisitAnalytics {
+    const now = new Date()
+    const dayMeta: Array<{ key: string; label: string }> = []
+    const dayCounts = new Map<string, number>()
+
+    for (let offset = 6; offset >= 0; offset--) {
+        const date = new Date(now.getTime() - offset * DAY_MS)
+        const key = date.toISOString().slice(0, 10)
+        dayMeta.push({ key, label: formatDayLabel(date) })
+        dayCounts.set(key, 0)
+    }
+
+    for (const sub of subscriptions) {
+        const sourceDate = sub?.lastHeartbeat || sub?.updatedAt || sub?.createdAt
+        if (!sourceDate) continue
+
+        const visitDate = new Date(sourceDate)
+        if (Number.isNaN(visitDate.getTime())) continue
+
+        const key = visitDate.toISOString().slice(0, 10)
+        if (!dayCounts.has(key)) continue
+
+        dayCounts.set(key, (dayCounts.get(key) || 0) + 1)
+    }
+
+    const series = dayMeta.map(({ key, label }) => {
+        return {
+            label,
+            count: dayCounts.get(key) || 0,
+        }
+    })
+
+    const totalVisits7d = series.reduce((acc, item) => acc + item.count, 0)
+    const todayKey = now.toISOString().slice(0, 10)
+    const todayVisits = dayCounts.get(todayKey) || 0
+
+    const recent3 = series.slice(-3).reduce((acc, item) => acc + item.count, 0)
+    const previous3 = series.slice(-6, -3).reduce((acc, item) => acc + item.count, 0)
+    const trendPercent = previous3 === 0
+        ? (recent3 > 0 ? 100 : 0)
+        : Math.round(((recent3 - previous3) / previous3) * 100)
+
+    return {
+        totalVisits7d,
+        todayVisits,
+        activeDevices: subscriptions.filter((sub) => sub?.isActive).length,
+        trendPercent,
+        series,
+    }
+}
+
 
 /**
  * Custom hook for Admin Dashboard logic.
@@ -32,7 +110,7 @@ export function useAdminDashboard() {
     // --- Computed Logic ---
     const stats = useMemo(() => {
         const cars = carRes?.data || []
-        const subscriptionData = Array.isArray(subRes) ? subRes : (subRes as any)?.data || []
+        const subscriptionData = normalizeSubscriptions(subRes)
 
         return {
             totalCars: cars.length,
@@ -45,6 +123,11 @@ export function useAdminDashboard() {
     const recentBookings = useMemo(() => {
         return bookingRes?.data || []
     }, [bookingRes])
+
+    const webVisitAnalytics = useMemo(() => {
+        const subscriptionData = normalizeSubscriptions(subRes)
+        return buildWebVisitAnalytics(subscriptionData)
+    }, [subRes])
 
     const isLoading = carsLoading || subsLoading || bookingsLoading
 
@@ -94,6 +177,7 @@ export function useAdminDashboard() {
         isLoading,
         isUpdating,
         canManageBookingActions,
+        webVisitAnalytics,
         
         // Modal State
         selectedBooking,

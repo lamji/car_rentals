@@ -20,6 +20,7 @@ All notable changes to the `car_rentals` project will be documented in this file
 - **Environment**: Fixed `EPERM` lock issues during `next build` by identifying and clearing locked `.next` trace files.
 
 ### Changed
+- **Admin Management**: Integrated Interactive Mapbox picker for garage locations. Admin can now search via autocomplete or click/drag a marker on a map to retrieve precise coordinates and reverse-geocoded addresses.
 - **Admin Management**: Integrated Mapbox Autocomplete for garage address selection in the Car Management modal. This ensures accurate address data and automatically captures geographical coordinates for distance calculations.
 - **Login UI**: Refactored the login page to a "Pure Input" focus. Removed logo, marketing features, and external links to create a distraction-free authentication interface with simplified sample credential buttons.
 

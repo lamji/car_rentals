@@ -13,6 +13,11 @@
     - Use `MapboxAutocomplete` for the "Garage Address" field.
     - Synchronize both `garageLocation.address` and `garageAddress` fields upon selection.
     - Automatically populate `garageLocation.coordinates` when a suggestion is selected.
+3. **Integrated Map Search**: Added a dedicated search box within the `GarageMapPicker` component. This allows users to:
+    - Search for an address via autocomplete directly on the map.
+    - View suggestions and select one to instantly center the map and drop the marker.
+    - Continue to pinpoint the exact location by dragging the marker or clicking the map.
+    - Synchronize all geocoded details (city, province, address) back to the form state.
 
 ## Verification
 - Open Car Management in Admin.

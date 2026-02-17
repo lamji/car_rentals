@@ -27,6 +27,7 @@ import {
 import Link from 'next/link'
 import { useAdminDashboard } from './hooks/useAdminDashboard'
 import BookingDetailsModal from '@/components/admin/Bookings/BookingDetailsModal'
+import { WebVisitAnalyticsCard } from '@/components/admin/dashboard/WebVisitAnalyticsCard'
 
 /**
  * Admin Dashboard Overview Page
@@ -45,6 +46,7 @@ export default function AdminDashboard() {
     selectedBooking,
     isUpdating,
     canManageBookingActions,
+    webVisitAnalytics,
   } = useAdminDashboard()
 
   if (isLoading) {
@@ -125,6 +127,9 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Web Visit Analytics */}
+      <WebVisitAnalyticsCard analytics={webVisitAnalytics} />
 
       <div className="space-y-6">
         {/* Recent Activity */}
