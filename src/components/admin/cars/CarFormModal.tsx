@@ -23,6 +23,7 @@ import { useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
+import { MapboxAutocomplete } from "@/components/ui/mapbox-autocomplete";
 import usePostCar from "@/lib/api/usePostCar";
 import usePutCar from "@/lib/api/usePutCar";
 import { useToast } from "@/components/providers/ToastProvider";
@@ -37,6 +38,11 @@ interface CarFormModalProps {
 export function CarFormModal({ open, onClose, car, onSuccess }: CarFormModalProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { showToast } = useToast();
+    const debugLog = (...args: unknown[]) => {
+        if (process.env.NODE_ENV !== "production") {
+            console.log("[CarFormModal]", ...args);
+        }
+    };
 
     const {
         register,
@@ -88,7 +94,17 @@ export function CarFormModal({ open, onClose, car, onSuccess }: CarFormModalProp
 
     const { mutateAsync: postCar } = usePostCar();
     const { mutateAsync: putCar } = usePutCar(car?.id || "");
-    const primaryPreview = watch("imageUrls.0") || watch("image") || "";
+    const watchedImage = watch("image");
+    const watchedPrimaryUrl = watch("imageUrls.0");
+    const primaryPreview = watchedPrimaryUrl || watchedImage || "";
+
+    useEffect(() => {
+        debugLog("preview-state", {
+            image: watchedImage,
+            primaryUrl: watchedPrimaryUrl,
+            primaryPreview,
+        });
+    }, [watchedImage, watchedPrimaryUrl, primaryPreview]);
 
     const onSubmit = async (data: Partial<Car>) => {
         setIsSubmitting(true);
@@ -138,9 +154,9 @@ export function CarFormModal({ open, onClose, car, onSuccess }: CarFormModalProp
             console.error("Failed to save car:", error);
             const message: string =
                 typeof error === "object" &&
-                error !== null &&
-                "response" in error &&
-                typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === "string"
+                    error !== null &&
+                    "response" in error &&
+                    typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === "string"
                     ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to save car details."
                     : "Failed to save car details.";
             showToast(message, "error");
@@ -313,11 +329,13 @@ export function CarFormModal({ open, onClose, car, onSuccess }: CarFormModalProp
                                                                         value={watch("imageUrls.0")}
                                                                         compact
                                                                         onChange={(url) => {
+                                                                            debugLog("main-thumbnail:onChange", { url });
                                                                             setValue("imageUrls.0", url || "");
                                                                             setValue("image", url || "");
                                                                             if (!url) setValue("imagePublicIds.0", "");
                                                                         }}
                                                                         onUploadSuccess={(data) => {
+                                                                            debugLog("main-thumbnail:onUploadSuccess", data);
                                                                             setValue("imageUrls.0", data.url);
                                                                             setValue("imagePublicIds.0", data.publicId);
                                                                             setValue("image", data.url);
@@ -429,7 +447,17 @@ export function CarFormModal({ open, onClose, car, onSuccess }: CarFormModalProp
                                             <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
                                                 <div className="space-y-2">
                                                     <Label className="uppercase text-[10px] tracking-widest font-black text-slate-400">Garage Address</Label>
-                                                    <Input {...register("garageLocation.address")} className="h-12" placeholder="Full address..." />
+                                                    <MapboxAutocomplete
+                                                        value={watch("garageLocation.address") || ""}
+                                                        onChange={(address, coords) => {
+                                                            setValue("garageLocation.address", address);
+                                                            setValue("garageAddress", address);
+                                                            if (coords) {
+                                                                setValue("garageLocation.coordinates", coords);
+                                                            }
+                                                        }}
+                                                        placeholder="Search for garage address..."
+                                                    />
                                                 </div>
                                             </div>
                                         </TabsContent>

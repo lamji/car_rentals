@@ -57,6 +57,11 @@ export function ImageUpload({
 }: ImageUploadProps) {
   const { uploadImage, deleteImage, isLoading: isUploading, error: uploadError } = useUploadImage();
   const [preview, setPreview] = React.useState<string | null>(value || null);
+  const debugLog = (...args: unknown[]) => {
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[ImageUpload]", ...args);
+    }
+  };
 
   /**
    * Handle image upload to Cloudinary
@@ -64,6 +69,12 @@ export function ImageUpload({
    */
   const handleImageUpload = async (file: File) => {
     try {
+      debugLog("upload:start", {
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+      });
+
       // Validate file size
       if (file.size > maxSize * 1024 * 1024) {
         throw new Error(`File size must be less than ${maxSize}MB`);
@@ -78,6 +89,7 @@ export function ImageUpload({
 
       // Upload to Cloudinary
       const { url, publicId } = await uploadImage(file);
+      debugLog("upload:success", { url, publicId });
 
       // Update preview with Cloudinary URL
       setPreview(url);
@@ -87,6 +99,7 @@ export function ImageUpload({
       onUploadSuccess?.({ url, publicId });
     } catch (error) {
       console.error('Upload failed:', error);
+      debugLog("upload:error", error);
       // Reset preview on error
       setPreview(null);
       onChange(undefined);
@@ -97,6 +110,7 @@ export function ImageUpload({
    * Handle image removal from Cloudinary and local state
    */
   const handleImageRemove = async () => {
+    debugLog("remove:start", { preview });
     if (preview && preview.startsWith('https://res.cloudinary.com')) {
       try {
         // Delete from Cloudinary if it's a Cloudinary URL
@@ -118,6 +132,7 @@ export function ImageUpload({
 
   // Update preview when value prop changes
   React.useEffect(() => {
+    debugLog("value-prop:changed", { value });
     setPreview(value || null);
   }, [value]);
 

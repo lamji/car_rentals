@@ -102,7 +102,15 @@ export default function useUploadImage(): UseUploadImageReturn {
       }
 
       const data = await response.json();
-      return data.secure_url;
+
+      const url = data.secure_url || data.url;
+      const publicId = data.public_id || data.publicId;
+
+      if (!url || !publicId) {
+        throw new Error('Cloudinary response missing url or publicId');
+      }
+
+      return { url, publicId };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Upload failed';
       setError(errorMessage);

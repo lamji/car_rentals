@@ -14,11 +14,13 @@ All notable changes to the `car_rentals` project will be documented in this file
 ## [2026-02-18]
 
 ### Fixed
+- **Admin Users**: Resolved a critical navigation bug where clicking "Users" redirected admins to the homepage. Created the missing `src/app/admin/users/page.tsx` and restored the management dashboard.
 - **Build System**: Resolved production build blockers by synchronizing mock data with current `Car` type schema.
 - **Geolocation**: Hardened `useNearestGarage` hook to handle edge cases where car coordinates might be missing, preventing haversine calculation errors.
 - **Environment**: Fixed `EPERM` lock issues during `next build` by identifying and clearing locked `.next` trace files.
 
 ### Changed
+- **Admin Management**: Integrated Mapbox Autocomplete for garage address selection in the Car Management modal. This ensures accurate address data and automatically captures geographical coordinates for distance calculations.
 - **Login UI**: Refactored the login page to a "Pure Input" focus. Removed logo, marketing features, and external links to create a distraction-free authentication interface with simplified sample credential buttons.
 
 
